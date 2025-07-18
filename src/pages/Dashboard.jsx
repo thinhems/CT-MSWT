@@ -9,63 +9,19 @@ import {
   HiOutlineEye,
   HiOutlineTrendingUp,
   HiOutlineTrendingDown,
-  HiOutlineCog
+  HiOutlineCog,
+  HiOutlineBell
 } from "react-icons/hi";
 import UserRoleInfo from '../components/UserRoleInfo';
+import { useDashboardStats, useRecentActivities, useChartData } from '../hooks/useDashboard';
 
 const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [stats] = useState({
-    totalUsers: 125,
-    activeTrashBins: 32,
-    pendingReports: 8,
-    maintenanceItems: 3,
-    todayReports: 12,
-    completedTasks: 47
-  });
-
-  const [recentActivities] = useState([
-    {
-      id: 1,
-      type: 'report',
-      message: 'Báo cáo mới từ Nguyễn Văn A - Thùng rác T1-01 đầy',
-      time: '10 phút trước',
-      priority: 'high'
-    },
-    {
-      id: 2,
-      type: 'maintenance',
-      message: 'Hoàn thành bảo trì thùng rác T2-03',
-      time: '1 giờ trước',
-      priority: 'normal'
-    },
-    {
-      id: 3,
-      type: 'user',
-      message: 'Thêm nhân viên mới: Trần Thị B',
-      time: '2 giờ trước',
-      priority: 'normal'
-    },
-    {
-      id: 4,
-      type: 'system',
-      message: 'Cập nhật lịch làm việc tuần này',
-      time: '3 giờ trước',
-      priority: 'low'
-    }
-  ]);
-
-  const [chartData] = useState({
-    reports: [
-      { day: 'T2', count: 8 },
-      { day: 'T3', count: 12 },
-      { day: 'T4', count: 6 },
-      { day: 'T5', count: 15 },
-      { day: 'T6', count: 10 },
-      { day: 'T7', count: 4 },
-      { day: 'CN', count: 2 }
-    ]
-  });
+  
+  // Fetch real data from APIs
+  const { stats, isLoading: statsLoading, isError: statsError } = useDashboardStats();
+  const { activities, isLoading: activitiesLoading, isError: activitiesError } = useRecentActivities();
+  const { chartData, isLoading: chartLoading, isError: chartError } = useChartData();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -158,6 +114,7 @@ const Dashboard = () => {
         case 'report': return <HiOutlineChartBar />;
         case 'maintenance': return <HiOutlineCog />;
         case 'user': return <HiOutlineUsers />;
+        case 'alert': return <HiOutlineBell />;
         default: return <HiOutlineCheckCircle />;
       }
     };
@@ -214,34 +171,65 @@ const Dashboard = () => {
   };
 
   const BarChart = ({ data }) => {
+    console.log('=== BarChart Debug ===');
+    console.log('Chart data received:', data);
+    console.log('Data type:', typeof data);
+    console.log('Data length:', data?.length);
+    
+    if (!data || data.length === 0) {
+      console.log('No data for chart');
+      return (
+        <div style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+          Không có dữ liệu để hiển thị
+        </div>
+      );
+    }
+    
     const maxValue = Math.max(...data.map(item => item.count));
+    console.log('Max value:', maxValue);
+    
+    if (maxValue === 0) {
+      console.log('All values are 0');
+      return (
+        <div style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+          Không có báo cáo trong tuần này
+        </div>
+      );
+    }
     
     return (
       <div style={{ display: "flex", alignItems: "end", gap: "12px", height: "200px", padding: "20px 0" }}>
-        {data.map((item, index) => (
-          <div key={index} style={{ 
-            display: "flex", 
-            flexDirection: "column", 
-            alignItems: "center", 
-            flex: 1 
-          }}>
-            <div style={{
-              width: "100%",
-              height: `${(item.count / maxValue) * 160}px`,
-              backgroundColor: "#FF5B27",
-              borderRadius: "4px 4px 0 0",
-              marginBottom: "8px",
-              transition: "all 0.3s ease",
-              position: "relative",
-              cursor: "pointer"
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "#E04B1F";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "#FF5B27";
+        {data.map((item, index) => {
+          const height = maxValue > 0 ? `${(item.count / maxValue) * 160}px` : '4px';
+          console.log(`Bar ${item.day}: count=${item.count}, height=${height}`);
+          
+          return (
+            <div key={index} style={{ 
+              display: "flex", 
+              flexDirection: "column", 
+              alignItems: "center", 
+              flex: 1 
             }}>
               <div style={{
+                width: "100%",
+                height: height,
+                backgroundColor: "#FF5B27",
+                borderRadius: "4px 4px 0 0",
+                marginBottom: "8px",
+                transition: "all 0.3s ease",
+                position: "relative",
+                cursor: "pointer",
+                minHeight: "4px"
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = "#E04B1F";
+                e.target.querySelector('.tooltip').style.opacity = "1";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = "#FF5B27";
+                e.target.querySelector('.tooltip').style.opacity = "0";
+              }}>
+              <div className="tooltip" style={{
                 position: "absolute",
                 top: "-20px",
                 left: "50%",
@@ -261,7 +249,8 @@ const Dashboard = () => {
               {item.day}
             </span>
           </div>
-        ))}
+        );
+      })}
       </div>
     );
   };
@@ -318,33 +307,30 @@ const Dashboard = () => {
         <StatCard
           icon={HiOutlineUsers}
           title="Tổng nhân viên"
-          value={stats.totalUsers}
-          subtitle="+12% so với tháng trước"
-          trend="up"
+          value={statsLoading ? "..." : stats.totalUsers}
+          subtitle={statsLoading ? "Đang tải..." : `${stats.totalUsers} người`}
           color="#3b82f6"
         />
         <StatCard
           icon={HiOutlineTrash}
           title="Thùng rác hoạt động"
-          value={stats.activeTrashBins}
-          subtitle="94% hiệu suất"
-          trend="up"
+          value={statsLoading ? "..." : stats.activeTrashBins}
+          subtitle={statsLoading ? "Đang tải..." : `${stats.activeTrashBins} thùng`}
           color="#10b981"
         />
         <StatCard
           icon={HiOutlineExclamation}
           title="Báo cáo chờ xử lý"
-          value={stats.pendingReports}
-          subtitle="-25% so với hôm qua"
-          trend="down"
+          value={statsLoading ? "..." : stats.pendingReports}
+          subtitle={statsLoading ? "Đang tải..." : `${stats.pendingReports} báo cáo`}
           color="#f59e0b"
         />
         <StatCard
-          icon={HiOutlineClock}
-          title="Nhiệm vụ hoàn thành"
-          value={stats.completedTasks}
-          subtitle="Hôm nay"
-          color="#8b5cf6"
+          icon={HiOutlineBell}
+          title="Cảnh báo chưa xử lý"
+          value={statsLoading ? "..." : (stats.totalAlerts - stats.resolvedAlerts)}
+          subtitle={statsLoading ? "Đang tải..." : `${stats.totalAlerts - stats.resolvedAlerts} cảnh báo`}
+          color="#ef4444"
         />
       </div>
 
@@ -387,7 +373,17 @@ const Dashboard = () => {
               Xem chi tiết
             </button>
           </div>
-          <BarChart data={chartData.reports} />
+          {chartLoading ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+              Đang tải biểu đồ...
+            </div>
+          ) : chartError ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#ef4444" }}>
+              Lỗi tải dữ liệu biểu đồ
+            </div>
+          ) : (
+            <BarChart data={chartData} />
+          )}
         </div>
 
         {/* Recent Activities */}
@@ -406,9 +402,23 @@ const Dashboard = () => {
             Hoạt động gần đây
           </h3>
           <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-            {recentActivities.map(activity => (
-              <ActivityItem key={activity.id} activity={activity} />
-            ))}
+            {activitiesLoading ? (
+              <div style={{ textAlign: "center", padding: "20px", color: "#6b7280" }}>
+                Đang tải hoạt động...
+              </div>
+            ) : activitiesError ? (
+              <div style={{ textAlign: "center", padding: "20px", color: "#ef4444" }}>
+                Lỗi tải dữ liệu
+              </div>
+            ) : activities.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "20px", color: "#6b7280" }}>
+                Không có hoạt động gần đây
+              </div>
+            ) : (
+              activities.map(activity => (
+                <ActivityItem key={activity.id} activity={activity} />
+              ))
+            )}
           </div>
           <button style={{
             width: "100%",

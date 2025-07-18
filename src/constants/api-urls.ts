@@ -1,9 +1,6 @@
 // Base API URL for the backend
-// Use proxy in development, direct URL in production
-export const BASE_API_URL = 
-  (import.meta as any).env?.DEV 
-    ? "/api" // Use Vite proxy in development
-    : "https://capstoneproject-mswt-su25.onrender.com/api"; // Direct URL in production
+// Use direct URL for both development and production
+export const BASE_API_URL = "https://capstoneproject-mswt-su25.onrender.com/api";
 
 export const API_URLS = {
   // User management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong userService.js

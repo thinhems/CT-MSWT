@@ -29,61 +29,95 @@ const Notifications = () => {
   const notifications = user?.id ? userNotifications : allNotifications;
 
   // Debug: Log the notifications data structure
+  console.log('=== DEBUG NOTIFICATIONS ===');
   console.log('Notifications data:', notifications);
+  console.log('Notifications type:', typeof notifications);
+  console.log('Notifications length:', notifications?.length);
+  console.log('User ID:', user?.id);
+  console.log('Filter:', filter);
+  
+  if (notifications && notifications.length > 0) {
+    console.log('First notification:', notifications[0]);
+    console.log('First notification keys:', Object.keys(notifications[0]));
+    console.log('First notification resolvedAt:', notifications[0]?.resolvedAt);
+    console.log('First notification trashBinId:', notifications[0]?.trashBinId);
+    console.log('First notification timeSend:', notifications[0]?.timeSend);
+    console.log('First notification alertId:', notifications[0]?.alertId);
+  }
+  
+  // Ensure notifications is an array and has proper structure
+  const notificationsArray = Array.isArray(notifications) ? notifications : [];
+  console.log('NotificationsArray length:', notificationsArray.length);
+  
+  // Filter alerts based on status
+  const filteredNotifications = notificationsArray.filter(alert => {
+    if (!alert || typeof alert !== 'object') {
+      console.log('Filtered out invalid alert:', alert);
+      return false;
+    }
+    
+    // Check if alert is resolved (has resolvedAt)
+    const isResolved = alert.resolvedAt !== null;
+    console.log('Alert:', alert.alertId, 'resolvedAt:', alert.resolvedAt, 'isResolved:', isResolved);
+    
+    if (filter === "unread") return !isResolved; // Unresolved alerts
+    if (filter === "read") return isResolved; // Resolved alerts
+    return true; // All alerts
+  });
+  
+  console.log('Filtered notifications length:', filteredNotifications.length);
 
   // Function to format relative time
   const getRelativeTime = (timestamp) => {
     if (!timestamp) return 'Không xác định';
     
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffInSeconds = Math.floor((now - time) / 1000);
-    
-    if (diffInSeconds < 60) return 'Vừa xong';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
-    return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
-  };
-
-  const getNotificationIcon = (type) => {
-    switch (type) {
-      case "success":
-        return <HiOutlineCheckCircle className="text-green-500" />;
-      case "warning":
-        return <HiOutlineExclamationCircle className="text-yellow-500" />;
-      case "error":
-        return <HiOutlineExclamationCircle className="text-red-500" />;
-      default:
-        return <HiOutlineInformationCircle className="text-blue-500" />;
+    try {
+      const now = new Date();
+      const time = new Date(timestamp);
+      const diffInSeconds = Math.floor((now - time) / 1000);
+      
+      if (diffInSeconds < 60) return 'Vừa xong';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
+      return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
+    } catch (error) {
+      console.error('Error parsing timestamp:', timestamp, error);
+      return 'Không xác định';
     }
   };
 
-  const getNotificationColor = (type) => {
-    switch (type) {
-      case "success":
-        return { 
-          bg: "#dcfce7", 
-          border: "#bbf7d0",
-          icon: "#15803d"
-        };
-      case "warning":
-        return { 
-          bg: "#fef3c7", 
-          border: "#fde68a",
-          icon: "#d97706"
-        };
-      case "error":
-        return { 
-          bg: "#fee2e2", 
-          border: "#fecaca",
-          icon: "#dc2626"
-        };
-      default:
-        return { 
-          bg: "#dbeafe", 
-          border: "#bfdbfe",
-          icon: "#2563eb"
-        };
+  // Function to get alert icon based on resolved status
+  const getAlertIcon = (resolvedAt) => {
+    if (resolvedAt === null) {
+      return <HiOutlineExclamationCircle style={{ width: "18px", height: "18px" }} />;
+    } else {
+      return <HiOutlineCheckCircle style={{ width: "18px", height: "18px" }} />;
+    }
+  };
+
+  // Function to get alert color based on resolved status
+  const getAlertColor = (resolvedAt) => {
+    if (resolvedAt === null) {
+      return { 
+        bg: "#fef3c7", 
+        border: "#fde68a",
+        icon: "#d97706"
+      };
+    } else {
+      return { 
+        bg: "#dcfce7", 
+        border: "#bbf7d0",
+        icon: "#15803d"
+      };
+    }
+  };
+
+  // Function to get status display text
+  const getStatusDisplay = (resolvedAt) => {
+    if (resolvedAt === null) {
+      return "Cần được xử lý";
+    } else {
+      return "Đã xử lý";
     }
   };
 
@@ -136,17 +170,7 @@ const Notifications = () => {
     }
   };
 
-  // Ensure notifications is an array and has proper structure
-  const notificationsArray = Array.isArray(notifications) ? notifications : [];
-
-  const filteredNotifications = notificationsArray.filter(notif => {
-    if (!notif || typeof notif !== 'object') return false;
-    if (filter === "unread") return !notif.read;
-    if (filter === "read") return notif.read;
-    return true;
-  });
-
-  const unreadCount = notificationsArray.filter(notif => notif && !notif.read).length;
+  const unreadCount = notificationsArray.filter(alert => alert && alert.resolvedAt === null).length;
 
   // Loading state
   if (isLoading) {
@@ -276,8 +300,8 @@ const Notifications = () => {
           <div style={{ display: "flex", gap: "24px" }}>
             {[
               { key: "all", label: `Tất cả (${notificationsArray.length})` },
-              { key: "unread", label: `Chưa đọc (${unreadCount})` },
-              { key: "read", label: `Đã đọc (${notificationsArray.length - unreadCount})` }
+              { key: "unread", label: `Chưa xử lý (${unreadCount})` },
+              { key: "read", label: `Đã xử lý (${notificationsArray.length - unreadCount})` }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -331,7 +355,7 @@ const Notifications = () => {
               onMouseLeave={(e) => e.target.style.backgroundColor = "#f3f4f6"}
             >
               <HiOutlineCheck style={{ width: "16px", height: "16px" }} />
-              Đánh dấu tất cả đã đọc
+              Đánh dấu tất cả đã xử lý
             </button>
           )}
         </div>
@@ -360,35 +384,37 @@ const Notifications = () => {
               Không có thông báo
             </h3>
             <p style={{ fontSize: "14px", margin: 0 }}>
-              {filter === "unread" ? "Tất cả thông báo đã được đọc" : 
-               filter === "read" ? "Không có thông báo đã đọc" : 
+              {filter === "unread" ? "Tất cả thông báo đã được xử lý" : 
+               filter === "read" ? "Không có thông báo đã xử lý" : 
                "Chưa có thông báo nào"}
             </p>
           </div>
         ) : (
-          filteredNotifications.map((notification, index) => {
-            const colors = getNotificationColor(notification.type);
+          filteredNotifications.map((alert, index) => {
+            const colors = getAlertColor(alert.resolvedAt);
+            const isResolved = alert.resolvedAt !== null;
+            
             return (
               <div
-                key={notification.id || `notification-${index}`}
+                key={alert.alertId || `alert-${index}`}
                 style={{
                   padding: "20px 24px",
                   borderBottom: index < filteredNotifications.length - 1 ? "1px solid #f3f4f6" : "none",
-                  backgroundColor: notification.read ? "white" : "#fafafa",
+                  backgroundColor: isResolved ? "white" : "#fafafa",
                   position: "relative",
                   transition: "background-color 0.2s"
                 }}
                 onMouseEnter={(e) => {
-                  if (notification.read) {
+                  if (isResolved) {
                     e.currentTarget.style.backgroundColor = "#f9fafb";
                   }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = notification.read ? "white" : "#fafafa";
+                  e.currentTarget.style.backgroundColor = isResolved ? "white" : "#fafafa";
                 }}
               >
-                {/* Unread indicator */}
-                {!notification.read && (
+                {/* Unresolved indicator */}
+                {!isResolved && (
                   <div style={{
                     position: "absolute",
                     left: "8px",
@@ -414,8 +440,8 @@ const Notifications = () => {
                     justifyContent: "center",
                     flexShrink: 0
                   }}>
-                    <div style={{ color: colors.icon, fontSize: "18px" }}>
-                      {getNotificationIcon(notification.type)}
+                    <div style={{ color: colors.icon }}>
+                      {getAlertIcon(alert.resolvedAt)}
                     </div>
                   </div>
 
@@ -425,11 +451,13 @@ const Notifications = () => {
                       <div style={{ flex: 1 }}>
                         <h4 style={{
                           fontSize: "16px",
-                          fontWeight: notification.read ? "500" : "600",
+                          fontWeight: isResolved ? "500" : "600",
                           color: "#111827",
                           margin: "0 0 4px 0"
-                        }}>
-                          {notification.title}
+                        }}
+                        title={`Alert ID: ${alert.alertId}\nTrash Bin ID: ${alert.trashBinId}\nTime: ${alert.timeSend}`}
+                        >
+                          {getStatusDisplay(alert.resolvedAt)}
                         </h4>
                         <p style={{
                           fontSize: "14px",
@@ -437,29 +465,51 @@ const Notifications = () => {
                           margin: "0 0 8px 0",
                           lineHeight: "1.5"
                         }}>
-                          {notification.message}
+                          {alert.trashBin?.location || `Thùng rác ${alert.trashBinId || 'Không xác định'}`}
+                          {alert.trashBin?.alerts && alert.trashBin.alerts.length > 1 && (
+                            <span style={{
+                              fontSize: "12px",
+                              color: "#6b7280",
+                              marginLeft: "8px"
+                            }}>
+                              ({alert.trashBin.alerts.filter(a => a !== null).length} cảnh báo)
+                            </span>
+                          )}
                         </p>
                         <div style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: "12px"
+                          gap: "12px",
+                          flexWrap: "wrap"
                         }}>
                           <span style={{
                             fontSize: "12px",
                             color: "#9ca3af"
                           }}>
-                            {getRelativeTime(notification.createdAt || notification.updatedAt)}
+                            {getRelativeTime(alert.timeSend)}
                           </span>
-                          {notification.priority === "high" && (
+                          {alert.trashBin?.status && (
                             <span style={{
                               fontSize: "10px",
                               padding: "2px 6px",
-                              backgroundColor: "#fee2e2",
-                              color: "#dc2626",
+                              backgroundColor: alert.trashBin.status === "Hoạt động" ? "#dcfce7" : "#fee2e2",
+                              color: alert.trashBin.status === "Hoạt động" ? "#15803d" : "#dc2626",
                               borderRadius: "4px",
                               fontWeight: "500"
                             }}>
-                              Ưu tiên cao
+                              {alert.trashBin.status}
+                            </span>
+                          )}
+                          {alert.trashBinId && (
+                            <span style={{
+                              fontSize: "10px",
+                              padding: "2px 6px",
+                              backgroundColor: "#dbeafe",
+                              color: "#1d4ed8",
+                              borderRadius: "4px",
+                              fontWeight: "500"
+                            }}>
+                              ID: {alert.trashBinId?.slice(-8) || 'N/A'}
                             </span>
                           )}
                         </div>
@@ -467,9 +517,9 @@ const Notifications = () => {
 
                       {/* Actions */}
                       <div style={{ display: "flex", gap: "8px", marginLeft: "16px" }}>
-                        {!notification.read ? (
+                        {!isResolved ? (
                           <button
-                            onClick={() => markAsRead(notification.id)}
+                            onClick={() => markAsRead(alert.alertId)}
                             style={{
                               padding: "6px",
                               backgroundColor: "transparent",
@@ -487,13 +537,13 @@ const Notifications = () => {
                               e.target.style.backgroundColor = "transparent";
                               e.target.style.color = "#6b7280";
                             }}
-                            title="Đánh dấu đã đọc"
+                            title="Đánh dấu đã xử lý"
                           >
                             <HiOutlineCheck style={{ width: "16px", height: "16px" }} />
                           </button>
                         ) : (
                           <button
-                            onClick={() => markAsUnread(notification.id)}
+                            onClick={() => markAsUnread(alert.alertId)}
                             style={{
                               padding: "6px",
                               backgroundColor: "transparent",
@@ -511,14 +561,14 @@ const Notifications = () => {
                               e.target.style.backgroundColor = "transparent";
                               e.target.style.color = "#6b7280";
                             }}
-                            title="Đánh dấu chưa đọc"
+                            title="Đánh dấu chưa xử lý"
                           >
                             <HiOutlineX style={{ width: "16px", height: "16px" }} />
                           </button>
                         )}
                         
                         <button
-                          onClick={() => deleteNotification(notification.id)}
+                          onClick={() => deleteNotification(alert.alertId)}
                           style={{
                             padding: "6px",
                             backgroundColor: "transparent",

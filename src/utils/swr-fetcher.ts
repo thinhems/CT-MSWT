@@ -17,6 +17,12 @@ const swrAxios = axios.create({
 swrAxios.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
+    console.log('🔐 SWR Request Interceptor:', {
+      url: config.url,
+      method: config.method,
+      hasToken: !!token,
+      tokenLength: token?.length
+    });
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,9 +36,21 @@ swrAxios.interceptors.request.use(
 // Add response interceptor for error handling
 swrAxios.interceptors.response.use(
   (response) => {
+    console.log('✅ SWR Response Success:', {
+      url: response.config.url,
+      status: response.status,
+      dataLength: Array.isArray(response.data) ? response.data.length : 'not array'
+    });
     return response;
   },
   (error) => {
+    console.log('❌ SWR Response Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.message,
+      data: error.response?.data
+    });
+    
     // Handle 401 unauthorized
     if (error.response?.status === 401) {
       localStorage.removeItem("accessToken");
