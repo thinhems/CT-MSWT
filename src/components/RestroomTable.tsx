@@ -5,7 +5,6 @@ import {
   HiOutlineDotsVertical,
   HiOutlineEye,
   HiOutlinePencil,
-  HiOutlineTrash,
 } from "react-icons/hi";
 import { useAreas } from "@/hooks/useArea";
 

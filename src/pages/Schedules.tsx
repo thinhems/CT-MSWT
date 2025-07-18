@@ -10,7 +10,6 @@ import { useAreas } from "../hooks/useArea";
 import { useShifts } from "../hooks/useShifts";
 import { useRestrooms } from "../hooks/useRestroom";
 import { useTrashBins } from "../hooks/useTrashBins";
-import { useAssignments } from "../hooks/useAssignments";
 import { useUsers } from "../hooks/useUsers";
 import { Schedule, ICreateScheduleRequest } from "@/config/models/schedule.model";
 
@@ -35,7 +34,6 @@ const Schedules = () => {
   const { shifts, isLoading: shiftsLoading, error: shiftsError } = useShifts();
   const { restrooms } = useRestrooms();
   const { trashBins } = useTrashBins();
-  const { assignments } = useAssignments();
   const { users } = useUsers();
 
   // Filter supervisors from users

@@ -4,7 +4,6 @@ import {
   HiOutlineDotsVertical,
   HiOutlineEye,
   HiOutlinePencil,
-  HiOutlineTrash,
 } from "react-icons/hi";
 
 interface IProps {

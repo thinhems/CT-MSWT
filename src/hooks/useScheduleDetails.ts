@@ -47,16 +47,7 @@ export function useScheduleDetails(scheduleId?: string) {
     return enhanced;
   }, [data, scheduleId, assignmentLookup]);
 
-  // Simple filtering by scheduleId if provided
-  const scheduleDetails = useMemo(() => {
-    if (!data) return [];
-    
-    if (scheduleId) {
-      return data.filter(detail => detail.scheduleId === scheduleId);
-    }
-    
-    return data;
-  }, [data, scheduleId]);
+
 
   const createScheduleDetail = async (newDetail: ICreateScheduleDetailsRequest) => {
     try {

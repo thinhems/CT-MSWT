@@ -73,7 +73,7 @@ export const useNotification = (id: string) => {
 // Function to create a new notification
 export const createNotification = async (notificationData: CreateNotificationData): Promise<Notification> => {
   try {
-    const response = await swrFetcher(API_URLS.NOTIFICATIONS.CREATE, {
+    const response = await swrFetcher(`${BASE_API_URL}/${API_URLS.ALERTS.CREATE}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export const createNotification = async (notificationData: CreateNotificationDat
 // Function to update a notification
 export const updateNotification = async (id: string, notificationData: Partial<CreateNotificationData>): Promise<Notification> => {
   try {
-    const response = await swrFetcher(API_URLS.NOTIFICATIONS.UPDATE(id), {
+    const response = await swrFetcher(`${BASE_API_URL}/${API_URLS.ALERTS.UPDATE(id)}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ export const updateNotification = async (id: string, notificationData: Partial<C
 // Function to mark notification as read
 export const markNotificationAsRead = async (id: string): Promise<Notification> => {
   try {
-    const response = await swrFetcher(API_URLS.NOTIFICATIONS.MARK_AS_READ(id), {
+    const response = await swrFetcher(`${BASE_API_URL}/${API_URLS.ALERTS.MARK_AS_READ(id)}`, {
       method: 'PUT',
     }) as Response;
 
@@ -141,7 +141,7 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<void> 
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
     },
-  });
+  }) as Response;
 
   if (!response.ok) {
     throw new Error(`Failed to mark all notifications as read: ${response.statusText}`);
@@ -156,7 +156,7 @@ export const deleteNotification = async (id: string): Promise<void> => {
     headers: {
       ...(token && { Authorization: `Bearer ${token}` }),
     },
-  });
+  }) as Response;
 
   if (!response.ok) {
     throw new Error(`Failed to delete notification: ${response.statusText}`);

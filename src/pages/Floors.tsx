@@ -2,7 +2,6 @@ import {
   Floor,
   ICreateFloorRequest,
 } from "@/config/models/floor.model";
-import { Restroom } from "@/config/models/restroom.model";
 import { useState } from "react";
 import { HiOutlinePlus, HiOutlineSearch, HiX } from "react-icons/hi";
 import FloorTable from "../components/FloorTable";
@@ -35,7 +34,7 @@ const Floors = () => {
   const itemsPerPage = 5;
 
   const { floors, createAsync, deleteAsync } = useFloors();
-  const { areas, assignAreaToFloor, assignMultipleAreasToFloor } = useAreas();
+  const { areas, assignMultipleAreasToFloor } = useAreas();
 
   if (floors.length === 0) return null;
 

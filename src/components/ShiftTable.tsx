@@ -5,7 +5,6 @@ import {
   HiOutlinePencil,
   HiChevronUp,
   HiChevronDown,
-  HiOutlineTrash,
 } from "react-icons/hi";
 import { Shift } from "@/config/models/shift.mode";
 import { IActionType } from "@/config/models/types";

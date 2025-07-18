@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import {
   HiOutlineDotsVertical,
   HiOutlineEye,
-  HiOutlineTrash,
   HiOutlinePlus,
 } from "react-icons/hi";
 import { useAreas } from "../hooks/useArea";
@@ -192,7 +191,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
                   
                   return (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                      {floorAreas.slice(0, 3).map((area, areaIndex) => (
+                      {floorAreas.slice(0, 3).map((area) => (
                         <span
                           key={area.areaId}
                           style={{

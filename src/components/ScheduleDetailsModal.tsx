@@ -42,10 +42,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     return users.filter((user: any) => user.position === "Nhân viên vệ sinh");
   }, [users]);
 
-  const supervisors = useMemo(() => {
-    if (!users) return [];
-    return users.filter((user: any) => user.position === "Giám sát viên vệ sinh");
-  }, [users]);
+
 
   // Get shift name from shiftId
   const getShiftName = useMemo(() => {

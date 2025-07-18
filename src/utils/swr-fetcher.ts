@@ -82,7 +82,7 @@ const getErrorMessage = (status: number): string => {
 };
 
 // SWR fetcher function with retry logic
-export const swrFetcher = async (url: string, options?: RequestInit, retryCount = 0) => {
+export const swrFetcher = async (url: string, options?: RequestInit, retryCount = 0): Promise<any> => {
   const maxRetries = 3;
   
   try {

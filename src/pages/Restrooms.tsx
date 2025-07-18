@@ -9,9 +9,8 @@ import { HiOutlinePlus, HiOutlineSearch, HiX, HiOutlinePencil } from "react-icon
 import Notification from "../components/Notification";
 import Pagination from "../components/Pagination";
 import RestroomTable from "../components/RestroomTable";
-import { useFloors } from "../hooks/useFloor";
 import { useAreas } from "../hooks/useArea";
-import { IActionType, IError } from "@/config/models/types";
+import { IActionType } from "@/config/models/types";
 
 const Restrooms = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,13 +36,12 @@ const Restrooms = () => {
     message: "",
   });
 
-  const { restrooms, isLoading, createAsync, updateAsync, deleteAsync } =
+  const { restrooms, createAsync, updateAsync, deleteAsync } =
     useRestrooms();
   
   // Use the new hook to fetch detailed restroom data
   const { restroom: restroomDetail } = useRestroomDetail(selectedRestroomId);
   
-  const { floors } = useFloors();
   const { areas } = useAreas();
   const itemsPerPage = 5;
 

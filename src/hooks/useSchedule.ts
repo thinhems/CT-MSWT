@@ -81,7 +81,6 @@ export function useSchedules() {
       restroomName: restroomLookup.get(schedule.restroomId) || schedule.restroomId,
       shiftName: shiftLookup.get(schedule.shiftId) || (schedule.shiftId ? `Ca ${schedule.shiftId.slice(0, 8)}` : 'N/A'),
       assignmentName: assignmentLookup.get(schedule.assignmentId) || (schedule.assignmentId ? `Assignment ${schedule.assignmentId.slice(0, 8)}` : 'N/A'),
-      trashBinName: schedule.trashBinId || "",
     }));
   }, [data, areaLookup, restroomLookup, floorLookup, shiftLookup, assignmentLookup]);
 

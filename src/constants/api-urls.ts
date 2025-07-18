@@ -1,7 +1,7 @@
 // Base API URL for the backend
 // Use proxy in development, direct URL in production
 export const BASE_API_URL = 
-  import.meta.env.DEV 
+  (import.meta as any).env?.DEV 
     ? "/api" // Use Vite proxy in development
     : "https://capstoneproject-mswt-su25.onrender.com/api"; // Direct URL in production
 
@@ -129,5 +129,17 @@ export const API_URLS = {
     MARK_AS_READ: (id: string) => `alerts/${id}/read`,
     MARK_ALL_AS_READ: (userId: string) => `alerts/user/${userId}/read-all`,
     DELETE: (id: string) => `alerts/${id}`,
+  },
+
+  // Notifications management endpoints
+  NOTIFICATIONS: {
+    GET_ALL: `notifications`,
+    GET_BY_ID: (id: string) => `notifications/${id}`,
+    GET_BY_USER: (userId: string) => `notifications/user/${userId}`,
+    CREATE: `notifications`,
+    UPDATE: (id: string) => `notifications/${id}`,
+    MARK_AS_READ: (id: string) => `notifications/${id}/read`,
+    MARK_ALL_AS_READ: (userId: string) => `notifications/user/${userId}/read-all`,
+    DELETE: (id: string) => `notifications/${id}`,
   },
 };
