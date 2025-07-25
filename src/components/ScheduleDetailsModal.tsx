@@ -77,14 +77,15 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
 
     setIsSubmitting(true);
     try {
-      // Create the schedule detail with all information including staff assignment
-      const detailData = {
-        assignmentId: newDetail.assignmentId,
-        description: newDetail.description,
-        workerId: newDetail.workerId || "",
-      };
+      // Create FormData object
+      const formData = new FormData();
+      formData.append('Description', newDetail.description);
+      formData.append('Date', new Date().toISOString()); // Use current date
+      formData.append('Status', ''); // Send empty status
+      formData.append('WorkerId', newDetail.workerId || '');
+      formData.append('AssignmentId', newDetail.assignmentId);
       
-      await createScheduleDetailForSchedule(schedule.scheduleId, detailData);
+      await createScheduleDetailForSchedule(schedule.scheduleId, formData);
       
       const assignmentMsg = newDetail.workerId 
         ? " và đã gán nhân viên thực hiện"
@@ -769,10 +770,11 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
             {/* Create Form */}
             {showCreateForm && (
               <form onSubmit={handleSubmitDetail} style={{
-                backgroundColor: "#f9fafb",
+                backgroundColor: "#f0f9ff",
                 borderRadius: "8px",
                 padding: "20px",
-                marginBottom: "16px"
+                marginBottom: "16px",
+                border: "1px solid #e0f2fe"
               }}>
                 <h4 style={{ 
                   fontSize: "16px", 
@@ -781,20 +783,22 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   marginBottom: "16px",
                   marginTop: "0"
                 }}>
-                  Tạo chi tiết công việc mới
+                  Chi tiết lịch trình
                 </h4>
                 
                 {/* Assignment Selection */}
                 <div style={{ marginBottom: "20px" }}>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: "8px", 
-                    fontSize: "14px", 
-                    fontWeight: "500",
-                    color: "#374151"
+                  <div style={{ 
+                    marginBottom: "8px"
                   }}>
-                    Loại công việc *
-                  </label>
+                    <label style={{ 
+                      fontSize: "14px", 
+                      fontWeight: "500",
+                      color: "#374151"
+                    }}>
+                      Loại công việc
+                    </label>
+                  </div>
                   <select
                     name="assignmentId"
                     value={newDetail.assignmentId}
@@ -821,20 +825,22 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                 
                 {/* Description */}
                 <div style={{ marginBottom: "20px" }}>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: "8px", 
-                    fontSize: "14px", 
-                    fontWeight: "500",
-                    color: "#374151"
+                  <div style={{ 
+                    marginBottom: "8px"
                   }}>
-                    Mô tả công việc *
-                  </label>
+                    <label style={{ 
+                      fontSize: "14px", 
+                      fontWeight: "500",
+                      color: "#374151"
+                    }}>
+                      Mô tả công việc
+                    </label>
+                  </div>
                   <textarea
                     name="description"
                     value={newDetail.description}
                     onChange={handleDetailInputChange}
-                    placeholder="Nhập mô tả chi tiết công việc..."
+                    placeholder=""
                     required
                     rows={4}
                     style={{
@@ -844,10 +850,15 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                       borderRadius: "8px",
                       fontSize: "14px",
                       resize: "vertical",
-                      fontFamily: "inherit"
+                      fontFamily: "inherit",
+                      backgroundColor: "white"
                     }}
                   />
                 </div>
+
+
+
+
 
                 {/* Staff Assignment Section */}
                 <div style={{ 
@@ -872,15 +883,17 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   
                   {/* Worker Selection */}
                   <div>
-                    <label style={{ 
-                      display: "block", 
-                      marginBottom: "8px", 
-                      fontSize: "13px", 
-                      fontWeight: "500",
-                      color: "#374151"
+                    <div style={{ 
+                      marginBottom: "8px"
                     }}>
-                      Nhân viên thực hiện
-                    </label>
+                      <label style={{ 
+                        fontSize: "13px", 
+                        fontWeight: "500",
+                        color: "#374151"
+                      }}>
+                        Nhân viên thực hiện
+                      </label>
+                    </div>
                     <select
                       name="workerId"
                       value={newDetail.workerId}

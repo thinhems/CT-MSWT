@@ -230,7 +230,8 @@ const AreaTable = ({
                     fontSize: "11px",
                     fontWeight: "600",
                     borderRadius: "9999px",
-                    ...getStatusColor(area.status),
+                    backgroundColor: getStatusColor(area.status).backgroundColor,
+                color: getStatusColor(area.status).color,
                   }}
                 >
                   {area.status}

@@ -68,34 +68,17 @@ export function useScheduleDetails(scheduleId?: string) {
 
   const createScheduleDetailForSchedule = async (
     scheduleId: string, 
-    newDetail: {
-      assignmentId: string;
-      description: string;
-      workerId?: string;
-      supervisorId?: string;
-    }
+    formData: FormData
   ) => {
     try {
-      // Include assignmentId and staff assignment in the request payload
-      const detailData = {
-        assignmentId: newDetail.assignmentId,
-        description: newDetail.description,
-        workerId: newDetail.workerId || "string", // Use provided workerId or default
-        supervisorId: newDetail.supervisorId || "string", // Use provided supervisorId or default
-        date: new Date().toISOString(), // Full ISO format: "2025-07-08T13:11:35.282Z"
-        status: "string", // Theo example trong Swagger
-        isBackup: "string", // Theo example trong Swagger  
-        backupForUserId: "string" // Theo example trong Swagger
-      };
-
-      console.log("📝 Creating schedule detail for schedule:", scheduleId, "with data:", detailData);
+      console.log("📝 Creating schedule detail for schedule:", scheduleId, "with FormData:", formData);
       
       const response = await swrFetcher(API_URLS.SCHEDULE_DETAILS.CREATE_FOR_SCHEDULE(scheduleId), {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          // Remove Content-Type header to let browser set it automatically for FormData
         },
-        body: JSON.stringify(detailData),
+        body: formData,
       });
       
       console.log("✅ Schedule detail created successfully:", response);

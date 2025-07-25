@@ -6,7 +6,6 @@ const swrAxios = axios.create({
   baseURL: BASE_API_URL,
   timeout: 30000, // Increase timeout to 30s
   headers: {
-    "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
@@ -21,8 +20,19 @@ swrAxios.interceptors.request.use(
       url: config.url,
       method: config.method,
       hasToken: !!token,
-      tokenLength: token?.length
+      tokenLength: token?.length,
+      contentType: config.headers['Content-Type']
     });
+    
+    // Set Content-Type based on data type
+    if (config.data instanceof FormData) {
+      // For FormData, let browser set the Content-Type automatically
+      delete config.headers['Content-Type'];
+    } else if (config.data && typeof config.data === 'object') {
+      // For JSON data
+      config.headers['Content-Type'] = 'application/json';
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -108,10 +118,21 @@ export const swrFetcher = async (url: string, options?: RequestInit, retryCount 
     
     if (options) {
       // For POST, PUT, DELETE requests
+      let data;
+      
+      // Handle different body types
+      if (options.body instanceof FormData) {
+        // For FormData, don't parse as JSON
+        data = options.body;
+      } else if (options.body) {
+        // For JSON strings, parse them
+        data = JSON.parse(options.body as string);
+      }
+      
       response = await swrAxios({
         url,
         method: options.method || "GET",
-        data: options.body ? JSON.parse(options.body as string) : undefined,
+        data: data,
         headers: {
           ...swrAxios.defaults.headers.common,
           ...(options.headers as Record<string, string>),

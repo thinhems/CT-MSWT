@@ -16,6 +16,7 @@ import {
   HiOutlineClipboardList,
   HiOutlineMenu,
   HiOutlineX,
+  HiOutlineDocumentText,
 } from "react-icons/hi";
 
 const Sidebar = () => {
@@ -75,6 +76,11 @@ const Sidebar = () => {
       title: "Ca làm việc",
       path: "/shifts",
       icon: HiOutlineClock,
+    },
+    {
+      title: "Đơn nghỉ phép",
+      path: "/leaves",
+      icon: HiOutlineDocumentText,
     },
   ];
 

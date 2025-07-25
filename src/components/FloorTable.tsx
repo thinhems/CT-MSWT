@@ -235,7 +235,8 @@ const FloorTable: React.FC<FloorTableProps> = ({
                     fontSize: "11px",
                     fontWeight: "600",
                     borderRadius: "9999px",
-                    ...getStatusColor(floor.status),
+                    backgroundColor: getStatusColor(floor.status).backgroundColor,
+                color: getStatusColor(floor.status).color,
                   }}
                 >
                   {floor.status}

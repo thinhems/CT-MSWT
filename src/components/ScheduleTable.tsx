@@ -155,6 +155,8 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
             >
               Ca làm việc
             </th>
+
+
             <th
               style={{
                 padding: "12px 16px",
@@ -216,7 +218,8 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                     fontSize: "11px",
                     fontWeight: "600",
                     borderRadius: "9999px",
-                    ...getScheduleTypeColor(schedule.scheduleType),
+                    backgroundColor: getScheduleTypeColor(schedule.scheduleType).backgroundColor,
+                color: getScheduleTypeColor(schedule.scheduleType).color,
                   }}
                 >
                   {getScheduleTypeDisplay(schedule.scheduleType)}
@@ -269,6 +272,8 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
               >
                 {schedule.shiftName || `Shift ${schedule.shiftId.slice(0, 8)}`}
               </td>
+
+
 
               {/* Action Column */}
               <td

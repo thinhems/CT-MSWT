@@ -213,7 +213,8 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     borderRadius: "9999px",
-                    ...getStatusColor(shift.status),
+                    backgroundColor: getStatusColor(shift.status).backgroundColor,
+                color: getStatusColor(shift.status).color,
                   }}
                 >
                   {shift.status}

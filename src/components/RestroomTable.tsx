@@ -211,7 +211,8 @@ const RestroomTable = ({
                     fontSize: "12px",
                     fontWeight: "600",
                     borderRadius: "9999px",
-                    ...getStatusColor(restroom.status),
+                    backgroundColor: getStatusColor(restroom.status).backgroundColor,
+                color: getStatusColor(restroom.status).color,
                   }}
                 >
                   {getStatusDisplay(restroom.status)}

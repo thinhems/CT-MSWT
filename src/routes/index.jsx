@@ -16,6 +16,7 @@ import Notifications from "../pages/Notifications";
 import Areas from "../pages/Areas";
 import Schedules from "../pages/Schedules";
 import AssignmentManagement from "../pages/AssignmentManagement";
+import Leaves from "../pages/Leaves";
 
 export const router = createBrowserRouter([
   {
@@ -81,6 +82,10 @@ export const router = createBrowserRouter([
       {
         path: "assignments",
         element: <AssignmentManagement />,
+      },
+      {
+        path: "leaves",
+        element: <Leaves />,
       },
       {
         path: "*",
