@@ -407,7 +407,6 @@ const LeaveForm: React.FC<LeaveFormProps> = ({ leave, onClose, onSuccess }) => {
                   }}
                 >
                   <option value="">Chọn trạng thái</option>
-                  <option value="0">Chờ duyệt</option>
                   <option value="1">Đã duyệt</option>
                   <option value="2">Từ chối</option>
                 </select>

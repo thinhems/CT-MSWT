@@ -3,9 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const AuthDebug = () => {
   const { isAuthenticated, user, loading } = useAuth();
-
-  // Check localStorage directly
-  const accessToken = localStorage.getItem('accessToken');
+  const token = localStorage.getItem('accessToken');
   const userData = localStorage.getItem('userData');
 
   return (
@@ -14,43 +12,62 @@ const AuthDebug = () => {
       top: '10px',
       right: '10px',
       backgroundColor: '#1f2937',
-      color: '#f9fafb',
-      padding: '12px',
+      color: 'white',
+      padding: '16px',
       borderRadius: '8px',
       fontSize: '12px',
-      zIndex: 9999,
       maxWidth: '300px',
+      zIndex: 9999,
       fontFamily: 'monospace'
     }}>
-      <h4 style={{ margin: '0 0 8px 0', color: '#60a5fa' }}>🐛 Auth Debug</h4>
+      <h3 style={{ margin: '0 0 8px 0', color: '#fbbf24' }}>🔐 Auth Debug</h3>
       
       <div style={{ marginBottom: '8px' }}>
-        <strong>State:</strong>
-        <div>• Loading: {loading ? '✅' : '❌'}</div>
-        <div>• Authenticated: {isAuthenticated ? '✅' : '❌'}</div>
-        <div>• User: {user ? '✅' : '❌'}</div>
+        <strong>Loading:</strong> {loading ? '🔄 Yes' : '✅ No'}
       </div>
-
+      
       <div style={{ marginBottom: '8px' }}>
-        <strong>LocalStorage:</strong>
-        <div>• Token: {accessToken ? '✅' : '❌'}</div>
-        <div>• UserData: {userData ? '✅' : '❌'}</div>
+        <strong>Authenticated:</strong> {isAuthenticated ? '✅ Yes' : '❌ No'}
       </div>
-
+      
+      <div style={{ marginBottom: '8px' }}>
+        <strong>Token:</strong> {token ? `✅ ${token.substring(0, 20)}...` : '❌ None'}
+      </div>
+      
+      <div style={{ marginBottom: '8px' }}>
+        <strong>User Data:</strong> {userData ? '✅ Stored' : '❌ None'}
+      </div>
+      
       {user && (
         <div style={{ marginBottom: '8px' }}>
-          <strong>User Info:</strong>
-          <div>• Username: {user.username}</div>
-          <div>• RoleId: {user.roleId}</div>
-          <div>• Role: {user.role}</div>
-          <div>• Position: {user.position}</div>
-          <div>• FullName: {user.fullName}</div>
+          <strong>User:</strong> {user.username || 'N/A'}
         </div>
       )}
-
-      <div style={{ fontSize: '10px', color: '#9ca3af' }}>
-        Refresh: {new Date().toLocaleTimeString()}
-      </div>
+      
+      {user && (
+        <div style={{ marginBottom: '8px' }}>
+          <strong>Role:</strong> {user.role || 'N/A'}
+        </div>
+      )}
+      
+      <button
+        onClick={() => {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('userData');
+          window.location.reload();
+        }}
+        style={{
+          backgroundColor: '#dc2626',
+          color: 'white',
+          border: 'none',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          fontSize: '10px',
+          cursor: 'pointer'
+        }}
+      >
+        Clear Auth
+      </button>
     </div>
   );
 };
