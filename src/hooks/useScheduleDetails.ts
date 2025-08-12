@@ -31,19 +31,29 @@ export function useScheduleDetails(scheduleId?: string) {
   // Enhanced schedule details with assignment names
   const enhancedScheduleDetails = useMemo(() => {
     if (!data) return [];
-    
-    const enhanced = data.map(detail => ({
+
+    // Map to include readable assignment names
+    let enhanced = data.map((detail) => ({
       ...detail,
-      assignmentName: assignmentLookup.get(detail.assignmentId) || 
-                     assignmentLookup.get(detail.schedule?.assignmentId) || 
-                     detail.assignmentId || 
-                     "N/A"
+      assignmentName:
+        assignmentLookup.get(detail.assignmentId) ||
+        assignmentLookup.get(detail.schedule?.assignmentId) ||
+        detail.assignmentId ||
+        "N/A",
     }));
-    
+
+    // Filter by schedule if provided
     if (scheduleId) {
-      return enhanced.filter(detail => detail.scheduleId === scheduleId);
+      enhanced = enhanced.filter((detail) => detail.scheduleId === scheduleId);
     }
-    
+
+    // Sort by date descending so newest appears on top
+    enhanced.sort((a, b) => {
+      const aTime = a?.date ? new Date(a.date).getTime() : 0;
+      const bTime = b?.date ? new Date(b.date).getTime() : 0;
+      return bTime - aTime;
+    });
+
     return enhanced;
   }, [data, scheduleId, assignmentLookup]);
 

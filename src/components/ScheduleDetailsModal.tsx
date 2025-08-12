@@ -30,6 +30,8 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
   // State for creating new schedule detail
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [detailSearchTerm, setDetailSearchTerm] = useState("");
+  const [activeWorkerNameTab, setActiveWorkerNameTab] = useState("Tất cả");
   const [newDetail, setNewDetail] = useState({
     assignmentId: "",
     description: "",
@@ -112,6 +114,30 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     const user = users.find((u: any) => u.id === userId);
     return user?.name || userId;
   };
+
+
+  const workerNameTabs = useMemo(() => {
+    if (!scheduleDetails) return ["Tất cả"];
+    const names = new Set<string>();
+    scheduleDetails.forEach((d: any) => {
+      const name = getUserName(d.workerId);
+      if (name && name !== "Chưa gán") names.add(name);
+    });
+    return ["Tất cả", ...Array.from(names)];
+  }, [scheduleDetails, users]);
+
+  // Filter schedule details by worker name
+  const filteredScheduleDetails = useMemo(() => {
+    if (!scheduleDetails) return [];
+    const term = detailSearchTerm.toLowerCase();
+    return scheduleDetails.filter((detail: any) => {
+      const matchesName = !term || getUserName(detail.workerId).toLowerCase().includes(term);
+      const matchesNameTab =
+        activeWorkerNameTab === "Tất cả" ||
+        getUserName(detail.workerId) === activeWorkerNameTab;
+      return matchesName && matchesNameTab;
+    });
+  }, [scheduleDetails, detailSearchTerm, activeWorkerNameTab, users]);
 
   const getScheduleTypeDisplay = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -579,7 +605,8 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
               display: "flex", 
               justifyContent: "space-between", 
               alignItems: "center", 
-              marginBottom: "16px" 
+              marginBottom: "16px",
+              gap: "12px"
             }}>
               <h3 style={{ 
                 fontSize: "18px", 
@@ -589,6 +616,23 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
               }}>
                 Chi tiết công việc
               </h3>
+              {/* Search input */}
+              <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+                <input
+                  type="text"
+                  placeholder="Lọc theo tên nhân viên"
+                  value={detailSearchTerm}
+                  onChange={(e) => setDetailSearchTerm(e.target.value)}
+                  style={{
+                    width: "60%",
+                    maxWidth: "280px",
+                    padding: "8px 12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                  }}
+                />
+              </div>
               <button
                 onClick={() => {
                   setShowCreateForm(!showCreateForm);
@@ -623,135 +667,290 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
               </button>
             </div>
 
+            {/* Worker name tabs only */}
+
+            {/* Worker name tabs */}
+            <div style={{ marginBottom: "12px", borderBottom: "1px solid #e5e7eb", display: "flex", gap: "12px", overflowX: "auto" }}>
+              {workerNameTabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveWorkerNameTab(tab)}
+                  style={{
+                    padding: "8px 12px",
+                    border: "none",
+                    backgroundColor: "transparent",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    borderBottom: activeWorkerNameTab === tab ? "2px solid #FF5B27" : "2px solid transparent",
+                    color: activeWorkerNameTab === tab ? "#FF5B27" : "#6b7280",
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Create Form */}
+            {showCreateForm && (
+              <form onSubmit={handleSubmitDetail} style={{
+                backgroundColor: "#f0f9ff",
+                borderRadius: "8px",
+                padding: "20px",
+                marginBottom: "16px",
+                border: "1px solid #e0f2fe"
+              }}>
+                <h4 style={{ 
+                  fontSize: "16px", 
+                  fontWeight: "600", 
+                  color: "#374151",
+                  marginBottom: "16px",
+                  marginTop: "0"
+                }}>
+                  Chi tiết lịch trình
+                </h4>
+                
+                {/* Assignment Selection */}
+                <div style={{ marginBottom: "20px" }}>
+                  <div style={{ 
+                    marginBottom: "8px"
+                  }}>
+                    <label style={{ 
+                      fontSize: "14px", 
+                      fontWeight: "500",
+                      color: "#374151"
+                    }}>
+                      Loại công việc
+                    </label>
+                  </div>
+                  <select
+                    name="assignmentId"
+                    value={newDetail.assignmentId}
+                    onChange={handleDetailInputChange}
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      backgroundColor: "white",
+                      fontFamily: "inherit"
+                    }}
+                  >
+                    <option value="">-- Chọn loại công việc --</option>
+                    {assignments.map((assignment) => (
+                      <option key={assignment.assignmentId} value={assignment.assignmentId}>
+                        {assignment.assignmentName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Description */}
+                <div style={{ marginBottom: "20px" }}>
+                  <div style={{ 
+                    marginBottom: "8px"
+                  }}>
+                    <label style={{ 
+                      fontSize: "14px", 
+                      fontWeight: "500",
+                      color: "#374151"
+                    }}>
+                      Mô tả công việc
+                    </label>
+                  </div>
+                  <textarea
+                    name="description"
+                    value={newDetail.description}
+                    onChange={handleDetailInputChange}
+                    placeholder=""
+                    required
+                    rows={4}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      resize: "vertical",
+                      fontFamily: "inherit",
+                      backgroundColor: "white"
+                    }}
+                  />
+                </div>
+
+                {/* Staff Assignment Section */}
+                <div style={{ 
+                  backgroundColor: "#f0f9ff", 
+                  borderRadius: "8px", 
+                  padding: "16px", 
+                  marginBottom: "20px",
+                  border: "1px solid #e0f2fe"
+                }}>
+                  <h5 style={{ 
+                    fontSize: "14px", 
+                    fontWeight: "600", 
+                    color: "#374151",
+                    marginBottom: "12px",
+                    marginTop: "0",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px"
+                  }}>
+                    👥 Gán nhân viên
+                  </h5>
+                  
+                  {/* Worker Selection */}
+                  <div>
+                    <div style={{ 
+                      marginBottom: "8px"
+                    }}>
+                      <label style={{ 
+                        fontSize: "13px", 
+                        fontWeight: "500",
+                        color: "#374151"
+                      }}>
+                        Nhân viên thực hiện
+                      </label>
+                    </div>
+                    <select
+                      name="workerId"
+                      value={newDetail.workerId}
+                      onChange={handleDetailInputChange}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        fontSize: "13px",
+                        backgroundColor: "white",
+                        fontFamily: "inherit"
+                      }}
+                    >
+                      <option value="">-- Chọn nhân viên --</option>
+                      {workers.map((worker: any) => (
+                        <option key={worker.id} value={worker.id}>
+                          {worker.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ 
+                  display: "flex", 
+                  gap: "12px", 
+                  justifyContent: "flex-end"
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateForm(false);
+                      setNewDetail({
+                        assignmentId: "",
+                        description: "",
+                        workerId: "",
+                      });
+                    }}
+                    style={{
+                      padding: "10px 20px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "6px",
+                      backgroundColor: "white",
+                      color: "#374151",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    style={{
+                      padding: "10px 20px",
+                      border: "none",
+                      borderRadius: "6px",
+                      backgroundColor: isSubmitting ? "#9ca3af" : "#FF5B27",
+                      color: "white",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: isSubmitting ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {isSubmitting ? "Đang tạo..." : "Tạo chi tiết"}
+                  </button>
+                </div>
+              </form>
+            )}
+
             {/* Schedule Details List */}
             <div style={{ marginBottom: "16px" }}>
-              {scheduleDetails && scheduleDetails.length > 0 ? (
+              {filteredScheduleDetails && filteredScheduleDetails.length > 0 ? (
                 <div style={{ 
-                  backgroundColor: "#f9fafb", 
-                  borderRadius: "8px", 
-                  padding: "16px" 
+                  backgroundColor: "white", 
+                  borderRadius: "10px", 
+                  border: "1px solid #e5e7eb",
+                  overflow: "hidden"
                 }}>
-                  {scheduleDetails.map((detail, index) => (
-                    <div key={detail.scheduleDetailId} style={{
-                      backgroundColor: "white",
-                      borderRadius: "6px",
-                      padding: "16px",
-                      marginBottom: index < scheduleDetails.length - 1 ? "8px" : "0",
-                      border: "1px solid #e5e7eb"
-                    }}>
-                      {/* Detail Header */}
-                      <div style={{ 
-                        display: "flex", 
-                        justifyContent: "space-between", 
-                        alignItems: "flex-start",
-                        marginBottom: "12px"
-                      }}>
-                        <div style={{ flex: 1 }}>
-                          <h5 style={{ 
-                            fontSize: "14px", 
-                            fontWeight: "600", 
-                            color: "#374151", 
-                            margin: "0 0 8px 0" 
-                          }}>
-                            Chi tiết công việc #{detail.scheduleDetailId.slice(0, 8)}
-                          </h5>
-                          <div style={{ 
-                            fontSize: "12px", 
-                            color: "#6b7280",
-                            display: "flex",
-                            gap: "16px"
-                          }}>
-                            <span>Ngày: {new Date(detail.date).toLocaleDateString("vi-VN")}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Assignment Name */}
-                      <div style={{ marginBottom: "12px" }}>
-                        <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>
-                          Loại công việc:
-                        </div>
-                        <div style={{ 
-                          fontSize: "14px", 
-                          color: "#374151",
-                          backgroundColor: "#f3f4f6",
-                          padding: "6px 12px",
-                          borderRadius: "6px",
-                          fontWeight: "500",
-                          display: "inline-block"
-                        }}>
-                          {detail.assignmentName || "Chưa xác định"}
-                        </div>
-                      </div>
-
-                      {/* Description */}
-                      <div style={{ marginBottom: "12px" }}>
-                        <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>
-                          Mô tả:
-                        </div>
-                        <div style={{ fontSize: "14px", color: "#374151" }}>
-                          {detail.description || "Không có mô tả"}
-                        </div>
-                      </div>
-
-                      {/* Staff Assignment Info */}
-                      <div style={{ 
-                        backgroundColor: "#f9fafb",
-                        padding: "12px",
-                        borderRadius: "6px",
-                        marginBottom: "12px"
-                      }}>
-                        <div>
-                          <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>
-                            Nhân viên thực hiện:
-                          </div>
-                          <div style={{ fontSize: "13px", color: "#374151", fontWeight: "500" }}>
-                            {getUserName(detail.workerId)}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Rating Display - Read Only */}
-                      <div style={{
-                        backgroundColor: "#fff7ed",
-                        border: "1px solid #fed7aa",
-                        borderRadius: "6px",
-                        padding: "12px"
-                      }}>
-                        <div style={{ fontSize: "12px", color: "#9a3412", marginBottom: "4px", fontWeight: "600" }}>
-                          Đánh giá công việc:
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <div style={{ display: "flex", gap: "2px" }}>
-                            {[1, 2, 3, 4, 5].map((star) => {
-                              const currentRating = detail.rating ? parseInt(detail.rating) : 0;
-                              return (
-                                <span
-                                  key={star}
-                                  style={{
-                                    fontSize: "16px",
-                                    color: star <= currentRating ? "#f59e0b" : "#d1d5db",
-                                  }}
-                                >
-                                  ★
-                                </span>
-                              );
-                            })}
-                          </div>
-                          <span style={{ fontSize: "13px", color: "#92400e", fontWeight: "500" }}>
-                            {(() => {
-                              const currentRating = detail.rating ? parseInt(detail.rating) : 0;
-                              if (currentRating > 0) {
-                                return `${currentRating}/5 sao`;
-                              } else {
-                                return "Chưa có đánh giá";
-                              }
-                            })()}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <colgroup>
+                      <col style={{ width: "28%" }} />
+                      <col style={{ width: "18%" }} />
+                      <col style={{ width: "32%" }} />
+                      <col style={{ width: "12%" }} />
+                      <col style={{ width: "10%" }} />
+                    </colgroup>
+                    <thead>
+                      <tr style={{ backgroundColor: "#FEF6F4", borderBottom: "1px solid #f3f4f6" }}>
+                        <th style={{ textAlign: "left", padding: "12px 14px", fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Tên chi tiết công việc</th>
+                        <th style={{ textAlign: "left", padding: "12px 14px", fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Loại công việc</th>
+                        <th style={{ textAlign: "left", padding: "12px 14px", fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Mô tả</th>
+                        <th style={{ textAlign: "left", padding: "12px 14px", fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Ngày</th>
+                        <th style={{ textAlign: "left", padding: "12px 14px", fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Đánh giá</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredScheduleDetails.map((detail: any, index: number) => {
+                        const ratingValue = detail.rating ? parseInt(detail.rating) : 0;
+                        const zebra = index % 2 === 1 ? "#fafafa" : "transparent";
+                        return (
+                          <tr key={detail.scheduleDetailId} style={{ backgroundColor: zebra, transition: "background-color 0.2s" }}
+                              onMouseEnter={(e: any) => (e.currentTarget.style.backgroundColor = "#f9fafb")}
+                              onMouseLeave={(e: any) => (e.currentTarget.style.backgroundColor = zebra)}>
+                            <td style={{ padding: "12px 14px", fontSize: "13px", color: "#111827", verticalAlign: "top" }}>
+                              <div style={{ fontWeight: 600 }}>{`Chi tiết công việc #${detail.scheduleDetailId.slice(0, 8)}`}</div>
+                            </td>
+                            <td style={{ padding: "12px 14px", fontSize: "13px", color: "#374151", verticalAlign: "top" }}>
+                              <span style={{ backgroundColor: "#f3f4f6", padding: "4px 10px", borderRadius: 6, display: "inline-block", fontSize: "12px" }}>
+                                {detail.assignmentName || "Chưa xác định"}
+                              </span>
+                            </td>
+                            <td style={{ padding: "12px 14px", fontSize: "13px", color: "#374151", verticalAlign: "top", whiteSpace: "pre-wrap" }}>
+                              {detail.description || "Không có mô tả"}
+                            </td>
+                            <td style={{ padding: "12px 14px", fontSize: "13px", color: "#374151", verticalAlign: "top" }}>
+                              {new Date(detail.date).toLocaleDateString("vi-VN")}
+                            </td>
+                            <td style={{ padding: "12px 14px", fontSize: "13px", color: "#374151", verticalAlign: "top" }}>
+                              <span>
+                                {[1,2,3,4,5].map((star) => (
+                                  <span key={star} style={{ color: star <= ratingValue ? "#f59e0b" : "#d1d5db", marginRight: 2 }}>★</span>
+                                ))}
+                              </span>
+                              <span style={{ marginLeft: 6, color: "#6b7280", fontSize: "12px" }}>
+                                {ratingValue > 0 ? `${ratingValue}/5` : "Chưa có đánh giá"}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
                 <div style={{ 
@@ -762,7 +961,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   backgroundColor: "#f9fafb",
                   borderRadius: "8px"
                 }}>
-                  Chưa có chi tiết công việc nào
+                  Không tìm thấy chi tiết công việc phù hợp
                 </div>
               )}
             </div>

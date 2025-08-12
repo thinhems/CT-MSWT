@@ -124,32 +124,7 @@ const Leaves: React.FC = () => {
           </div>
 
           {/* Add New Button */}
-          <button
-            onClick={handleCreateNew}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "12px 20px",
-              backgroundColor: "#FF5B27",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#e04a1a";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#FF5B27";
-            }}
-          >
-            <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
-            Thêm mới
-          </button>
+         
         </div>
       </div>
 
