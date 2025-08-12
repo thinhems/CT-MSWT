@@ -1,12 +1,12 @@
 import { Restroom } from "@/config/models/restroom.model";
 import { IActionType } from "@/config/models/types";
-import { useState } from "react";
+
 import {
-  HiOutlineDotsVertical,
   HiOutlineEye,
   HiOutlinePencil,
 } from "react-icons/hi";
 import { useAreas } from "@/hooks/useArea";
+import Dropdown from './common/Dropdown';
 
 interface IAction {
   action: IActionType;
@@ -22,7 +22,11 @@ const RestroomTable = ({
   restrooms,
   onActionClick,
 }: IProps) => {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  
+  const handleDropdownAction = (item: any, restroom: Restroom) => {
+    onActionClick({ action: item.action, restroom });
+  };
+
   const { areas } = useAreas();
 
   // Debug log to check restrooms data
@@ -59,15 +63,6 @@ const RestroomTable = ({
     }
   };
 
-  const handleDropdownToggle = (restroomId: string) => {
-    setOpenDropdown(openDropdown === restroomId ? null : restroomId);
-  };
-
-  const handleActionSelect = (action: IActionType, restroom: Restroom) => {
-    onActionClick({ action, restroom });
-    setOpenDropdown(null);
-  };
-
   // Function to get area name from areaId
   const getAreaName = (areaId: string) => {
     const area = areas.find(a => a.areaId === areaId);
@@ -95,7 +90,7 @@ const RestroomTable = ({
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
                 position: "relative",
@@ -107,7 +102,7 @@ const RestroomTable = ({
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -118,7 +113,7 @@ const RestroomTable = ({
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -129,7 +124,7 @@ const RestroomTable = ({
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -227,124 +222,31 @@ const RestroomTable = ({
                   position: "relative",
                 }}
               >
-                <button
-                  onClick={() => handleDropdownToggle(restroom.restroomId)}
-                  style={{
-                    color: "#6b7280",
-                    background: "transparent",
-                    border: "none",
-                    padding: "8px",
-                    borderRadius: "9999px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e: any) => {
-                    e.target.style.color = "#374151";
-                    e.target.style.backgroundColor = "#f3f4f6";
-                  }}
-                  onMouseLeave={(e: any) => {
-                    e.target.style.color = "#6b7280";
-                    e.target.style.backgroundColor = "transparent";
-                  }}
-                >
-                  <HiOutlineDotsVertical
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                </button>
-
-                {/* Dropdown Menu */}
-                {openDropdown === restroom.restroomId && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "0%",
-                      right: "8px",
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "6px",
-                      boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
-                      zIndex: 10,
-                      minWidth: "100px",
-                    }}
-                  >
-                    <button
-                      onClick={() => handleActionSelect("view", restroom)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderRadius: "6px 6px 0 0",
-                      }}
-                      onMouseEnter={(e: any) =>
-                        (e.target.style.backgroundColor = "#f9fafb")
-                      }
-                      onMouseLeave={(e: any) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <HiOutlineEye style={{ width: "14px", height: "14px" }} />
-                      Xem chi tiết
-                    </button>
-                    <button
-                      onClick={() => handleActionSelect("update", restroom)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderRadius: "0 0 6px 6px",
-                        borderTop: "1px solid #f3f4f6",
-                      }}
-                      onMouseEnter={(e: any) =>
-                        (e.target.style.backgroundColor = "#f9fafb")
-                      }
-                      onMouseLeave={(e: any) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <HiOutlinePencil
-                        style={{ width: "14px", height: "14px" }}
-                      />
-                      Cập nhật
-                    </button>
-                    
-                  </div>
-                )}
+                <Dropdown
+                  items={[
+                    {
+                      action: 'view',
+                      label: 'Xem chi tiết',
+                      icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    },
+                    {
+                      action: 'edit',
+                      label: 'Chỉnh sửa',
+                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    }
+                  ] as any}
+                  onItemClick={handleDropdownAction}
+                  triggerData={restroom as any}
+                />
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* Click outside to close dropdown */}
-      {openDropdown && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 5,
-          }}
-          onClick={() => setOpenDropdown(null)}
-        />
-      )}
+
     </div>
   );
 };

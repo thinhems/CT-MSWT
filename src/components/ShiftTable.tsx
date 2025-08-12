@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  HiOutlineDotsVertical,
   HiOutlineEye,
   HiOutlinePencil,
   HiChevronUp,
@@ -8,6 +7,7 @@ import {
 } from "react-icons/hi";
 import { Shift } from "@/config/models/shift.mode";
 import { IActionType } from "@/config/models/types";
+import Dropdown from './common/Dropdown';
 
 interface ShiftTableProps {
   shifts: Shift[];
@@ -22,11 +22,13 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
   sortState,
   onSortClick,
 }) => {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-
   // Debug log to check shifts data
   console.log("ShiftTable received shifts:", shifts);
   console.log("ShiftTable shifts length:", shifts?.length);
+
+  const handleDropdownAction = (item, shift) => {
+    onActionClick({ action: item.action, shift });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -39,14 +41,9 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
     }
   };
 
-  const handleDropdownToggle = (shiftId: string) => {
-    setOpenDropdown(openDropdown === shiftId ? null : shiftId);
-  };
+  
 
-  const handleActionSelect = (action: IActionType, shift: Shift) => {
-    onActionClick({ action, shift });
-    setOpenDropdown(null);
-  };
+  
 
   return (
     <div
@@ -69,7 +66,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
                 position: "relative",
@@ -113,7 +110,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -124,7 +121,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -135,7 +132,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -174,7 +171,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
               <td
                 style={{
                   padding: "16px 24px",
-                  fontSize: "14px",
+                  fontSize: "13px",
                   fontWeight: "500",
                   color: "#111827",
                 }}
@@ -186,7 +183,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
               <td
                 style={{
                   padding: "16px 24px",
-                  fontSize: "14px",
+                  fontSize: "13px",
                   color: "#6b7280",
                 }}
               >
@@ -197,7 +194,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
               <td
                 style={{
                   padding: "16px 24px",
-                  fontSize: "14px",
+                  fontSize: "13px",
                   color: "#6b7280",
                 }}
               >
@@ -210,7 +207,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                   style={{
                     display: "inline-flex",
                     padding: "4px 12px",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: "600",
                     borderRadius: "9999px",
                     backgroundColor: getStatusColor(shift.status).backgroundColor,
@@ -229,124 +226,31 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                   position: "relative",
                 }}
               >
-                <button
-                  onClick={() => handleDropdownToggle(shift.shiftId)}
-                  style={{
-                    color: "#6b7280",
-                    background: "transparent",
-                    border: "none",
-                    padding: "8px",
-                    borderRadius: "9999px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e: any) => {
-                    e.target.style.color = "#374151";
-                    e.target.style.backgroundColor = "#f3f4f6";
-                  }}
-                  onMouseLeave={(e: any) => {
-                    e.target.style.color = "#6b7280";
-                    e.target.style.backgroundColor = "transparent";
-                  }}
-                >
-                  <HiOutlineDotsVertical
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                </button>
-
-                {/* Dropdown Menu */}
-                {openDropdown === shift.shiftId && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "50%",
-                      right: "8px",
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "6px",
-                      boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
-                      zIndex: 10,
-                      minWidth: "100px",
-                    }}
-                  >
-                    <button
-                      onClick={() => handleActionSelect("view", shift)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderRadius: "6px 6px 0 0",
-                      }}
-                      onMouseEnter={(e: any) =>
-                        (e.target.style.backgroundColor = "#f9fafb")
-                      }
-                      onMouseLeave={(e: any) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <HiOutlineEye style={{ width: "14px", height: "14px" }} />
-                      Xem chi tiết
-                    </button>
-                    <button
-                      onClick={() => handleActionSelect("update", shift)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderRadius: "0 0 6px 6px",
-                        borderTop: "1px solid #f3f4f6",
-                      }}
-                      onMouseEnter={(e: any) =>
-                        (e.target.style.backgroundColor = "#f9fafb")
-                      }
-                      onMouseLeave={(e: any) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <HiOutlinePencil
-                        style={{ width: "14px", height: "14px" }}
-                      />
-                      Cập nhật
-                    </button>
-                    
-                  </div>
-                )}
+                <Dropdown
+                  items={[
+                    {
+                      action: 'view',
+                      label: 'Xem chi tiết',
+                      icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    },
+                    {
+                      action: 'edit',
+                      label: 'Chỉnh sửa',
+                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    }
+                  ]}
+                  onItemClick={handleDropdownAction}
+                  triggerData={shift}
+                />
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* Click outside to close dropdown */}
-      {openDropdown && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 5,
-          }}
-          onClick={() => setOpenDropdown(null)}
-        />
-      )}
+
     </div>
   );
 };

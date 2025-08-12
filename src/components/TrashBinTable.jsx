@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { HiOutlineDotsVertical, HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
+import { HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
+import Dropdown from './common/Dropdown';
 import { useAreas } from "../hooks/useArea";
 import { useRestrooms } from "../hooks/useRestroom";
 
@@ -18,53 +18,15 @@ const dropdownAnimationStyle = `
 `;
 
 const TrashBinTable = ({ trashBins, onActionClick }) => {
-  const [openDropdown, setOpenDropdown] = useState(null);
+  
+  const handleDropdownAction = (item, trashBin) => {
+    onActionClick({ action: item.action, trashBin });
+  };
+
   const { areas } = useAreas();
   const { restrooms } = useRestrooms();
 
   // Inject animation styles
-  useEffect(() => {
-    if (!document.getElementById('dropdown-animation-styles')) {
-      const style = document.createElement('style');
-      style.id = 'dropdown-animation-styles';
-      style.textContent = dropdownAnimationStyle;
-      document.head.appendChild(style);
-    }
-  }, []);
-
-  // Debug log to check trash bins data
-  console.log('TrashBinTable received trashBins:', trashBins);
-  console.log('TrashBinTable trashBins length:', trashBins?.length);
-  console.log('Sample trash bin with area data:', trashBins?.[0]);
-  console.log('Areas data:', areas);
-  console.log('Restrooms data:', restrooms);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (openDropdown !== null) {
-        // Check if click is inside the dropdown or on the dropdown button
-        const isDropdownButton = event.target.closest("[data-dropdown-button]");
-        const isDropdownMenu = event.target.closest("[data-dropdown-container]");
-
-        // Only close if clicking outside both the button and menu
-        if (!isDropdownButton && !isDropdownMenu) {
-          setOpenDropdown(null);
-        }
-      }
-    };
-
-    if (openDropdown !== null) {
-      // Add slight delay to prevent immediate closing
-      const timeoutId = setTimeout(() => {
-        document.addEventListener("mousedown", handleClickOutside);
-      }, 50);
-
-      return () => {
-        clearTimeout(timeoutId);
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [openDropdown]);
 
   // Function to get area name by areaId
   const getAreaInfo = (areaId) => {
@@ -127,27 +89,6 @@ const TrashBinTable = ({ trashBins, onActionClick }) => {
     }
   };
 
-  const handleDropdownToggle = (binId) => {
-    console.log('🔄 Toggling dropdown for bin:', binId, 'Current open:', openDropdown);
-    setOpenDropdown(openDropdown === binId ? null : binId);
-  };
-
-  const handleActionSelect = (action, bin) => {
-    console.log('🎯 TrashBinTable handleActionSelect called:', { action, binId: bin.trashBinId || bin.id });
-    try {
-      if (onActionClick && typeof onActionClick === 'function') {
-        onActionClick({ action, bin });
-        console.log('✅ onActionClick called successfully');
-      } else {
-        console.warn('⚠️ onActionClick is not a function:', onActionClick);
-      }
-    } catch (error) {
-      console.error('❌ Error in handleActionSelect:', error);
-    } finally {
-      setOpenDropdown(null);
-    }
-  };
-
   return (
     <div
       style={{
@@ -169,7 +110,7 @@ const TrashBinTable = ({ trashBins, onActionClick }) => {
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
                 position: "relative",
@@ -181,7 +122,7 @@ const TrashBinTable = ({ trashBins, onActionClick }) => {
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -192,7 +133,7 @@ const TrashBinTable = ({ trashBins, onActionClick }) => {
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -288,109 +229,24 @@ const TrashBinTable = ({ trashBins, onActionClick }) => {
                   overflow: "visible",
                 }}
               >
-                <button
-                  data-dropdown-button="true"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    console.log('📊 Dropdown toggle clicked for bin:', bin.trashBinId || bin.id);
-                    handleDropdownToggle(bin.trashBinId || bin.id);
-                  }}
-                  style={{
-                    color: "#6b7280",
-                    background: "transparent",
-                    border: "none",
-                    padding: "8px",
-                    borderRadius: "9999px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.color = "#374151";
-                    e.target.style.backgroundColor = "#f3f4f6";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.color = "#6b7280";
-                    e.target.style.backgroundColor = "transparent";
-                  }}
-                >
-                  <HiOutlineDotsVertical
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                </button>
-
-                {/* Dropdown Menu */}
-                {openDropdown === (bin.trashBinId || bin.id) && (
-                  <div
-                    data-dropdown-container="true"
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      right: "0px",
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "6px",
-                      boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
-                      zIndex: 1000,
-                      minWidth: "110px",
-                      marginTop: "4px",
-                    }}
-                  >
-                    <button
-                      onClick={() => handleActionSelect('view', bin)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderRadius: "6px 6px 0 0",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.target.style.backgroundColor = "#f8fafc")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <HiOutlineEye style={{ width: "14px", height: "14px" }} />
-                      Xem chi tiết
-                    </button>
-                    <button
-                      onClick={() => handleActionSelect('edit', bin)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderRadius: "0 0 6px 6px",
-                        borderTop: "1px solid #f3f4f6",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.target.style.backgroundColor = "#f8fafc")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.target.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <HiOutlinePencil style={{ width: "14px", height: "14px" }} />
-                      Sửa
-                    </button>
-                  </div>
-                )}
+                <Dropdown
+                  items={[
+                    {
+                      action: 'view',
+                      label: 'Xem chi tiết',
+                      icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    },
+                    {
+                      action: 'edit',
+                      label: 'Chỉnh sửa',
+                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    }
+                  ]}
+                  onItemClick={handleDropdownAction}
+                  triggerData={bin}
+                />
               </td>
             </tr>
           ))}

@@ -17,6 +17,7 @@ import Areas from "../pages/Areas";
 import Schedules from "../pages/Schedules";
 import AssignmentManagement from "../pages/AssignmentManagement";
 import Leaves from "../pages/Leaves";
+import Attendance from "../pages/Attendance";
 
 export const router = createBrowserRouter([
   {
@@ -86,6 +87,10 @@ export const router = createBrowserRouter([
       {
         path: "leaves",
         element: <Leaves />,
+      },
+      {
+        path: "attendance",
+        element: <Attendance />,
       },
       {
         path: "*",

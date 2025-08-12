@@ -131,37 +131,13 @@ const UserManagement = () => {
   };
 
   const mapStatusToRole = (status) => {
-    const statusLower = status?.toLowerCase();
-    const statusToRoleMap = {
-      'đã có lịch': 'Đã có lịch',
-      'đang làm việc': 'Đã có lịch',
-      'hoạt động': 'Đã có lịch',
-      'nghỉ việc': 'Nghỉ việc', 
-      'thôi việc': 'Thôi việc',
-      'tạm nghỉ': 'Tạm nghỉ',
-      'chưa xác thực': 'Chưa xác thực',
-      'đang trống lịch': 'Đang trống lịch',
-      'nghỉ phép': 'Nghỉ phép'
-    };
-    return statusToRoleMap[statusLower] || status;
+    // Directly return status from API without mapping
+    return status || "Không xác định";
   };
 
   const mapStatusToRoleId = (status) => {
-    const statusLower = status?.toLowerCase();
-    const statusToRoleIdMap = {
-      'đã có lịch': 'RL04', // Worker roleId
-      'đang làm việc': 'RL04', // Worker roleId
-      'hoạt động': 'RL04', // Worker roleId
-      'nhân viên vệ sinh': 'RL04',
-      'giám sát viên vệ sinh': 'RL03', // Supervisor roleId  
-      'quản lý cấp cao': 'RL01', // Manager roleId
-      'quản trị hệ thống': 'RL02', // Admin roleId
-      'chưa xác thực': 'RL04', // Default to worker
-      'đang trống lịch': 'RL04', // Worker roleId
-      'nghỉ phép': 'RL04', // Worker roleId
-      'thôi việc': 'RL04' // Worker roleId
-    };
-    return statusToRoleIdMap[statusLower] || 'RL04'; // Default to worker
+    // Backend will handle role mapping, return default for frontend
+    return 'RL04'; // Default role ID
   };
 
   const handleSubmitUpdate = async (e) => {
@@ -231,7 +207,7 @@ const UserManagement = () => {
       position: "",
       phone: "",
       address: "",
-      status: "Đã có lịch",
+      status: "Hoạt động",
       avatar: "",
       avatarFile: null
     });
@@ -300,7 +276,7 @@ const UserManagement = () => {
         position: newUser.position,
         phone: newUser.phone.trim(),
         address: newUser.address?.trim() || "",
-        status: newUser.status || "Đã có lịch",
+        status: newUser.status || "Hoạt động",
         avatar: newUser.avatar || "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg",
         createdDate: new Date().toISOString().split('T')[0]
       };
@@ -1337,20 +1313,16 @@ const UserManagement = () => {
                         fontWeight: "600",
                         borderRadius: "9999px",
                         backgroundColor: 
-                          selectedUser.status === "Đã có lịch" || selectedUser.status === "Đang làm việc" || selectedUser.status?.toLowerCase() === "hoạt động" ? "#dcfce7" :
-                          selectedUser.status === "Chưa xác thực" ? "#fef3c7" :
-                          selectedUser.status === "Đang trống lịch" ? "#dbeafe" :
-                          selectedUser.status === "Nghỉ phép" ? "#ede9fe" :
-                          selectedUser.status === "Thôi việc" ? "#fee2e2" : "#f3f4f6",
+                          selectedUser.status === "Hoạt động" ? "#dcfce7" :
+                          selectedUser.status === "Thôi việc" ? "#fee2e2" :
+                          selectedUser.status === "Chưa xác thực" ? "#fef3c7" : "#f3f4f6",
                         color: 
-                          selectedUser.status === "Đã có lịch" || selectedUser.status === "Đang làm việc" || selectedUser.status?.toLowerCase() === "hoạt động" ? "#15803d" :
-                          selectedUser.status === "Chưa xác thực" ? "#ea580c" :
-                          selectedUser.status === "Đang trống lịch" ? "#1d4ed8" :
-                          selectedUser.status === "Nghỉ phép" ? "#7c3aed" :
-                          selectedUser.status === "Thôi việc" ? "#dc2626" : "#6b7280",
+                          selectedUser.status === "Hoạt động" ? "#15803d" :
+                          selectedUser.status === "Thôi việc" ? "#dc2626" :
+                          selectedUser.status === "Chưa xác thực" ? "#ea580c" : "#6b7280",
                       }}
                     >
-                      {selectedUser.status === "Đang làm việc" || selectedUser.status?.toLowerCase() === "hoạt động" ? "Đã có lịch" : selectedUser.status}
+                      {selectedUser.status}
                     </span>
                   </p>
                 </div>
@@ -1593,11 +1565,9 @@ const UserManagement = () => {
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="">Chọn trạng thái</option>
-                  <option value="Đã có lịch">Đã có lịch</option>
-                  <option value="Chưa xác thực">Chưa xác thực</option>
-                  <option value="Đang trống lịch">Đang trống lịch</option>
-                  <option value="Nghỉ phép">Nghỉ phép</option>
+                  <option value="Hoạt động">Hoạt động</option>
                   <option value="Thôi việc">Thôi việc</option>
+                  <option value="Chưa xác thực">Chưa xác thực</option>
                 </select>
               </div>
 

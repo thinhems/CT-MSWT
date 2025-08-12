@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSidebar } from "../contexts/SidebarContext";
@@ -17,6 +17,7 @@ import {
   HiOutlineMenu,
   HiOutlineX,
   HiOutlineDocumentText,
+  HiOutlineUserGroup,
 } from "react-icons/hi";
 
 const Sidebar = () => {
@@ -24,6 +25,12 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { isCollapsed, isMobile, isMobileOpen, toggleSidebar, closeMobileSidebar, sidebarWidth } = useSidebar();
+  const [hoveredItem, setHoveredItem] = useState(null);
+
+  // Clear hover state when location changes
+  useEffect(() => {
+    setHoveredItem(null);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
@@ -82,13 +89,18 @@ const Sidebar = () => {
       path: "/leaves",
       icon: HiOutlineDocumentText,
     },
+    {
+      title: "Điểm danh",
+      path: "/attendance",
+      icon: HiOutlineUserGroup,
+    },
   ];
 
   return (
     <div
       style={{
         position: "fixed",
-        left: isMobile ? (isMobileOpen ? 0 : "-220px") : 0,
+        left: isMobile ? (isMobileOpen ? 0 : "-200px") : 0,
         top: 0,
         width: `${sidebarWidth}px`,
         height: "100vh",
@@ -247,6 +259,7 @@ const Sidebar = () => {
         >
           {menuItems.map((item, index) => {
             const isActive = location.pathname === item.path;
+            const isHovered = hoveredItem === index && !isActive;
             const Icon = item.icon;
 
             return (
@@ -266,35 +279,27 @@ const Sidebar = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: isCollapsed ? "center" : "flex-start",
-                    padding: isCollapsed ? "12px 8px" : "12px 16px",
-                    fontSize: "13px",
+                    padding: isCollapsed ? "10px 8px" : "10px 14px",
+                    fontSize: "12px",
                     fontWeight: "500",
                     borderRadius: "6px",
                     textDecoration: "none",
                     transition: "all 0.2s",
-                    backgroundColor: isActive ? "#d1d5db" : "transparent",
+                    backgroundColor: isActive ? "#d1d5db" : (isHovered ? "#f3f4f6" : "transparent"),
                     color: "#000000",
-                    marginBottom: "2px",
+                    marginBottom: "1px",
                     position: "relative",
                     overflow: "hidden",
                   }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.target.style.backgroundColor = "#f3f4f6";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.target.style.backgroundColor = "transparent";
-                    }
-                  }}
+                  onMouseEnter={() => setHoveredItem(index)}
+                  onMouseLeave={() => setHoveredItem(null)}
                   title={isCollapsed ? item.title : ""}
                 >
                   <Icon
                     style={{
-                      width: "20px",
-                      height: "18px",
-                      marginRight: isCollapsed ? 0 : "12px",
+                      width: "18px",
+                      height: "16px",
+                      marginRight: isCollapsed ? 0 : "10px",
                       color: "#000000",
                       flexShrink: 0,
                       transition: "margin-right 0.3s ease"

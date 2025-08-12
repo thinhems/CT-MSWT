@@ -120,20 +120,20 @@ const TrashBinList = () => {
     setCurrentPage(1);
   };
 
-  const handleActionClick = ({ action, bin }) => {
-    console.log('🚀 TrashBinList handleActionClick called:', { action, binId: bin.trashBinId || bin.id });
+  const handleActionClick = ({ action, trashBin }) => {
+    console.log('🚀 TrashBinList handleActionClick called:', { action, binId: trashBin.trashBinId || trashBin.id });
     
     switch (action) {
       case 'view':
-        console.log('🔍 Opening detail for trash bin:', bin.trashBinId || bin.id);
-        setSelectedBin(bin); // Keep for fallback
-        setSelectedBinId(bin.trashBinId || bin.id); // Trigger API call
+        console.log('🔍 Opening detail for trash bin:', trashBin.trashBinId || trashBin.id);
+        setSelectedBin(trashBin); // Keep for fallback
+        setSelectedBinId(trashBin.trashBinId || trashBin.id); // Trigger API call
         setShowDetailPopup(true);
         console.log('✅ Detail popup state set to true');
         break;
       case 'edit':
-        console.log('✏️ Opening edit for trash bin:', bin.trashBinId || bin.id);
-        setEditingBin({ ...bin });
+        console.log('✏️ Opening edit for trash bin:', trashBin.trashBinId || trashBin.id);
+        setEditingBin({ ...trashBin });
         setShowEditModal(true);
         console.log('✅ Edit modal state set to true');
         break;

@@ -1,41 +1,42 @@
 import React, { useState, useMemo } from 'react';
-import { useLeaves, deleteLeave, approveLeave } from '../hooks/useLeave';
+import { useLeaves, approveLeave } from '../hooks/useLeave';
 import { Leave } from '../config/models/leave.model';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { HiDotsVertical, HiPencil, HiCheck, HiX } from 'react-icons/hi';
+import { HiCheck, HiX } from 'react-icons/hi';
+import Pagination from './Pagination';
+import Dropdown from './common/Dropdown';
 
 interface LeaveTableProps {
-  onEdit: (leave: Leave) => void;
   searchTerm?: string;
 }
 
-const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
+const LeaveTable: React.FC<LeaveTableProps> = ({ searchTerm = '' }) => {
   const { leaves, isLoading, error, mutate } = useLeaves();
   const [approvingId, setApprovingId] = useState<string | null>(null);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [approvalNote, setApprovalNote] = useState('');
   const [approvalStatus, setApprovalStatus] = useState<number>(1);
-
-  // Close dropdown when clicking outside
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (openDropdown && !(event.target as Element).closest('.dropdown-container')) {
-        setOpenDropdown(null);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [openDropdown]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Debug logging
   console.log('LeaveTable - leaves data:', leaves);
   console.log('LeaveTable - error:', error);
+
+  const handleDropdownAction = (item: any, leave: Leave) => {
+    if (item.action === 'approve') {
+      setSelectedLeave(leave);
+      // Set default approval status - only 2 choices: 1 (Đã duyệt) or 2 (Từ chối)
+      if (leave.approvalStatus === 'Đã duyệt') {
+        setApprovalStatus(2); // Từ chối (để có thể thay đổi)
+      } else {
+        setApprovalStatus(1); // Đã duyệt (default)
+      }
+      setShowApprovalModal(true);
+    }
+  };
 
   // Filter leaves based on search term
   const filteredLeaves = useMemo(() => {
@@ -50,6 +51,17 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
     );
   }, [leaves, searchTerm]);
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredLeaves.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentLeaves = filteredLeaves.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search term changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const handleApprove = async (leaveId: string, approvalStatus: number, note?: string) => {
     setApprovingId(leaveId);
     try {
@@ -62,24 +74,10 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
     } finally {
       setApprovingId(null);
     }
-    setOpenDropdown(null);
+
   };
 
-  const handleActionClick = (action: string, leave: Leave) => {
-    setOpenDropdown(null);
-    if (action === 'edit') {
-      onEdit(leave);
-    } else if (action === 'approve') {
-      setSelectedLeave(leave);
-      // Set default approval status - only 2 choices: 1 (Đã duyệt) or 2 (Từ chối)
-      if (leave.approvalStatus === 'Đã duyệt') {
-        setApprovalStatus(2); // Từ chối (để có thể thay đổi)
-      } else {
-        setApprovalStatus(1); // Đã duyệt (default)
-      }
-      setShowApprovalModal(true);
-    }
-  };
+
 
   const handleSubmitApproval = () => {
     if (selectedLeave) {
@@ -197,7 +195,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
                 <th style={{
                   padding: "16px 24px",
                   textAlign: "left",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "600",
                   color: "#374151",
                   borderBottom: "1px solid #e5e7eb"
@@ -207,7 +205,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
                 <th style={{
                   padding: "16px 24px",
                   textAlign: "left",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "600",
                   color: "#374151",
                   borderBottom: "1px solid #e5e7eb"
@@ -217,7 +215,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
                 <th style={{
                   padding: "16px 24px",
                   textAlign: "left",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "600",
                   color: "#374151",
                   borderBottom: "1px solid #e5e7eb"
@@ -227,7 +225,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
                 <th style={{
                   padding: "16px 24px",
                   textAlign: "left",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "600",
                   color: "#374151",
                   borderBottom: "1px solid #e5e7eb"
@@ -237,7 +235,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
                 <th style={{
                   padding: "16px 24px",
                   textAlign: "left",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "600",
                   color: "#374151",
                   borderBottom: "1px solid #e5e7eb"
@@ -247,7 +245,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
                 <th style={{
                   padding: "16px 24px",
                   textAlign: "left",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "600",
                   color: "#374151",
                   borderBottom: "1px solid #e5e7eb"
@@ -257,7 +255,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
                 <th style={{
                   padding: "16px 24px",
                   textAlign: "center",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "600",
                   color: "#374151",
                   borderBottom: "1px solid #e5e7eb"
@@ -267,7 +265,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
               </tr>
             </thead>
             <tbody>
-              {filteredLeaves.map((leave) => (
+              {currentLeaves.map((leave) => (
                 <tr key={leave.leaveId} style={{ borderBottom: "1px solid #f3f4f6" }}>
                   <td style={{
                     padding: "16px 24px",
@@ -326,78 +324,20 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
                     padding: "16px 24px",
                     textAlign: "center",
                   }}>
-                    <div className="dropdown-container" style={{ position: "relative", display: "flex", justifyContent: "center" }}>
-                      <button
-                        onClick={() => setOpenDropdown(openDropdown === leave.leaveId ? null : leave.leaveId)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          padding: "8px",
-                          borderRadius: "4px",
-                          color: "#6b7280",
-                          transition: "all 0.2s",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#f3f4f6";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                        }}
-                      >
-                        <HiDotsVertical size={16} />
-                      </button>
-
-                      {openDropdown === leave.leaveId && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "100%",
-                            right: "0",
-                            backgroundColor: "white",
-                            border: "1px solid #e5e7eb",
-                            borderRadius: "8px",
-                            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-                            zIndex: 10,
-                            minWidth: "140px",
-                            marginTop: "4px",
-                          }}
-                        >
-                          
-                          
-                          <button
-                            onClick={() => handleActionClick('approve', leave)}
-                            disabled={approvingId === leave.leaveId}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              width: "100%",
-                              padding: "8px 12px",
-                              border: "none",
-                              background: "none",
-                              cursor: approvingId === leave.leaveId ? "not-allowed" : "pointer",
-                              fontSize: "14px",
-                              color: approvingId === leave.leaveId ? "#9ca3af" : "#059669",
-                              transition: "background-color 0.2s",
-                            }}
-                            onMouseEnter={(e) => {
-                              if (approvingId !== leave.leaveId) {
-                                e.currentTarget.style.backgroundColor = "#ecfdf5";
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (approvingId !== leave.leaveId) {
-                                e.currentTarget.style.backgroundColor = "transparent";
-                              }
-                            }}
-                          >
-                            <HiCheck size={16} />
-                            {approvingId === leave.leaveId ? 'Đang cập nhật...' : 'Duyệt đơn'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <Dropdown
+                      items={[
+                        {
+                          action: 'approve',
+                          label: approvingId === leave.leaveId ? 'Đang cập nhật...' : 'Duyệt đơn',
+                          icon: <HiCheck style={{ width: "14px", height: "14px" }} />,
+                          color: "#059669",
+                          disabled: approvingId === leave.leaveId
+                        }
+                      ] as any}
+                      onItemClick={handleDropdownAction}
+                      triggerData={leave as any}
+                      disabled={approvingId === leave.leaveId}
+                    />
                   </td>
                 </tr>
               ))}
@@ -426,6 +366,17 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ onEdit, searchTerm = '' }) => {
           )}
         </div>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ padding: "16px 32px" }}>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
 
       {/* Approval Modal */}
       {showApprovalModal && selectedLeave && (

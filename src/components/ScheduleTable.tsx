@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { HiOutlineDotsVertical, HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
+import { HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
 import { Schedule } from "@/config/models/schedule.model";
+import Dropdown from './common/Dropdown';
 
 interface IProps {
   schedules: Schedule[];
@@ -13,15 +14,8 @@ interface IAction {
 }
 
 const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  
-  const handleDropdownToggle = (scheduleId: string) => {
-    setOpenDropdown(openDropdown === scheduleId ? null : scheduleId);
-  };
-
-  const handleActionSelect = (action: string, schedule: Schedule) => {
-    onActionClick({ action, schedule });
-    setOpenDropdown(null);
+  const handleDropdownAction = (item: any, schedule: Schedule) => {
+    onActionClick({ action: item.action, schedule });
   };
 
   const formatDate = (dateString: string) => {
@@ -283,130 +277,27 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                   position: "relative",
                 }}
               >
-                <button
-                  onClick={() => handleDropdownToggle(schedule.scheduleId)}
-                  style={{
-                    color: "#6b7280",
-                    background: "transparent",
-                    border: "none",
-                    padding: "8px",
-                    borderRadius: "9999px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e: any) => {
-                    e.target.style.color = "#374151";
-                    e.target.style.backgroundColor = "#f3f4f6";
-                  }}
-                  onMouseLeave={(e: any) => {
-                    e.target.style.color = "#6b7280";
-                    e.target.style.backgroundColor = "transparent";
-                  }}
-                >
-                  <HiOutlineDotsVertical
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                </button>
+                <Dropdown
+                  items={[
+                    {
+                      action: 'view',
+                      label: 'Xem chi tiết',
+                      icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    },
+                    {
+                      action: 'edit',
+                      label: 'Sửa lịch trình',
+                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    }
+                  ]}
+                  onItemClick={handleDropdownAction}
+                  triggerData={schedule}
+                />
 
-                {/* Dropdown Menu */}
-                {openDropdown === schedule.scheduleId && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: "10%",
-                      right: "8px",
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "6px",
-                      boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
-                      zIndex: 5,
-                      minWidth: "120px",
-                    }}
-                  >
-                    <button
-                      onClick={() => handleActionSelect("view", schedule)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderRadius: "6px 6px 0 0",
-                      }}
-                      onMouseEnter={(e: any) => {
-                        e.target.style.backgroundColor = "#f9fafb";
-                      }}
-                      onMouseLeave={(e: any) => {
-                        e.target.style.backgroundColor = "transparent";
-                      }}
-                    >
-                      <HiOutlineEye style={{ width: "14px", height: "14px" }} />
-                      Xem chi tiết
-                    </button>
-                    
-                    <button
-                      onClick={() => handleActionSelect("edit", schedule)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderTop: "1px solid #f3f4f6",
-                      }}
-                      onMouseEnter={(e: any) => {
-                        e.target.style.backgroundColor = "#f9fafb";
-                      }}
-                      onMouseLeave={(e: any) => {
-                        e.target.style.backgroundColor = "transparent";
-                      }}
-                    >
-                      <HiOutlinePencil style={{ width: "14px", height: "14px" }} />
-                      Sửa lịch trình
-                    </button>
-                    
-                    {/* <button
-                      onClick={() => handleActionSelect("update", schedule)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderRadius: "0 0 6px 6px",
-                        borderTop: "1px solid #f3f4f6",
-                      }}
-                      onMouseEnter={(e: any) => {
-                        e.target.style.backgroundColor = "#f9fafb";
-                      }}
-                      onMouseLeave={(e: any) => {
-                        e.target.style.backgroundColor = "transparent";
-                      }}
-                    >
-                      <HiOutlineUserAdd style={{ width: "14px", height: "14px" }} />
-                      Gán vị trí
-                    </button> */}
-                   
-                  </div>
-                )}
+
+
               </td>
             </tr>
           ))}

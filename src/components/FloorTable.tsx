@@ -1,10 +1,10 @@
 import { Floor } from "../config/models/floor.model";
-import { useEffect, useState } from "react";
+
 import {
-  HiOutlineDotsVertical,
   HiOutlineEye,
-  HiOutlinePlus,
+  HiOutlinePencil,
 } from "react-icons/hi";
+import Dropdown from './common/Dropdown';
 import { useAreas } from "../hooks/useArea";
 
 interface FloorTableProps {
@@ -19,42 +19,17 @@ const FloorTable: React.FC<FloorTableProps> = ({
   floors,
   onActionClick,
 }) => {
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  
+  const handleDropdownAction = (item: any, floor: Floor) => {
+    onActionClick({ action: item.action, floor });
+  };
+
   const { areas } = useAreas();
 
   // Function to get areas for a specific floor
   const getAreasForFloor = (floorId: string) => {
     return areas.filter(area => area.floorId === floorId);
   };
-
-  useEffect(() => {
-    const handleClickOutside = (event: any) => {
-      if (openDropdown !== null) {
-        // Check if click is inside the dropdown or on the dropdown button
-        const isDropdownButton = event.target.closest("[data-dropdown-button]");
-        const isDropdownMenu = event.target.closest(
-          "[data-dropdown-container]"
-        );
-
-        // Only close if clicking outside both the button and menu
-        if (!isDropdownButton && !isDropdownMenu) {
-          setOpenDropdown(null);
-        }
-      }
-    };
-
-    if (openDropdown !== null) {
-      // Add slight delay to prevent immediate closing
-      const timeoutId = setTimeout(() => {
-        document.addEventListener("mousedown", handleClickOutside);
-      }, 50);
-
-      return () => {
-        clearTimeout(timeoutId);
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [openDropdown]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -66,21 +41,6 @@ const FloorTable: React.FC<FloorTableProps> = ({
         return { backgroundColor: "#f3f4f6", color: "#374151" };
     }
   };
-
-  const handleDropdownToggle = (floorId: string) => {
-    console.log("🎯 Dropdown toggle for floor ID:", floorId);
-    setOpenDropdown(openDropdown === floorId ? null : floorId);
-  };
-
-  const handleActionSelect = (
-    action: "view" | "delete" | "assign",
-    floor: Floor
-  ) => {
-    console.log("🔥 FloorTable - Action selected:", action, floor);
-    onActionClick({ action, floor });
-    setOpenDropdown(null);
-  };
-
 
   return (
     <div
@@ -252,107 +212,24 @@ const FloorTable: React.FC<FloorTableProps> = ({
                   overflow: "visible",
                 }}
               >
-                <button
-                  data-dropdown-button="true"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    console.log(
-                      "🔥 Button clicked for floor:",
-                      floor.floorId,
-                      floor.floorNumber
-                    );
-                    handleDropdownToggle(floor.floorId);
-                  }}
-                  style={{
-                    color: "#6b7280",
-                    background: "transparent",
-                    border: "none",
-                    padding: "8px",
-                    borderRadius: "9999px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e: any) => {
-                    e.target.style.color = "#374151";
-                    e.target.style.backgroundColor = "#f3f4f6";
-                  }}
-                  onMouseLeave={(e: any) => {
-                    e.target.style.color = "#6b7280";
-                    e.target.style.backgroundColor = "transparent";
-                  }}
-                >
-                  <HiOutlineDotsVertical
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                </button>
-
-                {/* Dropdown Menu */}
-                {openDropdown === floor.floorId && (
-                  <div
-                    data-dropdown-container="true"
-                    style={{
-                      position: "absolute",
-                      top: "20%",
-                      right: "110px",
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "6px",
-                      boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
-                      zIndex: 1000,
-                      minWidth: "10px",
-                      marginTop: "4px",
-                    }}
-                  >
-                    <button
-                      onClick={() => handleActionSelect("view", floor)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                        color: "#374151",
-                        background: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                      onMouseEnter={(e: any) => (e.target.style.backgroundColor = "#f3f4f6")}
-                      onMouseLeave={(e: any) => (e.target.style.backgroundColor = "transparent")}
-                    >
-                      <HiOutlineEye style={{ width: "14px", height: "14px" }} />
-                      Xem chi tiết
-                    </button>
-                   
-                    <button
-                      onClick={() => handleActionSelect("assign", floor)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                        color: "#374151",
-                        background: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                      onMouseEnter={(e: any) => (e.target.style.backgroundColor = "#f3f4f6")}
-                      onMouseLeave={(e: any) => (e.target.style.backgroundColor = "transparent")}
-                                         >
-                       <HiOutlinePlus style={{ width: "14px", height: "14px" }} />
-                       Gán khu vực
-                     </button>
-
-                    
-                  </div>
-                )}
+                <Dropdown
+                  items={[
+                    {
+                      action: 'view',
+                      label: 'Xem chi tiết',
+                      icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    },
+                    {
+                      action: 'edit',
+                      label: 'Chỉnh sửa',
+                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    }
+                  ] as any}
+                  onItemClick={handleDropdownAction}
+                  triggerData={floor as any}
+                />
               </td>
             </tr>
           ))}

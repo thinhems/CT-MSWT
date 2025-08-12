@@ -2,8 +2,13 @@
 @import "tailwindcss/utilities";
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  /* Typography baseline aligned with Areas page */
+  --mswt-font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --mswt-font-size-base: 14px; /* Most texts, inputs, tables */
+  --mswt-font-size-h1: 30px;   /* Page titles */
+
+  font-family: var(--mswt-font-family);
+  line-height: 1.6;
   font-weight: 400;
   color: #1a1a1a;
   background-color: #ffffff;
@@ -18,6 +23,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: #ffffff;
+  font-size: var(--mswt-font-size-base);
+  font-family: var(--mswt-font-family);
 }
 
 #root {
@@ -53,8 +60,26 @@ a:hover {
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: var(--mswt-font-size-h1);
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+/* Inputs and controls */
+input,
+select,
+textarea,
+button,
+label {
+  font-size: var(--mswt-font-size-base);
+  font-family: var(--mswt-font-family);
+}
+
+/* Tables baseline (most pages use 14px like Areas) */
+table,
+th,
+td {
+  font-size: var(--mswt-font-size-base);
 }
 
 button {

@@ -49,7 +49,7 @@ export const SidebarProvider = ({ children }) => {
     isMobile,
     toggleSidebar,
     closeMobileSidebar,
-    sidebarWidth: isCollapsed ? 70 : 220,
+    sidebarWidth: isCollapsed ? 70 : 200,
   };
 
   return (

@@ -260,8 +260,9 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
         style={{
           backgroundColor: "white",
           borderRadius: "12px",
-          width: "650px",
-          maxHeight: "85vh",
+          width: "90vw",
+          maxWidth: "1200px",
+          maxHeight: "90vh",
           overflow: "auto",
           boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
         }}

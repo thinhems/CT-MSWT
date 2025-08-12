@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import LeaveTable from '../components/LeaveTable';
 import LeaveForm from '../components/LeaveForm';
 import { Leave } from '../config/models/leave.model';
-import { HiOutlinePlus, HiOutlineSearch } from 'react-icons/hi';
+import { HiOutlineSearch } from 'react-icons/hi';
 import Notification from '../components/Notification';
 
 const Leaves: React.FC = () => {
@@ -11,15 +11,9 @@ const Leaves: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
-  const handleCreateNew = () => {
-    setEditingLeave(undefined);
-    setShowForm(true);
-  };
 
-  const handleEdit = (leave: Leave) => {
-    setEditingLeave(leave);
-    setShowForm(true);
-  };
+
+
 
 
 
@@ -130,7 +124,7 @@ const Leaves: React.FC = () => {
 
       {/* Leave Table Container */}
       <div style={{ flex: "1", overflow: "auto", minHeight: 0 }}>
-        <LeaveTable onEdit={handleEdit} searchTerm={searchTerm} />
+        <LeaveTable searchTerm={searchTerm} />
       </div>
 
       {showForm && (

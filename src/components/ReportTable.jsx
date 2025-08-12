@@ -1,33 +1,12 @@
-import { useState, useEffect, useRef } from "react";
-import { HiOutlineDotsVertical, HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
+import { HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
+import Dropdown from './common/Dropdown';
 import { PRIORITY_MAPPING_REVERSE, PRIORITY_MAPPING } from "../hooks/useReport";
 
 const ReportTable = ({ reports, onActionClick }) => {
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const tableRef = useRef(null);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      // Check if click is outside the table container
-      if (tableRef.current && !tableRef.current.contains(event.target)) {
-        setOpenDropdown(null);
-      }
-    };
-
-    if (openDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      
-      // Also close dropdown on scroll
-      const handleScroll = () => setOpenDropdown(null);
-      window.addEventListener('scroll', handleScroll, true);
-      
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-        window.removeEventListener('scroll', handleScroll, true);
-      };
-    }
-  }, [openDropdown]);
+  const handleDropdownAction = (item, report) => {
+    onActionClick({ action: item.action, report });
+  };
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -126,28 +105,8 @@ const ReportTable = ({ reports, onActionClick }) => {
     }
   };
 
-  const handleDropdownToggle = (reportId, event) => {
-    event.stopPropagation();
-    event.preventDefault();
-    
-    // Close all other dropdowns first, then open this one if it wasn't already open
-    if (openDropdown === reportId) {
-      setOpenDropdown(null); // Close if clicking the same one
-    } else {
-      setOpenDropdown(reportId); // Open this one (closes others automatically)
-    }
-  };
-
-  const handleActionSelect = (action, report, event) => {
-    event.stopPropagation();
-    event.preventDefault();
-    onActionClick({ action, report });
-    setOpenDropdown(null);
-  };
-
   return (
     <div
-      ref={tableRef}
       style={{
         marginLeft: "32px",
         marginRight: "32px",
@@ -168,18 +127,18 @@ const ReportTable = ({ reports, onActionClick }) => {
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
             >
               Báo cáo
             </th>
-                         <th
+             <th
                style={{
                  padding: "16px 24px",
                  textAlign: "left",
-                 fontSize: "13px",
+                 fontSize: "12px",
                  fontWeight: "600",
                  color: "#374151",
                }}
@@ -190,7 +149,7 @@ const ReportTable = ({ reports, onActionClick }) => {
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -201,7 +160,7 @@ const ReportTable = ({ reports, onActionClick }) => {
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -212,7 +171,7 @@ const ReportTable = ({ reports, onActionClick }) => {
               style={{
                 padding: "16px 24px",
                 textAlign: "left",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
               }}
@@ -350,102 +309,30 @@ const ReportTable = ({ reports, onActionClick }) => {
                   position: "relative",
                 }}
               >
-                <button
-                  onClick={(e) => handleDropdownToggle(uniqueKey, e)}
-                  style={{
-                    color: "#6b7280",
-                    background: "transparent",
-                    border: "none",
-                    padding: "8px",
-                    borderRadius: "9999px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.color = "#374151";
-                    e.target.style.backgroundColor = "#f3f4f6";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.color = "#6b7280";
-                    e.target.style.backgroundColor = "transparent";
-                  }}
-                >
-                  <HiOutlineDotsVertical
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                </button>
-
-                {/* Dropdown Menu */}
-                {openDropdown === uniqueKey && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "0%",
-                      right: "8px",
-                      marginTop: "4px",
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "6px",
-                      boxShadow: "0 2px 4px -1px rgba(0, 0, 0, 0.1)",
-                      zIndex: 50,
-                      minWidth: "100px",
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={(e) => handleActionSelect('view', report, e)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderRadius: "6px 6px 0 0",
-                      }}
-                      onMouseEnter={(e) => (e.target.style.backgroundColor = "#f9fafb")}
-                      onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
-                    >
-                      <HiOutlineEye style={{ width: "14px", height: "14px" }} />
-                      Xem chi tiết
-                    </button>
-                    <button
-                      onClick={(e) => handleActionSelect('update', report, e)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        textAlign: "left",
-                        fontSize: "12px",
-                        color: "#374151",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        borderRadius: "0 0 6px 6px",
-                        borderTop: "1px solid #f3f4f6",
-                      }}
-                      onMouseEnter={(e) => (e.target.style.backgroundColor = "#f9fafb")}
-                      onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
-                    >
-                      <HiOutlinePencil style={{ width: "14px", height: "14px" }} />
-                      Cập nhật
-                    </button>
-                  </div>
-                )}
+                <Dropdown
+                  items={[
+                    {
+                      action: 'view',
+                      label: 'Xem chi tiết',
+                      icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    },
+                    {
+                      action: 'edit',
+                      label: 'Chỉnh sửa',
+                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    }
+                  ]}
+                  onItemClick={handleDropdownAction}
+                  triggerData={report}
+                />
               </td>
             </tr>
             );
           })}
         </tbody>
       </table>
-
 
     </div>
   );

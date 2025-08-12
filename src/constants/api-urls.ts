@@ -139,4 +139,10 @@ export const API_URLS = {
     MARK_ALL_AS_READ: (userId: string) => `notifications/user/${userId}/read-all`,
     DELETE: (id: string) => `notifications/${id}`,
   },
+
+  // Attendance record endpoints
+  ATTENDANCE: {
+    GET_ALL: `attendanceRecord/all`,
+    GET_BY_DATE: (date: string) => `attendanceRecord/date/${date}`,
+  },
 };
