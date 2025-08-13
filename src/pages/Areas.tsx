@@ -608,11 +608,13 @@ const Areas = () => {
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="">Chọn tầng</option>
-                  {floors.map((floor) => (
-                    <option key={floor.floorId} value={floor.floorId}>
-                      Tầng {floor.floorNumber}
-                    </option>
-                  ))}
+                  {floors
+                    .sort((a, b) => a.floorNumber - b.floorNumber)
+                    .map((floor) => (
+                      <option key={floor.floorId} value={floor.floorId}>
+                        Tầng {floor.floorNumber}
+                      </option>
+                    ))}
                 </select>
                 {newArea.floorId && (
                   <div style={{ 
@@ -962,11 +964,13 @@ const Areas = () => {
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="">Chọn tầng</option>
-                  {floors.map((floor) => (
-                    <option key={floor.floorId} value={floor.floorId}>
-                      Tầng {floor.floorNumber}
-                    </option>
-                  ))}
+                  {floors
+                    .sort((a, b) => a.floorNumber - b.floorNumber)
+                    .map((floor) => (
+                      <option key={floor.floorId} value={floor.floorId}>
+                        Tầng {floor.floorNumber}
+                      </option>
+                    ))}
                 </select>
               </div>
 

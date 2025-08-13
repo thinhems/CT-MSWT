@@ -4,6 +4,7 @@ import ReportTable from "../components/ReportTable";
 import Pagination from "../components/Pagination";
 import { useReports, useReportsWithRole, useReport, createReport, updateReport, updateReportStatus, deleteReport, PRIORITY_MAPPING, STATUS_MAPPING } from "../hooks/useReport";
 import { useAuth } from "../contexts/AuthContext";
+import { uploadImageToCloudinary } from "../services/imageUploadService";
 
 const ReportManagement = () => {
   const [priorityFilter, setPriorityFilter] = useState(""); // Filter by priority
@@ -26,6 +27,8 @@ const ReportManagement = () => {
     reportedTo: "", // Nhân viên được báo cáo
     image: null, // File hình ảnh
     imagePreview: null, // URL preview hình ảnh
+    imageUrl: null, // URL ảnh đã upload
+    isUploading: false, // Trạng thái upload
     reportType: "",
     status: "Đang duyệt"
   });
@@ -216,6 +219,8 @@ const ReportManagement = () => {
       reportedTo: "", 
       image: null,
       imagePreview: null,
+      imageUrl: null,
+      isUploading: false,
       reportType: "",
       status: "Đang duyệt"
     });
@@ -229,20 +234,47 @@ const ReportManagement = () => {
     }));
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Convert file thành base64 để có thể lưu vào localStorage
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64String = event.target.result;
+      // Hiển thị loading state
+      setNewReport(prev => ({
+        ...prev,
+        image: file,
+        imagePreview: null,
+        isUploading: true
+      }));
+
+      try {
+        // Upload ảnh lên Cloudinary
+        const uploadResult = await uploadImageToCloudinary(file);
+        
+        if (uploadResult.success) {
+          setNewReport(prev => ({
+            ...prev,
+            image: file,
+            imagePreview: uploadResult.url,
+            imageUrl: uploadResult.url,
+            isUploading: false
+          }));
+          
+          console.log('✅ Ảnh đã được upload thành công:', uploadResult);
+        } else {
+          throw new Error(uploadResult.error);
+        }
+      } catch (error) {
+        console.error('❌ Lỗi upload ảnh:', error);
+        alert(`Không thể upload ảnh: ${error.message}`);
+        
+        // Reset state nếu upload thất bại
         setNewReport(prev => ({
           ...prev,
-          image: file,
-          imagePreview: base64String
+          image: null,
+          imagePreview: null,
+          imageUrl: null,
+          isUploading: false
         }));
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -250,7 +282,9 @@ const ReportManagement = () => {
     setNewReport(prev => ({
       ...prev,
       image: null,
-      imagePreview: null
+      imagePreview: null,
+      imageUrl: null,
+      isUploading: false
     }));
   };
 
@@ -282,10 +316,8 @@ const ReportManagement = () => {
     const reportData = {
       description: newReport.description,
       reportName: newReport.reportType === "1" ? "Báo cáo sự cố" : "Báo cáo nhân viên",
-      image: newReport.imagePreview || "",
-      priority: typeof newReport.priority === 'string' ? 
-        PRIORITY_MAPPING[newReport.priority] || 2 : 
-        newReport.priority,
+      image: newReport.imageUrl || newReport.imagePreview || "",
+      priority: parseInt(newReport.priority), // Priority đã là số đúng rồi (1=Cao, 2=Trung bình, 3=Thấp)
       reportType: parseInt(newReport.reportType),
     };
 
@@ -840,9 +872,9 @@ const ReportManagement = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
-                  <option value="3">Thấp</option>
-                  <option value="2">Trung bình</option>
-                  <option value="1">Cao</option>
+                  <option value="3">Thấp </option>
+                  <option value="2">Trung bình </option>
+                  <option value="1">Cao </option>
                 </select>
               </div>
 
@@ -911,10 +943,34 @@ const ReportManagement = () => {
                     onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                   />
                   
-                  {newReport.imagePreview && (
+                  {/* Loading state */}
+                  {newReport.isUploading && (
+                    <div style={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      gap: "8px",
+                      padding: "12px",
+                      backgroundColor: "#f3f4f6",
+                      borderRadius: "8px",
+                      color: "#6b7280"
+                    }}>
+                      <div style={{
+                        width: "16px",
+                        height: "16px",
+                        border: "2px solid #e5e7eb",
+                        borderTop: "2px solid #3b82f6",
+                        borderRadius: "50%",
+                        animation: "spin 1s linear infinite"
+                      }} />
+                      Đang upload ảnh...
+                    </div>
+                  )}
+
+                  {/* Image preview */}
+                  {(newReport.imagePreview || newReport.imageUrl) && !newReport.isUploading && (
                     <div style={{ position: "relative", display: "inline-block" }}>
                       <img
-                        src={newReport.imagePreview}
+                        src={newReport.imageUrl || newReport.imagePreview}
                         alt="Preview"
                         style={{
                           maxWidth: "200px",

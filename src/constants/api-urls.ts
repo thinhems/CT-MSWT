@@ -111,7 +111,7 @@ export const API_URLS = {
     GET_WITH_ROLE: `reports/with-role`, // GET /api/reports/with-role - Filter theo role
     GET_BY_ID: (id: string) => `reports/${id}`,
     CREATE: `reports`,
-    CREATE_LEADER: `reports/leader`, // POST /api/reports/leader - Tạo báo cáo cho Leader
+    CREATE_LEADER: `reports/leader-supervisor`, // POST /api/reports/leader-supervisor - Tạo báo cáo cho Leader
     UPDATE: (id: string) => `reports/${id}`,
     UPDATE_STATUS: (id: string) => `reports/${id}/status`, // PATCH /api/reports/{id}/status
     DELETE: (id: string) => `reports/${id}`,

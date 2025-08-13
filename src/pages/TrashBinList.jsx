@@ -7,6 +7,7 @@ import { useAreas } from "../hooks/useArea";
 import { useRestrooms } from "../hooks/useRestroom";
 import { BASE_API_URL, API_URLS } from "../constants/api-urls";
 
+
 const TrashBinList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,11 +23,8 @@ const TrashBinList = () => {
   const [newTrashBin, setNewTrashBin] = useState({
     areaId: "",
     location: "",
-    image: "",
     restroomId: ""
   });
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState({
     isVisible: false,
@@ -240,103 +238,13 @@ const TrashBinList = () => {
     }));
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        showNotificationMessage("error", "Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG, GIF, WEBP)!");
-        return;
-      }
 
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        showNotificationMessage("error", "Kích thước file không được vượt quá 5MB!");
-        return;
-      }
 
-      setSelectedFile(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  const removeSelectedFile = () => {
-    setSelectedFile(null);
-    setImagePreview(null);
-    // Reset file input
-    const fileInput = document.querySelector('input[type="file"]');
-    if (fileInput) {
-      fileInput.value = '';
-    }
-  };
 
-  const uploadImageToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        // Convert to base64 string (without data:image/jpeg;base64, prefix)
-        const base64 = reader.result.split(',')[1];
-        console.log('🖼️ Base64 conversion successful:', {
-          originalSize: file.size,
-          base64Length: base64.length,
-          fileType: file.type,
-          fileName: file.name
-        });
-        resolve(base64);
-      };
-      reader.onerror = (error) => {
-        console.error('❌ FileReader error:', error);
-        reject(error);
-      };
-      reader.readAsDataURL(file);
-    });
-  };
 
-  // New function to try different image upload formats
-  const uploadImageAsFormData = async (file, trashBinData) => {
-    try {
-      const formData = new FormData();
-      formData.append('areaId', trashBinData.areaId);
-      formData.append('location', trashBinData.location);
-      formData.append('image', file); // Send file directly
-      if (trashBinData.restroomId) {
-        formData.append('restroomId', trashBinData.restroomId);
-      }
 
-      console.log('🔄 Attempting FormData upload...');
-      console.log('📋 FormData contents:');
-      for (let [key, value] of formData.entries()) {
-        console.log(`  ${key}:`, value instanceof File ? `File(${value.name}, ${value.size} bytes)` : value);
-      }
 
-      const response = await fetch(`${BASE_API_URL}/${API_URLS.TRASHBIN.CREATE}`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          // Don't set Content-Type for FormData - let browser set it with boundary
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`FormData upload failed: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ FormData upload successful:', result);
-      return result;
-    } catch (error) {
-      console.error('❌ FormData upload failed:', error);
-      throw error;
-    }
-  };
 
   const handleSubmitTrashBin = async (e) => {
     e.preventDefault();
@@ -352,130 +260,24 @@ const TrashBinList = () => {
     setIsSubmitting(true);
     
     try {
-      const baseData = {
+      const submitData = {
         areaId: newTrashBin.areaId,
         location: newTrashBin.location.trim(),
         restroomId: newTrashBin.restroomId || ""
       };
 
-      console.log('🔄 Starting trash bin creation...');
-      console.log('📋 Base data:', baseData);
-      
-      if (selectedFile) {
-        console.log('🖼️ File selected:', {
-          name: selectedFile.name,
-          size: selectedFile.size,
-          type: selectedFile.type
-        });
+      console.log('🔄 Creating trash bin:', submitData);
+      const response = await createAsync(submitData);
+      console.log('✅ Trash bin created successfully:', response);
 
-        // Strategy 1: Try FormData first (most common for file uploads)
-        try {
-          console.log('🔄 Attempting Strategy 1: FormData upload');
-          const response = await uploadImageAsFormData(selectedFile, baseData);
-          console.log('✅ FormData upload successful:', response);
-          
-          // Reset form and show success
-          setNewTrashBin({
-            areaId: "",
-            location: "",
-            image: "",
-            restroomId: ""
-          });
-          setSelectedFile(null);
-          setImagePreview(null);
-          setShowAddModal(false);
-          showNotificationMessage("success", "🎉 Đã thêm thùng rác thành công!");
-          return;
-        } catch (formDataError) {
-          console.warn('⚠️ FormData upload failed, trying base64...', formDataError.message);
-        }
-
-        // Strategy 2: Try base64 in JSON
-        try {
-          console.log('🔄 Attempting Strategy 2: Base64 in JSON');
-          const imageData = await uploadImageToBase64(selectedFile);
-          
-          const submitData = {
-            ...baseData,
-            image: imageData
-          };
-
-          console.log('🔄 Creating trash bin with base64 data:', { 
-            ...submitData, 
-            image: `[Base64 data: ${imageData.length} chars]` 
-          });
-          
-          const response = await createAsync(submitData);
-          console.log('✅ Base64 upload successful:', response);
-          
-          // Reset form and show success
-          setNewTrashBin({
-            areaId: "",
-            location: "",
-            image: "",
-            restroomId: ""
-          });
-          setSelectedFile(null);
-          setImagePreview(null);
-          setShowAddModal(false);
-          showNotificationMessage("success", "🎉 Đã thêm thùng rác thành công!");
-          return;
-        } catch (base64Error) {
-          console.warn('⚠️ Base64 upload failed, trying without image...', base64Error.message);
-        }
-
-        // Strategy 3: Create without image and warn user
-        try {
-          console.log('🔄 Attempting Strategy 3: Create without image');
-          const submitData = {
-            ...baseData,
-            image: "" // Empty image
-          };
-
-          console.log('🔄 Creating trash bin without image:', submitData);
-          const response = await createAsync(submitData);
-          console.log('✅ Creation without image successful:', response);
-          
-          // Reset form and show partial success warning
-          setNewTrashBin({
-            areaId: "",
-            location: "",
-            image: "",
-            restroomId: ""
-          });
-          setSelectedFile(null);
-          setImagePreview(null);
-          setShowAddModal(false);
-          showNotificationMessage("warning", "⚠️ Thùng rác đã được tạo nhưng không thể tải ảnh lên. Vui lòng thử lại sau.");
-          return;
-        } catch (noImageError) {
-          console.error('❌ All upload strategies failed:', noImageError);
-          throw new Error("Không thể tạo thùng rác. Vui lòng kiểm tra kết nối mạng và thử lại.");
-        }
-      } else {
-        // No image selected - standard creation
-        console.log('🔄 Creating trash bin without image (no file selected)');
-        const submitData = {
-          ...baseData,
-          image: ""
-        };
-
-        console.log('🔄 Creating trash bin:', submitData);
-        const response = await createAsync(submitData);
-        console.log('✅ Trash bin created successfully:', response);
-
-        // Reset form
-        setNewTrashBin({
-          areaId: "",
-          location: "",
-          image: "",
-          restroomId: ""
-        });
-        setSelectedFile(null);
-        setImagePreview(null);
-        setShowAddModal(false);
-        showNotificationMessage("success", "🎉 Đã thêm thùng rác thành công!");
-      }
+      // Reset form
+      setNewTrashBin({
+        areaId: "",
+        location: "",
+        restroomId: ""
+      });
+      setShowAddModal(false);
+      showNotificationMessage("success", "🎉 Đã thêm thùng rác thành công!");
       
     } catch (error) {
       console.error('❌ Error creating trash bin:', error);
@@ -490,16 +292,8 @@ const TrashBinList = () => {
     setNewTrashBin({
       areaId: "",
       location: "",
-      image: "",
       restroomId: ""
     });
-    setSelectedFile(null);
-    setImagePreview(null);
-    // Reset file input
-    const fileInput = document.querySelector('input[type="file"]');
-    if (fileInput) {
-      fileInput.value = '';
-    }
   };
 
   const getStatusBadge = (status) => {
@@ -1414,8 +1208,8 @@ const TrashBinList = () => {
                 />
               </div>
 
-              {/* Image Upload */}
-              <div style={{ marginBottom: "20px" }}>
+              {/* Image Upload - Hidden */}
+              {/* <div style={{ marginBottom: "20px" }}>
                 <label
                   style={{
                     display: "block",
@@ -1428,7 +1222,6 @@ const TrashBinList = () => {
                   Hình ảnh thùng rác (tùy chọn)
                 </label>
                 
-                {/* File Input */}
                 <div style={{
                   border: "2px dashed #d1d5db",
                   borderRadius: "8px",
@@ -1509,7 +1302,7 @@ const TrashBinList = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Restroom Selection */}
               <div style={{ marginBottom: "24px" }}>
