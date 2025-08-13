@@ -94,6 +94,11 @@ const Sidebar = () => {
       path: "/attendance",
       icon: HiOutlineUserGroup,
     },
+    {
+      title: "Yêu cầu",
+      path: "/request-management",
+      icon: HiOutlineClipboardList,
+    },
   ];
 
   return (

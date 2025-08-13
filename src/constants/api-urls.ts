@@ -145,4 +145,16 @@ export const API_URLS = {
     GET_ALL: `attendanceRecord/all`,
     GET_BY_DATE: (date: string) => `attendanceRecord/date/${date}`,
   },
+
+  // Request management endpoints
+  REQUEST: {
+    GET_ALL: `request`, // GET /api/request - Tất cả yêu cầu
+    GET_WITH_ROLE: `request/with-role`, // GET /api/request/with-role - Filter theo role
+    GET_BY_ID: (id: string) => `request/${id}`,
+    CREATE: `request`,
+    CREATE_LEADER: `request/leader`, // POST /api/request/leader - Tạo yêu cầu cho Leader
+    UPDATE: (id: string) => `request/${id}`,
+    UPDATE_STATUS: (id: string) => `request/${id}/status`, // PATCH /api/request/{id}/status
+    DELETE: (id: string) => `request/${id}`,
+  },
 };
