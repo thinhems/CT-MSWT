@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { HiOutlineX } from "react-icons/hi";
 import { Schedule } from "@/config/models/schedule.model";
 import { useScheduleDetails } from "../hooks/useScheduleDetails";
-import { useUsers } from "../hooks/useUsers";
+import { useUnassignedWorkers } from "../hooks/useUnassignedWorkers";
 import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 
@@ -14,7 +14,7 @@ interface IProps {
 
 const StaffAssignmentModal = ({ schedule, isVisible, onClose }: IProps) => {
   const { scheduleDetails, mutate } = useScheduleDetails(schedule?.scheduleId);
-  const { users } = useUsers();
+  const { unassignedWorkers, isLoading: isLoadingWorkers } = useUnassignedWorkers();
   
   const [selectedDetailId, setSelectedDetailId] = useState<string>("");
   const [staffData, setStaffData] = useState({
@@ -23,35 +23,35 @@ const StaffAssignmentModal = ({ schedule, isVisible, onClose }: IProps) => {
   });
   const [isAssigning, setIsAssigning] = useState(false);
 
-  // Filter users by position
+  // Filter unassigned workers by position
   const workers = useMemo(() => {
-    if (!users) return [];
-    const filteredWorkers = users.filter((user: any) => user.position === "Nhân viên vệ sinh");
-    console.log("🔍 All users:", users);
-    console.log("🔍 Filtered workers:", filteredWorkers);
-    console.log("🔍 Available positions:", [...new Set(users.map((u: any) => u.position))]);
+    if (!unassignedWorkers) return [];
+    const filteredWorkers = unassignedWorkers.filter((worker: any) => worker.description === "Nhân viên vệ sinh");
+    console.log("🔍 All unassigned workers:", unassignedWorkers);
+    console.log("🔍 Filtered unassigned workers:", filteredWorkers);
+    console.log("🔍 Available descriptions:", [...new Set(unassignedWorkers.map((u: any) => u.description))]);
     return filteredWorkers;
-  }, [users]);
+  }, [unassignedWorkers]);
 
   const supervisors = useMemo(() => {
-    if (!users) return [];
+    if (!unassignedWorkers) return [];
     
     // Chỉ filter "Giám sát viên vệ sinh"
-    const filteredSupervisors = users.filter((user: any) => 
-      user.position === "Giám sát viên vệ sinh"
+    const filteredSupervisors = unassignedWorkers.filter((worker: any) => 
+      worker.description === "Giám sát viên vệ sinh"
     );
     
-    console.log("🔍 Filtered supervisors:", filteredSupervisors);
-    console.log("🔍 Supervisor positions found:", filteredSupervisors.map(s => s.position));
+    console.log("🔍 Filtered unassigned supervisors:", filteredSupervisors);
+    console.log("🔍 Supervisor descriptions found:", filteredSupervisors.map((s: any) => s.description));
     
     return filteredSupervisors;
-  }, [users]);
+  }, [unassignedWorkers]);
 
   // Get user name by ID
   const getUserName = (userId: string) => {
-    if (!users || !userId) return "Chưa gán";
-    const user = users.find((u: any) => u.id === userId);
-    return user?.name || userId;
+    if (!unassignedWorkers || !userId) return "Chưa gán";
+    const user = unassignedWorkers.find((u: any) => u.userId === userId);
+    return user?.fullName || userId;
   };
 
   // Handle form changes
@@ -73,7 +73,7 @@ const StaffAssignmentModal = ({ schedule, isVisible, onClose }: IProps) => {
     console.log("🚀 Assigning worker:", { scheduleDetailId, workerId });
     
     // Verify worker exists in data
-    const selectedWorker = workers.find(w => w.id === workerId);
+    const selectedWorker = workers.find((w: any) => w.userId === workerId);
     console.log("🚀 Selected worker object:", selectedWorker);
     
     try {
@@ -96,7 +96,7 @@ const StaffAssignmentModal = ({ schedule, isVisible, onClose }: IProps) => {
     console.log("🚀 Assigning supervisor:", { scheduleDetailId, supervisorId });
     
     // Verify supervisor exists in data
-    const selectedSupervisor = supervisors.find(s => s.id === supervisorId);
+    const selectedSupervisor = supervisors.find((s: any) => s.userId === supervisorId);
     console.log("🚀 Selected supervisor object:", selectedSupervisor);
     
     try {
@@ -279,6 +279,26 @@ const StaffAssignmentModal = ({ schedule, isVisible, onClose }: IProps) => {
           </div>
         </div>
 
+        {/* Info Note about Unassigned Workers API */}
+        <div style={{
+          backgroundColor: "#f0f9ff",
+          borderRadius: "8px",
+          padding: "12px 16px",
+          marginBottom: "20px",
+          border: "1px solid #e0f2fe",
+        }}>
+          <div style={{
+            fontSize: "13px",
+            color: "#1e40af",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px"
+          }}>
+            <span style={{ fontWeight: "500" }}>ℹ️</span>
+            Dropdown hiển thị chỉ những nhân viên chưa được gán công việc (từ API /api/users/unassigned-workers)
+          </div>
+        </div>
+
         {/* Assignment Form */}
         <form onSubmit={handleAssignmentSubmit}>
           {/* Select Schedule Detail */}
@@ -412,22 +432,41 @@ const StaffAssignmentModal = ({ schedule, isVisible, onClose }: IProps) => {
                 name="workerId"
                 value={staffData.workerId}
                 onChange={handleInputChange}
+                disabled={isLoadingWorkers}
                 style={{
                   width: "100%",
                   padding: "12px",
                   border: "1px solid #d1d5db",
                   borderRadius: "8px",
                   fontSize: "14px",
-                  backgroundColor: "white",
+                  backgroundColor: isLoadingWorkers ? "#f3f4f6" : "white",
+                  cursor: isLoadingWorkers ? "not-allowed" : "pointer",
                 }}
               >
-                <option value="">-- Chọn nhân viên --</option>
+                <option value="">
+                  {isLoadingWorkers ? "Đang tải..." : "-- Chọn nhân viên --"}
+                </option>
+                {!isLoadingWorkers && workers.length === 0 && (
+                  <option value="" disabled>
+                    Không có nhân viên vệ sinh nào khả dụng
+                  </option>
+                )}
                 {workers.map((worker: any) => (
-                  <option key={worker.id} value={worker.id}>
-                    {worker.name} ({worker.position})
+                  <option key={worker.userId} value={worker.userId}>
+                    {worker.fullName} ({worker.description})
                   </option>
                 ))}
               </select>
+              {!isLoadingWorkers && workers.length === 0 && (
+                <div style={{
+                  fontSize: "12px",
+                  color: "#ef4444",
+                  marginTop: "4px",
+                  fontStyle: "italic"
+                }}>
+                  ⚠️ Tất cả nhân viên vệ sinh đã được gán công việc
+                </div>
+              )}
             </div>
 
             {/* Supervisor Selection */}
@@ -445,22 +484,41 @@ const StaffAssignmentModal = ({ schedule, isVisible, onClose }: IProps) => {
                 name="supervisorId"
                 value={staffData.supervisorId}
                 onChange={handleInputChange}
+                disabled={isLoadingWorkers}
                 style={{
                   width: "100%",
                   padding: "12px",
                   border: "1px solid #d1d5db",
                   borderRadius: "8px",
                   fontSize: "14px",
-                  backgroundColor: "white",
+                  backgroundColor: isLoadingWorkers ? "#f3f4f6" : "white",
+                  cursor: isLoadingWorkers ? "not-allowed" : "pointer",
                 }}
               >
-                <option value="">-- Chọn giám sát viên vệ sinh --</option>
+                <option value="">
+                  {isLoadingWorkers ? "Đang tải..." : "-- Chọn giám sát viên vệ sinh --"}
+                </option>
+                {!isLoadingWorkers && supervisors.length === 0 && (
+                  <option value="" disabled>
+                    Không có giám sát viên vệ sinh nào khả dụng
+                  </option>
+                )}
                 {supervisors.map((supervisor: any) => (
-                  <option key={supervisor.id} value={supervisor.id}>
-                    {supervisor.name} ({supervisor.position})
+                  <option key={supervisor.userId} value={supervisor.userId}>
+                    {supervisor.fullName} ({supervisor.description})
                   </option>
                 ))}
               </select>
+              {!isLoadingWorkers && supervisors.length === 0 && (
+                <div style={{
+                  fontSize: "12px",
+                  color: "#ef4444",
+                  marginTop: "4px",
+                  fontStyle: "italic"
+                }}>
+                  ⚠️ Tất cả giám sát viên vệ sinh đã được gán công việc
+                </div>
+              )}
             </div>
           </div>
 

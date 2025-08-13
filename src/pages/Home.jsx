@@ -1,3 +1,5 @@
+import ApiTestDebug from '../components/ApiTestDebug';
+
 const Home = () => {
   return (
     <div className="container mx-auto px-4 py-8">
@@ -5,6 +7,9 @@ const Home = () => {
       <p className="text-lg text-gray-600">
         This is the home page of your application.
       </p>
+      
+      {/* Temporary API Test Component */}
+      <ApiTestDebug />
     </div>
   );
 };

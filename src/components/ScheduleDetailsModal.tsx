@@ -1,7 +1,7 @@
 import { HiOutlineX, HiOutlineClipboardList, HiOutlinePlus } from "react-icons/hi";
 import { Schedule } from "@/config/models/schedule.model";
 import { useScheduleDetails } from "../hooks/useScheduleDetails";
-import { useUsers } from "../hooks/useUsers";
+import { useUnassignedWorkers } from "../hooks/useUnassignedWorkers";
 import { useAssignments } from "../hooks/useAssignments";
 import { useShifts } from "../hooks/useShifts";
 import { API_URLS } from "../constants/api-urls";
@@ -25,7 +25,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
   const { assignments } = useAssignments();
   const { shifts } = useShifts(); // Keep for shift name lookup
   const { scheduleDetails, createScheduleDetailForSchedule } = useScheduleDetails(schedule?.scheduleId);
-  const { users } = useUsers();
+  const { unassignedWorkers, isLoading: isLoadingWorkers } = useUnassignedWorkers();
   
   // State for creating new schedule detail
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -38,11 +38,11 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     workerId: "",
   });
   
-  // Filter users by position for staff assignment
+  // Filter unassigned workers by position for staff assignment
   const workers = useMemo(() => {
-    if (!users) return [];
-    return users.filter((user: any) => user.position === "Nhân viên vệ sinh");
-  }, [users]);
+    if (!unassignedWorkers) return [];
+    return unassignedWorkers.filter((worker: any) => worker.description === "Nhân viên vệ sinh");
+  }, [unassignedWorkers]);
 
 
 
@@ -108,12 +108,12 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     }
   };
 
-  // Get user name by ID
-  const getUserName = (userId: string) => {
-    if (!users || !userId) return "Chưa gán";
-    const user = users.find((u: any) => u.id === userId);
-    return user?.name || userId;
-  };
+      // Get user name by ID
+    const getUserName = (userId: string) => {
+      if (!unassignedWorkers || !userId) return "Chưa gán";
+      const user = unassignedWorkers.find((u: any) => u.userId === userId);
+      return user?.fullName || userId;
+    };
 
 
   const workerNameTabs = useMemo(() => {
@@ -124,7 +124,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
       if (name && name !== "Chưa gán") names.add(name);
     });
     return ["Tất cả", ...Array.from(names)];
-  }, [scheduleDetails, users]);
+  }, [scheduleDetails, unassignedWorkers]);
 
   // Filter schedule details by worker name
   const filteredScheduleDetails = useMemo(() => {
@@ -137,7 +137,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
         getUserName(detail.workerId) === activeWorkerNameTab;
       return matchesName && matchesNameTab;
     });
-  }, [scheduleDetails, detailSearchTerm, activeWorkerNameTab, users]);
+  }, [scheduleDetails, detailSearchTerm, activeWorkerNameTab, unassignedWorkers]);
 
   const getScheduleTypeDisplay = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -790,6 +790,26 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   marginBottom: "20px",
                   border: "1px solid #e0f2fe"
                 }}>
+                  {/* Info Note about Unassigned Workers API */}
+                  <div style={{
+                    backgroundColor: "#e0f2fe",
+                    borderRadius: "6px",
+                    padding: "8px 12px",
+                    marginBottom: "12px",
+                    border: "1px solid #b3e5fc",
+                  }}>
+                    <div style={{
+                      fontSize: "12px",
+                      color: "#0277bd",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px"
+                    }}>
+                      <span style={{ fontWeight: "500" }}>ℹ️</span>
+                      Dropdown hiển thị chỉ những nhân viên chưa được gán công việc
+                    </div>
+                  </div>
+                  
                   <h5 style={{ 
                     fontSize: "14px", 
                     fontWeight: "600", 
@@ -820,20 +840,29 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                       name="workerId"
                       value={newDetail.workerId}
                       onChange={handleDetailInputChange}
+                      disabled={isLoadingWorkers}
                       style={{
                         width: "100%",
                         padding: "10px",
                         border: "1px solid #d1d5db",
                         borderRadius: "6px",
                         fontSize: "13px",
-                        backgroundColor: "white",
-                        fontFamily: "inherit"
+                        backgroundColor: isLoadingWorkers ? "#f3f4f6" : "white",
+                        fontFamily: "inherit",
+                        cursor: isLoadingWorkers ? "not-allowed" : "pointer",
                       }}
                     >
-                      <option value="">-- Chọn nhân viên --</option>
+                      <option value="">
+                        {isLoadingWorkers ? "Đang tải..." : "-- Chọn nhân viên --"}
+                      </option>
+                      {!isLoadingWorkers && workers.length === 0 && (
+                        <option value="" disabled>
+                          Không có nhân viên vệ sinh nào khả dụng
+                        </option>
+                      )}
                       {workers.map((worker: any) => (
-                        <option key={worker.id} value={worker.id}>
-                          {worker.name}
+                        <option key={worker.userId} value={worker.userId}>
+                          {worker.fullName}
                         </option>
                       ))}
                     </select>
@@ -938,14 +967,20 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                               {new Date(detail.date).toLocaleDateString("vi-VN")}
                             </td>
                             <td style={{ padding: "12px 14px", fontSize: "13px", color: "#374151", verticalAlign: "top" }}>
-                              <span>
-                                {[1,2,3,4,5].map((star) => (
-                                  <span key={star} style={{ color: star <= ratingValue ? "#f59e0b" : "#d1d5db", marginRight: 2 }}>★</span>
-                                ))}
-                              </span>
-                              <span style={{ marginLeft: 6, color: "#6b7280", fontSize: "12px" }}>
-                                {ratingValue > 0 ? `${ratingValue}/5` : "Chưa có đánh giá"}
-                              </span>
+                              {ratingValue > 0 ? (
+                                <span>
+                                  {[1,2,3,4,5].map((star) => (
+                                    <span key={star} style={{ color: star <= ratingValue ? "#f59e0b" : "#d1d5db", marginRight: 2 }}>★</span>
+                                  ))}
+                                  <span style={{ marginLeft: 6, color: "#6b7280", fontSize: "12px" }}>
+                                    {ratingValue}/5
+                                  </span>
+                                </span>
+                              ) : (
+                                <span style={{ color: "#6b7280", fontSize: "12px" }}>
+                                  Chưa đánh giá
+                                </span>
+                              )}
                             </td>
                           </tr>
                         );
@@ -1098,20 +1133,29 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                       name="workerId"
                       value={newDetail.workerId}
                       onChange={handleDetailInputChange}
+                      disabled={isLoadingWorkers}
                       style={{
                         width: "100%",
                         padding: "10px",
                         border: "1px solid #d1d5db",
                         borderRadius: "6px",
                         fontSize: "13px",
-                        backgroundColor: "white",
-                        fontFamily: "inherit"
+                        backgroundColor: isLoadingWorkers ? "#f3f4f6" : "white",
+                        fontFamily: "inherit",
+                        cursor: isLoadingWorkers ? "not-allowed" : "pointer",
                       }}
                     >
-                      <option value="">-- Chọn nhân viên --</option>
+                      <option value="">
+                        {isLoadingWorkers ? "Đang tải..." : "-- Chọn nhân viên --"}
+                      </option>
+                      {!isLoadingWorkers && workers.length === 0 && (
+                        <option value="" disabled>
+                          Không có nhân viên vệ sinh nào khả dụng
+                        </option>
+                      )}
                       {workers.map((worker: any) => (
-                        <option key={worker.id} value={worker.id}>
-                          {worker.name}
+                        <option key={worker.userId} value={worker.userId}>
+                          {worker.fullName}
                         </option>
                       ))}
                     </select>

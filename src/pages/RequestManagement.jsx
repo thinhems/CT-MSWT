@@ -1,533 +1,1104 @@
 import { useState, useEffect } from "react";
-import { HiOutlinePlus, HiX } from "react-icons/hi";
+import { HiOutlinePlus, HiX, HiOutlineSearch, HiOutlineClipboardList } from "react-icons/hi";
 import RequestTable from "../components/RequestTable";
 import Pagination from "../components/Pagination";
-import { useRequests, useRequestsWithRole, useRequest, createRequest, updateRequest, updateRequestStatus, deleteRequest, REQUEST_PRIORITY_MAPPING, REQUEST_STATUS_MAPPING } from "../hooks/useRequest";
+import { useRequests, useRequest, createRequest, updateRequestStatus, REQUEST_STATUS_MAPPING, REQUEST_STATUS_MAPPING_REVERSE } from "../hooks/useRequest";
 import { useAuth } from "../contexts/AuthContext";
 
 const RequestManagement = () => {
-  const [priorityFilter, setPriorityFilter] = useState(""); // Filter by priority
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all"); // "all", "supervisor", "worker", "mine"
   const [showAddRequestPopup, setShowAddRequestPopup] = useState(false);
   const [showViewRequestModal, setShowViewRequestModal] = useState(false);
   const [showUpdateRequestModal, setShowUpdateRequestModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [selectedRequestId, setSelectedRequestId] = useState(null); // ID for detailed API call
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
   const [updateRequestData, setUpdateRequestData] = useState({
-    requestType: "",
+    description: "",
     location: "",
     status: ""
   });
   const [newRequest, setNewRequest] = useState({
-    title: "",
+    workerId: "",
     description: "",
-    priority: 2,
-    requestedTo: "", // Nhân viên được yêu cầu
-    image: null, // File hình ảnh
-    imagePreview: null, // URL preview hình ảnh
-    requestType: "",
-    status: "Đang duyệt"
+    location: "",
+    status: "Đã gửi",
+    supervisorId: "",
+    trashBinId: ""
   });
 
-  const itemsPerPage = 5; // Số yêu cầu hiển thị mỗi trang
-  const { user } = useAuth(); // Get current user from auth context
-  const currentUser = user?.username || "Alex Morgan"; // Fallback
+  const itemsPerPage = 5;
+  const { user } = useAuth();
 
-  // API hooks - now using single call to get all requests with role info
+  // API hooks
   const { requests: allRequests, isLoading: allLoading, isError: allError, refresh: refreshAll } = useRequests();
-  const { requests: requestsWithRole, isLoading: roleLoading, isError: roleError, refresh: refreshWithRole } = useRequestsWithRole();
-  
-  // Hook for detailed request view
   const { request: detailedRequest, isLoading: detailLoading, isError: detailError } = useRequest(selectedRequestId);
-
-  // Debug detailed request data
-  console.log('🔍 Detailed Request Data:', detailedRequest);
-  console.log('🔍 Available fields:', detailedRequest ? Object.keys(detailedRequest) : 'No data');
-  console.log('🔍 requestedBy field:', detailedRequest?.requestedBy);
-  console.log('🔍 createdBy field:', detailedRequest?.createdBy);
-  console.log('🔍 userName field:', detailedRequest?.userName);
 
   // Get requests based on active tab
   const getRequestsForTab = () => {
-    switch (activeTab) {
-      case "all":
-        return { requests: allRequests, isLoading: allLoading, isError: allError };
-      case "supervisor":
-        // Filter requests where roleName is "Supervisor"
-        const supervisorRequests = requestsWithRole.filter(request => 
-          request.requesterRole === "Supervisor" || request.requesterRole === "supervisor"
-        );
-        return { requests: supervisorRequests, isLoading: roleLoading, isError: roleError };
-      case "worker":
-        // Filter requests where roleName is "Worker" 
-        const workerRequests = requestsWithRole.filter(request => 
-          request.requesterRole === "Worker" || request.requesterRole === "worker"
-        );
-        return { requests: workerRequests, isLoading: roleLoading, isError: roleError };
-      case "mine":
-        // Filter requests created by current leader specifically
-        console.log('🔍 Filtering current leader requests - User:', user?.username);
-        console.log('🔍 Requests with role data:', requestsWithRole.map(r => ({ 
-          requesterRole: r.requesterRole, 
-          userName: r.userName, 
-          createdBy: r.createdBy 
-        })));
-        const myLeaderRequests = requestsWithRole.filter(request => 
-          (request.requesterRole === "Leader" || request.requesterRole === "leader") &&
-          (request.userName === user?.username || request.createdBy === user?.username)
-        );
-        console.log('🔍 My leader requests:', myLeaderRequests);
-        return { requests: myLeaderRequests, isLoading: roleLoading, isError: roleError };
-      default:
-        return { requests: [], isLoading: false, isError: false };
+    if (activeTab === "all") {
+      return allRequests || [];
+    } else if (activeTab === "sent") {
+      return (allRequests || []).filter(request => request.status === "Đã gửi");
+    } else if (activeTab === "processing") {
+      return (allRequests || []).filter(request => request.status === "Đang xử lý");
+    } else if (activeTab === "completed") {
+      return (allRequests || []).filter(request => request.status === "Đã xử lý");
+    } else if (activeTab === "cancelled") {
+      return (allRequests || []).filter(request => request.status === "Đã hủy");
+    } else if (activeTab === "mine") {
+      return (allRequests || []).filter(request => request.workerId === user?.id);
     }
+    return allRequests || [];
   };
 
-  const { requests, isLoading, isError } = getRequestsForTab();
+  // Filter requests based on active tab and search term
+  const filteredRequests = getRequestsForTab().filter((request) => {
+    if (!searchTerm) return true;
+    return request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           request.location.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
-  const handleActionClick = ({ action, request }) => {
-    if (action === 'view') {
-      setSelectedRequestId(request.id); // Set ID to trigger API call
-      setSelectedRequest(request); // Keep basic info for immediate display
+  // Sort requests by request date (newest first)
+  const sortedRequests = [...filteredRequests].sort((a, b) => {
+    return new Date(b.requestDate) - new Date(a.requestDate);
+  });
+
+  const requests = sortedRequests;
+  const totalPages = Math.ceil(requests.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRequests = requests.slice(startIndex, endIndex);
+
+  // Get counts for tabs
+  const getTabCounts = () => {
+    const allCount = (allRequests || []).length;
+    const sentCount = (allRequests || []).filter(r => r.status === "Đã gửi").length;
+    const processingCount = (allRequests || []).filter(r => r.status === "Đang xử lý").length;
+    const completedCount = (allRequests || []).filter(r => r.status === "Đã xử lý").length;
+    const cancelledCount = (allRequests || []).filter(r => r.status === "Đã hủy").length;
+    const mineCount = (allRequests || []).filter(r => r.workerId === user?.id).length;
+
+    return { allCount, sentCount, processingCount, completedCount, cancelledCount, mineCount };
+  };
+
+  const tabCounts = getTabCounts();
+
+  const handleActionClick = ({ action, request, newStatus }) => {
+    if (action === "view") {
+      setSelectedRequest(request);
+      setSelectedRequestId(request.requestId);
       setShowViewRequestModal(true);
-    } else if (action === 'update') {
+    } else if (action === "edit") {
       setSelectedRequest(request);
       setUpdateRequestData({
-        requestType: request.requestType,
+        description: request.description,
         location: request.location,
         status: request.status
       });
       setShowUpdateRequestModal(true);
+    } else if (action === "status") {
+      handleStatusUpdate(request.requestId, newStatus);
     }
   };
 
   const handleAddRequest = async () => {
     try {
-      const requestData = {
-        description: newRequest.description,
-        requestName: newRequest.title,
-        priority: newRequest.priority,
-        requestType: parseInt(newRequest.requestType) || 1,
-        image: newRequest.image
-      };
-
-      await createRequest(requestData);
+      await createRequest(newRequest);
       setShowAddRequestPopup(false);
       setNewRequest({
-        title: "",
+        workerId: "",
         description: "",
-        priority: 2,
-        requestedTo: "",
-        image: null,
-        imagePreview: null,
-        requestType: "",
-        status: "Đang duyệt"
+        location: "",
+        status: "Đã gửi",
+        supervisorId: "",
+        trashBinId: ""
       });
-      
-      // Refresh data
       refreshAll();
-      refreshWithRole();
-      
-      alert("Tạo yêu cầu thành công!");
+      alert("✅ Đã thêm yêu cầu thành công!");
     } catch (error) {
       console.error("Error creating request:", error);
-      alert("Có lỗi xảy ra khi tạo yêu cầu!");
+      alert("Không thể tạo yêu cầu. Vui lòng thử lại.");
+    }
+  };
+
+  const handleStatusUpdate = async (requestId, newStatus) => {
+    try {
+      // Convert status text to number using the mapping
+      const statusNumber = REQUEST_STATUS_MAPPING_REVERSE[newStatus];
+      if (statusNumber === undefined) {
+        alert("Trạng thái không hợp lệ!");
+        return;
+      }
+      
+      await updateRequestStatus(requestId, statusNumber);
+      refreshAll();
+      alert("✅ Đã cập nhật trạng thái thành công!");
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Không thể cập nhật trạng thái. Vui lòng thử lại.");
     }
   };
 
   const handleUpdateRequest = async () => {
     try {
-      const updateData = {};
+      // Since the backend doesn't support updating requests, we'll just update the status
+      // if the status has changed
+      if (updateRequestData.status !== selectedRequest.status) {
+        const statusNumber = REQUEST_STATUS_MAPPING_REVERSE[updateRequestData.status];
+        if (statusNumber !== undefined) {
+          await updateRequestStatus(selectedRequest.requestId, statusNumber);
+        }
+      }
       
-      if (updateRequestData.requestType) updateData.requestType = updateRequestData.requestType;
-      if (updateRequestData.location) updateData.location = updateRequestData.location;
-      if (updateRequestData.status) updateData.status = updateRequestData.status;
-
-      await updateRequest(selectedRequest.id, updateData);
       setShowUpdateRequestModal(false);
-      
-      // Refresh data
+      setSelectedRequest(null);
+      setUpdateRequestData({
+        description: "",
+        location: "",
+        status: ""
+      });
       refreshAll();
-      refreshWithRole();
-      
-      alert("Cập nhật yêu cầu thành công!");
+      alert("✅ Đã cập nhật yêu cầu thành công!");
     } catch (error) {
       console.error("Error updating request:", error);
-      alert("Có lỗi xảy ra khi cập nhật yêu cầu!");
+      alert("Không thể cập nhật yêu cầu. Vui lòng thử lại.");
     }
   };
 
-  const handleDeleteRequest = async (requestId) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa yêu cầu này?')) {
-      try {
-        await deleteRequest(requestId);
-        
-        // Refresh data
-        refreshAll();
-        refreshWithRole();
-        
-        alert("Xóa yêu cầu thành công!");
-      } catch (error) {
-        console.error("Error deleting request:", error);
-        alert("Có lỗi xảy ra khi xóa yêu cầu!");
-      }
-    }
+  const handleCloseViewModal = () => {
+    setShowViewRequestModal(false);
+    setSelectedRequest(null);
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setNewRequest(prev => ({
-        ...prev,
-        image: file,
-        imagePreview: URL.createObjectURL(file)
-      }));
-    }
+  const handleClosePopup = () => {
+    setShowAddRequestPopup(false);
+    setNewRequest({
+      workerId: "",
+      description: "",
+      location: "",
+      status: "Đã gửi",
+      supervisorId: "",
+      trashBinId: ""
+    });
   };
 
-  const removeImage = () => {
-    setNewRequest(prev => ({
+  const handleCloseUpdateModal = () => {
+    setShowUpdateRequestModal(false);
+    setSelectedRequest(null);
+    setUpdateRequestData({
+      description: "",
+      location: "",
+      status: ""
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewRequest((prev) => ({
       ...prev,
-      image: null,
-      imagePreview: null
+      [name]: value,
     }));
   };
 
-  // Filter requests by priority
-  const filteredRequests = priorityFilter
-    ? requests.filter(request => {
-        const priority = getPriorityDisplay(request.priority);
-        return priority === priorityFilter;
-      })
-    : requests;
-
-  // Pagination
-  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentRequests = filteredRequests.slice(startIndex, endIndex);
-
-  const getPriorityDisplay = (priority) => {
-    if (priority === undefined || priority === null) {
-      return "Không xác định";
-    }
-    
-    const priorityStr = String(priority).trim().toLowerCase();
-    
-    switch (priorityStr) {
-      case "1":
-      case "cao":
-        return "Cao";
-      case "2":
-      case "trung bình":
-        return "Trung bình";
-      case "3":
-      case "thấp":
-        return "Thấp";
-      default:
-        return "Không xác định";
-    }
+  const handleUpdateChange = (e) => {
+    const { name, value } = e.target;
+    setUpdateRequestData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  if (isLoading) {
+  const handleSubmitRequest = (e) => {
+    e.preventDefault();
+
+    // Kiểm tra đầy đủ thông tin
+    if (!newRequest.description || !newRequest.location || !newRequest.workerId) {
+      alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
+      return;
+    }
+
+    handleAddRequest();
+  };
+
+  const handleSubmitUpdate = (e) => {
+    e.preventDefault();
+    handleUpdateRequest();
+  };
+
+  // Reset về trang 1 khi search
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  if (allLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="text-lg text-gray-600">Đang tải...</div>
       </div>
     );
   }
 
-  if (isError) {
+  if (allError) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-600">Có lỗi xảy ra khi tải dữ liệu yêu cầu</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Thử lại
-        </button>
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg text-red-600">Có lỗi xảy ra khi tải dữ liệu</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Quản lý yêu cầu</h1>
-        <p className="text-gray-600">Quản lý và theo dõi các yêu cầu từ nhân viên</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            {[
-              { id: "all", label: "Tất cả yêu cầu" },
-              { id: "supervisor", label: "Yêu cầu từ giám sát" },
-              { id: "worker", label: "Yêu cầu từ công nhân" },
-              { id: "mine", label: "Yêu cầu của tôi" }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+    <div
+      style={{
+        backgroundColor: "#ffffff",
+        height: "100vh",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div style={{ padding: "16px", flex: "0 0 auto" }}>
+        
+        <div style={{ marginBottom: "16px" }}>
+          <nav style={{ color: "#6b7280", fontSize: "14px" }}>
+            <h1
+              style={{
+                fontSize: "22px",
+                fontWeight: "bold",
+                color: "#111827",
+                marginBottom: "16px",
+              }}
+            >
+              Quản lý Yêu cầu
+            </h1>
+            <span>Trang chủ</span>
+            <span style={{ margin: "0 8px" }}>›</span>
+            <span style={{ color: "#374151", fontWeight: "500" }}>
+              Quản lý Yêu cầu
+            </span>
           </nav>
         </div>
-      </div>
 
-      {/* Filters and Add Button */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex space-x-4">
-          <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Tất cả độ ưu tiên</option>
-            <option value="Cao">Cao</option>
-            <option value="Trung bình">Trung bình</option>
-            <option value="Thấp">Thấp</option>
-          </select>
+        {/* Tabs */}
+        <div style={{ marginBottom: "20px" }}>
+          <div style={{ display: "flex", gap: "8px", borderBottom: "2px solid #f3f4f6" }}>
+            <button
+              onClick={() => setActiveTab("all")}
+              style={{
+                padding: "12px 20px",
+                border: "none",
+                backgroundColor: activeTab === "all" ? "#FF5B27" : "transparent",
+                color: activeTab === "all" ? "white" : "#6b7280",
+                borderRadius: "8px 8px 0 0",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                position: "relative",
+              }}
+            >
+              Tất cả
+              <span
+                style={{
+                  marginLeft: "8px",
+                  backgroundColor: activeTab === "all" ? "rgba(255, 255, 255, 0.2)" : "#f3f4f6",
+                  color: activeTab === "all" ? "white" : "#6b7280",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                }}
+              >
+                {tabCounts.allCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("sent")}
+              style={{
+                padding: "12px 20px",
+                border: "none",
+                backgroundColor: activeTab === "sent" ? "#FF5B27" : "transparent",
+                color: activeTab === "sent" ? "white" : "#6b7280",
+                borderRadius: "8px 8px 0 0",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                position: "relative",
+              }}
+            >
+              Đã gửi
+              <span
+                style={{
+                  marginLeft: "8px",
+                  backgroundColor: activeTab === "sent" ? "rgba(255, 255, 255, 0.2)" : "#f3f4f6",
+                  color: activeTab === "sent" ? "white" : "#6b7280",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                }}
+              >
+                {tabCounts.sentCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("processing")}
+              style={{
+                padding: "12px 20px",
+                border: "none",
+                backgroundColor: activeTab === "processing" ? "#FF5B27" : "transparent",
+                color: activeTab === "processing" ? "white" : "#6b7280",
+                borderRadius: "8px 8px 0 0",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                position: "relative",
+              }}
+            >
+              Đang xử lý
+              <span
+                style={{
+                  marginLeft: "8px",
+                  backgroundColor: activeTab === "processing" ? "rgba(255, 255, 255, 0.2)" : "#f3f4f6",
+                  color: activeTab === "processing" ? "white" : "#6b7280",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                }}
+              >
+                {tabCounts.processingCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("completed")}
+              style={{
+                padding: "12px 20px",
+                border: "none",
+                backgroundColor: activeTab === "completed" ? "#FF5B27" : "transparent",
+                color: activeTab === "completed" ? "white" : "#6b7280",
+                borderRadius: "8px 8px 0 0",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                position: "relative",
+              }}
+            >
+              Đã xử lý
+              <span
+                style={{
+                  marginLeft: "8px",
+                  backgroundColor: activeTab === "completed" ? "rgba(255, 255, 255, 0.2)" : "#f3f4f6",
+                  color: activeTab === "completed" ? "white" : "#6b7280",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                }}
+              >
+                {tabCounts.completedCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("cancelled")}
+              style={{
+                padding: "12px 20px",
+                border: "none",
+                backgroundColor: activeTab === "cancelled" ? "#FF5B27" : "transparent",
+                color: activeTab === "cancelled" ? "white" : "#6b7280",
+                borderRadius: "8px 8px 0 0",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                position: "relative",
+              }}
+            >
+              Đã hủy
+              <span
+                style={{
+                  marginLeft: "8px",
+                  backgroundColor: activeTab === "cancelled" ? "rgba(255, 255, 255, 0.2)" : "#f3f4f6",
+                  color: activeTab === "cancelled" ? "white" : "#6b7280",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                }}
+              >
+                {tabCounts.cancelledCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("mine")}
+              style={{
+                padding: "12px 20px",
+                border: "none",
+                backgroundColor: activeTab === "mine" ? "#FF5B27" : "transparent",
+                color: activeTab === "mine" ? "white" : "#6b7280",
+                borderRadius: "8px 8px 0 0",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                position: "relative",
+              }}
+            >
+              Của tôi
+              <span
+                style={{
+                  marginLeft: "8px",
+                  backgroundColor: activeTab === "mine" ? "rgba(255, 255, 255, 0.2)" : "#f3f4f6",
+                  color: activeTab === "mine" ? "white" : "#6b7280",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                }}
+              >
+                {tabCounts.mineCount}
+              </span>
+            </button>
+          </div>
         </div>
 
-        <button
-          onClick={() => setShowAddRequestPopup(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        {/* Search and Add Button */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "12px",
+          }}
         >
-          <HiOutlinePlus className="mr-2 h-5 w-5" />
-          Thêm yêu cầu mới
-        </button>
+          {/* Search Box */}
+          <div style={{ position: "relative", flex: "1" }}>
+            <div
+              style={{
+                position: "absolute",
+                left: "16px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "#9ca3af",
+              }}
+            >
+              <HiOutlineSearch style={{ width: "20px", height: "20px" }} />
+            </div>
+            <input
+              type="text"
+              placeholder="Tìm yêu cầu"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              style={{
+                width: "32%",
+                padding: "12px 16px 12px 48px",
+                border: "1px solid #d1d5db",
+                borderRadius: "50px",
+                fontSize: "14px",
+                outline: "none",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+              onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: "flex", gap: "12px", marginLeft: "24px" }}>
+            {/* Add Request Button */}
+            <button
+              onClick={() => setShowAddRequestPopup(true)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                backgroundColor: "#FF5B27",
+                color: "white",
+                padding: "12px 20px",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "background-color 0.2s",
+              }}
+              onMouseEnter={(e) =>
+                (e.target.style.backgroundColor = "#e04516")
+              }
+              onMouseLeave={(e) =>
+                (e.target.style.backgroundColor = "#FF5B27")
+              }
+            >
+              <HiOutlinePlus style={{ width: "20px", height: "20px" }} />
+              Thêm yêu cầu
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Request Table */}
-      <div className="bg-white rounded-lg shadow">
+      {/* Content Area */}
+      <div style={{ flex: "0 0 auto" }}>
         <RequestTable 
           requests={currentRequests} 
-          onActionClick={handleActionClick}
+          onActionClick={handleActionClick} 
         />
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </div>
-      )}
+      <div style={{ flex: "0 0 auto", padding: "16px" }}>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      </div>
 
-      {/* Add Request Popup */}
+      {/* Add Request Modal */}
       {showAddRequestPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Thêm yêu cầu mới</h3>
-              <button
-                onClick={() => setShowAddRequestPopup(false)}
-                className="text-gray-400 hover:text-gray-600"
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={handleClosePopup}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              width: "500px",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              overflow: "auto",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "24px",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#111827",
+                  margin: 0,
+                }}
               >
-                <HiX className="h-6 w-6" />
+                Thêm yêu cầu mới
+              </h2>
+              <button
+                onClick={handleClosePopup}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px",
+                  borderRadius: "4px",
+                  color: "#6b7280",
+                }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#f3f4f6")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "transparent")
+                }
+              >
+                <HiX style={{ width: "24px", height: "24px" }} />
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tiêu đề yêu cầu
+            {/* Form */}
+            <form onSubmit={handleSubmitRequest}>
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
+                  Mô tả yêu cầu *
+                </label>
+                <textarea
+                  name="description"
+                  value={newRequest.description}
+                  onChange={handleInputChange}
+                  required
+                  rows={3}
+                  placeholder="Nhập mô tả yêu cầu"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                    resize: "vertical",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                />
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
+                  Vị trí *
                 </label>
                 <input
                   type="text"
-                  value={newRequest.title}
-                  onChange={(e) => setNewRequest(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nhập tiêu đề yêu cầu"
+                  name="location"
+                  value={newRequest.location}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Nhập vị trí yêu cầu"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mô tả
-                </label>
-                <textarea
-                  value={newRequest.description}
-                  onChange={(e) => setNewRequest(prev => ({ ...prev, description: e.target.value }))}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nhập mô tả chi tiết"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Loại yêu cầu
-                </label>
-                <select
-                  value={newRequest.requestType}
-                  onChange={(e) => setNewRequest(prev => ({ ...prev, requestType: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
                 >
-                  <option value="">Chọn loại yêu cầu</option>
-                  <option value="1">Vệ sinh</option>
-                  <option value="2">Bảo trì</option>
-                  <option value="3">Cung cấp</option>
-                  <option value="4">Khác</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Độ ưu tiên
-                </label>
-                <select
-                  value={newRequest.priority}
-                  onChange={(e) => setNewRequest(prev => ({ ...prev, priority: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value={1}>Cao</option>
-                  <option value={2}>Trung bình</option>
-                  <option value={3}>Thấp</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Hình ảnh (tùy chọn)
+                  ID Nhân viên *
                 </label>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="text"
+                  name="workerId"
+                  value={newRequest.workerId}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Nhập ID nhân viên (UUID)"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 />
-                {newRequest.imagePreview && (
-                  <div className="mt-2 relative">
-                    <img
-                      src={newRequest.imagePreview}
-                      alt="Preview"
-                      className="w-20 h-20 object-cover rounded"
-                    />
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
-                    >
-                      ×
-                    </button>
-                  </div>
-                )}
+                <small style={{ color: "#6b7280", fontSize: "12px", marginTop: "4px", display: "block" }}>
+                  Nhập ID nhân viên để tạo yêu cầu
+                </small>
               </div>
-            </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowAddRequestPopup(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-300 rounded-md hover:bg-gray-400"
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
+                  Trạng thái
+                </label>
+                <select
+                  name="status"
+                  value={newRequest.status}
+                  onChange={handleInputChange}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                >
+                  <option value="Đã gửi">Đã gửi</option>
+                  <option value="Đang xử lý">Đang xử lý</option>
+                  <option value="Đã xử lý">Đã xử lý</option>
+                  <option value="Đã hủy">Đã hủy</option>
+                </select>
+              </div>
+
+              {/* Buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "12px",
+                }}
               >
-                Hủy
-              </button>
-              <button
-                onClick={handleAddRequest}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Tạo yêu cầu
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={handleClosePopup}
+                  style={{
+                    padding: "12px 20px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    backgroundColor: "white",
+                    color: "#374151",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.backgroundColor = "#f9fafb")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.backgroundColor = "white")
+                  }
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: "12px 20px",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    backgroundColor: "#FF5B27",
+                    color: "white",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.backgroundColor = "#E04B1F")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.backgroundColor = "#FF5B27")
+                  }
+                >
+                  Thêm yêu cầu
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
       {/* View Request Modal */}
       {showViewRequestModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Chi tiết yêu cầu</h3>
-              <button
-                onClick={() => setShowViewRequestModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={handleCloseViewModal}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              width: "500px",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              overflow: "auto",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "24px",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#111827",
+                  margin: 0,
+                }}
               >
-                <HiX className="h-6 w-6" />
+                Chi tiết yêu cầu
+              </h2>
+              <button
+                onClick={handleCloseViewModal}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px",
+                  borderRadius: "4px",
+                  color: "#6b7280",
+                }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#f3f4f6")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "transparent")
+                }
+              >
+                <HiX style={{ width: "24px", height: "24px" }} />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Tiêu đề:</label>
-                <p className="text-sm text-gray-900">{selectedRequest.title || "Không có"}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Trạng thái:</label>
-                <p className="text-sm text-gray-900">{selectedRequest.status || "Không xác định"}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Độ ưu tiên:</label>
-                <p className="text-sm text-gray-900">{getPriorityDisplay(selectedRequest.priority)}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Loại yêu cầu:</label>
-                <p className="text-sm text-gray-900">{selectedRequest.requestType || "Không xác định"}</p>
-              </div>
-                              <div>
-                  <label className="block text-sm font-medium text-gray-700">Vị trí:</label>
-                  <p className="text-sm text-gray-900">{selectedRequest.location || "Không xác định"}</p>
-                </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Người yêu cầu:</label>
-                <p className="text-sm text-gray-900">{selectedRequest.requestedBy || selectedRequest.createdBy || "Không xác định"}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Người được phân công:</label>
-                <p className="text-sm text-gray-900">{selectedRequest.assignedTo || "Chưa phân công"}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Ngày tạo:</label>
-                <p className="text-sm text-gray-900">{selectedRequest.createdDate || "Không xác định"}</p>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700">Mô tả:</label>
-              <p className="text-sm text-gray-900 mt-1">{selectedRequest.description || "Không có mô tả"}</p>
-            </div>
-
-            {selectedRequest.imageUrl && (
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700">Hình ảnh:</label>
-                <img
-                  src={selectedRequest.imageUrl}
-                  alt="Request"
-                  className="mt-2 w-32 h-32 object-cover rounded"
+            {/* Request Info */}
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+            >
+              {/* Request Header */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "16px",
+                  backgroundColor: "#f8fafc",
+                  borderRadius: "8px",
+                }}
+              >
+                <HiOutlineClipboardList
+                  style={{ width: "24px", height: "24px", color: "#FF5B27" }}
                 />
+                <div>
+                  <h4
+                    style={{ margin: 0, fontSize: "18px", fontWeight: "600" }}
+                  >
+                    Yêu cầu #{selectedRequest.requestId.slice(0, 8)}
+                  </h4>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#6b7280" }}>
+                    {new Date(selectedRequest.requestDate).toLocaleDateString('vi-VN')}
+                  </p>
+                </div>
               </div>
-            )}
 
-            <div className="flex justify-end space-x-3 mt-6">
+              {/* Request Details */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "20px",
+                }}
+              >
+                <div>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Mô tả
+                  </label>
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      color: "#111827",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    {selectedRequest.description}
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Vị trí
+                  </label>
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      color: "#111827",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    {selectedRequest.location}
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Nhân viên
+                  </label>
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      color: "#111827",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    {selectedRequest.workerName || selectedRequest.workerId || "N/A"}
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Trạng thái
+                  </label>
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        padding: "4px 12px",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        borderRadius: "9999px",
+                        backgroundColor: 
+                          selectedRequest.status === "Đã xử lý" ? "#dcfce7" :
+                          selectedRequest.status === "Đang xử lý" ? "#fef3c7" :
+                          selectedRequest.status === "Đã gửi" ? "#dbeafe" : "#f3f4f6",
+                        color: 
+                          selectedRequest.status === "Đã xử lý" ? "#15803d" :
+                          selectedRequest.status === "Đang xử lý" ? "#d97706" :
+                          selectedRequest.status === "Đã gửi" ? "#1d4ed8" : "#374151",
+                      }}
+                    >
+                      {selectedRequest.status}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Description - Full width */}
+              <div>
+                <label
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#6b7280",
+                  }}
+                >
+                  Ngày xử lý
+                </label>
+                <p
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#111827",
+                    margin: "4px 0 0 0",
+                    lineHeight: "1.5",
+                  }}
+                >
+                  {selectedRequest.resolveDate 
+                    ? new Date(selectedRequest.resolveDate).toLocaleDateString('vi-VN')
+                    : "Chưa xử lý"
+                  }
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ textAlign: "right", marginTop: "24px" }}>
               <button
-                onClick={() => setShowViewRequestModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                onClick={() => handleCloseViewModal()}
+                style={{
+                  padding: "12px 24px",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  backgroundColor: "#6b7280",
+                  color: "white",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#4b5563")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#6b7280")
+                }
               >
                 Đóng
-              </button>
-              <button
-                onClick={() => {
-                  setShowViewRequestModal(false);
-                  handleActionClick({ action: 'update', request: selectedRequest });
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Cập nhật
               </button>
             </div>
           </div>
@@ -536,80 +1107,230 @@ const RequestManagement = () => {
 
       {/* Update Request Modal */}
       {showUpdateRequestModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Cập nhật yêu cầu</h3>
-              <button
-                onClick={() => setShowUpdateRequestModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={handleCloseUpdateModal}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              width: "500px",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              overflow: "auto",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "24px",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#111827",
+                  margin: 0,
+                }}
               >
-                <HiX className="h-6 w-6" />
+                Cập nhật yêu cầu
+              </h2>
+              <button
+                onClick={handleCloseUpdateModal}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px",
+                  borderRadius: "4px",
+                  color: "#6b7280",
+                }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#f3f4f6")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "transparent")
+                }
+              >
+                <HiX style={{ width: "24px", height: "24px" }} />
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Loại yêu cầu
-                </label>
-                <select
-                  value={updateRequestData.requestType}
-                  onChange={(e) => setUpdateRequestData(prev => ({ ...prev, requestType: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            {/* Form */}
+            <form onSubmit={handleSubmitUpdate}>
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
                 >
-                  <option value="">Giữ nguyên</option>
-                  <option value="1">Vệ sinh</option>
-                  <option value="2">Bảo trì</option>
-                  <option value="3">Cung cấp</option>
-                  <option value="4">Khác</option>
-                </select>
+                  Mô tả yêu cầu
+                </label>
+                <textarea
+                  name="description"
+                  value={updateRequestData.description}
+                  onChange={handleUpdateChange}
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                    resize: "vertical",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
                   Vị trí
                 </label>
                 <input
                   type="text"
+                  name="location"
                   value={updateRequestData.location}
-                  onChange={(e) => setUpdateRequestData(prev => ({ ...prev, location: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nhập vị trí mới"
+                  onChange={handleUpdateChange}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div style={{ marginBottom: "24px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
                   Trạng thái
                 </label>
                 <select
+                  name="status"
                   value={updateRequestData.status}
-                  onChange={(e) => setUpdateRequestData(prev => ({ ...prev, status: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={handleUpdateChange}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
-                  <option value="">Giữ nguyên</option>
                   <option value="Đã gửi">Đã gửi</option>
                   <option value="Đang xử lý">Đang xử lý</option>
-                  <option value="Đã hoàn thành">Đã hoàn thành</option>
+                  <option value="Đã xử lý">Đã xử lý</option>
+                  <option value="Đã hủy">Đã hủy</option>
                 </select>
               </div>
-            </div>
 
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowUpdateRequestModal(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+              {/* Buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "12px",
+                }}
               >
-                Hủy
-              </button>
-              <button
-                onClick={handleUpdateRequest}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Cập nhật
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={handleCloseUpdateModal}
+                  style={{
+                    padding: "12px 20px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    backgroundColor: "white",
+                    color: "#374151",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.backgroundColor = "#f9fafb")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.backgroundColor = "white")
+                  }
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: "12px 20px",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    backgroundColor: "#FF5B27",
+                    color: "white",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.backgroundColor = "#E04B1F")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.backgroundColor = "#FF5B27")
+                  }
+                >
+                  Cập nhật
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

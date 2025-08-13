@@ -2,108 +2,150 @@ import useSWR, { mutate } from 'swr';
 import { API_URLS, BASE_API_URL } from '../constants/api-urls';
 import { swrFetcher } from '../utils/swr-fetcher';
 
-// Request interface based on backend API
+// Request interface based on actual API response
 export interface Request {
-  id: string;
-  title: string;
+  requestId: string;
+  workerId: string;
+  workerName: string | null;
   description: string;
   status: string;
-  priority: string;
-  requestType: string;
+  requestDate: string;
+  resolveDate: string | null;
   location: string;
-  requestedBy: string;
-  contactInfo: string;
-  createdDate: string;
-  timeCreated: string;
-  createdBy: string;
-  assignedTo: string;
-  imageUrl?: string;
-  requesterRole?: string;
+  supervisorId: string | null;
+  trashBinId: string | null;
+  supervisor: any | null;
+  trashBin: any | null;
+  worker: any | null;
 }
 
 export interface RequestWithRole extends Request {
   roleName: string;
-  userName: string;
 }
 
-// Create request data interface
 export interface CreateRequestData {
+  workerId: string;
   description: string;
-  requestName: string;
-  image?: string;
-  priority: number; // 1, 2, 3 cho Low, Medium, High
-  requestType: number; // Loại yêu cầu
+  location: string;
+  supervisorId?: string;
+  trashBinId?: string;
 }
 
-// Update request data interface
 export interface UpdateRequestData {
-  title?: string;
   description?: string;
   status?: string;
-  priority?: string;
-  requestType?: string;
   location?: string;
-  assignedTo?: string;
+  supervisorId?: string;
+  trashBinId?: string;
 }
 
-// Update request status data interface
-export interface UpdateRequestStatusData {
-  status: number | string; // Based on enum: 1=DaGui, 2=DangXuLy, 3=DaHoanThanh or string format
-}
-
-// Priority mapping
+// Priority mapping for requests
 export const REQUEST_PRIORITY_MAPPING = {
-  "Thấp": 3,
-  "Trung bình": 2, 
-  "Cao": 1
+  1: "Thấp",
+  2: "Trung bình", 
+  3: "Cao",
+  4: "Khẩn cấp"
 };
 
 export const REQUEST_PRIORITY_MAPPING_REVERSE = {
-  1: "Cao",
-  2: "Trung bình",
-  3: "Thấp"
+  "Thấp": 1,
+  "Trung bình": 2,
+  "Cao": 3,
+  "Khẩn cấp": 4
 };
 
-// Status mapping based on enum RequestStatus
+// Status mapping for requests - Updated to match the new 4 statuses
 export const REQUEST_STATUS_MAPPING = {
-  "Đã gửi": 1,        // DaGui
-  "Đang xử lý": 2,    // DangXuLy  
-  "Đã hoàn thành": 3  // DaHoanThanh
+  1: "Đã gửi",
+  2: "Đang xử lý", 
+  3: "Đã xử lý",
+  4: "Đã hủy"
 };
 
 export const REQUEST_STATUS_MAPPING_REVERSE = {
-  1: "Đã gửi",        // DaGui
-  2: "Đang xử lý",    // DangXuLy
-  3: "Đã hoàn thành"  // DaHoanThanh
+  "Đã gửi": 1,
+  "Đang xử lý": 2,
+  "Đã xử lý": 3,
+  "Đã hủy": 4
+};
+
+// Helper function to validate and normalize request data
+const normalizeRequestData = (data: any): Request[] => {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map((item, index) => {
+    // Ensure all required fields are present
+    const normalized: Request = {
+      requestId: item.requestId || `temp-${index}`,
+      workerId: item.workerId || '',
+      workerName: item.workerName || null,
+      description: item.description || '',
+      status: item.status || 'Chờ xử lý',
+      requestDate: item.requestDate || new Date().toISOString(),
+      resolveDate: item.resolveDate || null,
+      location: item.location || '',
+      supervisorId: item.supervisorId || null,
+      trashBinId: item.trashBinId || null,
+      supervisor: item.supervisor || null,
+      trashBin: item.trashBin || null,
+      worker: item.worker || null,
+    };
+
+    return normalized;
+  });
 };
 
 // Hook to get all requests
 export const useRequests = () => {
   const { data, error, isLoading } = useSWR<Request[]>(
     API_URLS.REQUEST.GET_ALL,
-    swrFetcher
+    swrFetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      errorRetryCount: 3,
+      errorRetryInterval: 5000,
+    }
   );
 
+  // Normalize the data before returning
+  const normalizedRequests = data ? normalizeRequestData(data) : [];
+
   return {
-    requests: data || [],
+    requests: normalizedRequests,
     isLoading,
     isError: error,
     refresh: () => mutate(API_URLS.REQUEST.GET_ALL),
   };
 };
 
-// Hook to get requests with role filtering
+// Hook to get requests with role filtering (now just returns the same data with role info)
 export const useRequestsWithRole = () => {
-  const { data, error, isLoading } = useSWR<RequestWithRole[]>(
-    API_URLS.REQUEST.GET_WITH_ROLE,
-    swrFetcher
+  const { data, error, isLoading } = useSWR<Request[]>(
+    API_URLS.REQUEST.GET_ALL, // Use the same endpoint since /with-role doesn't exist
+    swrFetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      errorRetryCount: 3,
+      errorRetryInterval: 5000,
+    }
   );
 
+  // Since the backend doesn't support role filtering, we'll add a roleName property
+  // based on the user's role or other logic
+  const requestsWithRole = (data || []).map(request => ({
+    ...request,
+    roleName: 'worker' // Default role, you can customize this based on your needs
+  }));
+
   return {
-    requests: data || [],
+    requests: requestsWithRole,
     isLoading,
     isError: error,
-    refresh: () => mutate(API_URLS.REQUEST.GET_WITH_ROLE),
+    refresh: () => mutate(API_URLS.REQUEST.GET_ALL),
   };
 };
 
@@ -111,7 +153,13 @@ export const useRequestsWithRole = () => {
 export const useRequest = (id: string | null) => {
   const { data, error, isLoading } = useSWR<Request>(
     id ? API_URLS.REQUEST.GET_BY_ID(id) : null,
-    swrFetcher
+    swrFetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+      errorRetryCount: 3,
+      errorRetryInterval: 5000,
+    }
   );
 
   return {
@@ -124,62 +172,84 @@ export const useRequest = (id: string | null) => {
 
 // Function to create a new request
 export const createRequest = async (requestData: CreateRequestData): Promise<Request> => {
-  const response = await fetch(`${BASE_API_URL}/${API_URLS.REQUEST.CREATE}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestData),
-  });
+  try {
+    const response = await swrFetcher(API_URLS.REQUEST.CREATE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+    });
 
-  if (!response.ok) {
-    throw new Error('Failed to create request');
+    // Refresh the requests list
+    mutate(API_URLS.REQUEST.GET_ALL);
+
+    return response;
+  } catch (error) {
+    console.error('Error creating request:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 // Function to update a request
-export const updateRequest = async (id: string, updateData: UpdateRequestData): Promise<Request> => {
-  const response = await fetch(`${BASE_API_URL}/${API_URLS.REQUEST.UPDATE(id)}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(updateData),
-  });
+export const updateRequest = async (id: string, requestData: UpdateRequestData): Promise<Request> => {
+  try {
+    const response = await swrFetcher(API_URLS.REQUEST.UPDATE(id), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+    });
 
-  if (!response.ok) {
-    throw new Error('Failed to update request');
+    // Refresh the requests list
+    mutate(API_URLS.REQUEST.GET_ALL);
+    mutate(API_URLS.REQUEST.GET_BY_ID(id));
+
+    return response;
+  } catch (error) {
+    console.error('Error updating request:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
-// Function to update request status
-export const updateRequestStatus = async (id: string, statusData: UpdateRequestStatusData): Promise<Request> => {
-  const response = await fetch(`${BASE_API_URL}/${API_URLS.REQUEST.UPDATE_STATUS(id)}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(statusData),
-  });
+// Function to update request status using the new API endpoint
+export const updateRequestStatus = async (requestId: string, status: number): Promise<Request> => {
+  try {
+    // Use the endpoint from Swagger documentation: PUT /api/request/status
+    const response = await swrFetcher(`${BASE_API_URL}/request/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        requestId, 
+        status 
+      }),
+    });
 
-  if (!response.ok) {
-    throw new Error('Failed to update request status');
+    // Refresh the requests list
+    mutate(API_URLS.REQUEST.GET_ALL);
+    mutate(API_URLS.REQUEST.GET_BY_ID(requestId));
+
+    return response;
+  } catch (error) {
+    console.error('Error updating request status:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 // Function to delete a request
 export const deleteRequest = async (id: string): Promise<void> => {
-  const response = await fetch(`${BASE_API_URL}/${API_URLS.REQUEST.DELETE(id)}`, {
-    method: 'DELETE',
-  });
+  try {
+    await swrFetcher(API_URLS.REQUEST.DELETE(id), {
+      method: 'DELETE',
+    });
 
-  if (!response.ok) {
-    throw new Error('Failed to delete request');
+    // Refresh the requests list
+    mutate(API_URLS.REQUEST.GET_ALL);
+  } catch (error) {
+    console.error('Error deleting request:', error);
+    throw error;
   }
 };

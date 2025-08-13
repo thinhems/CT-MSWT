@@ -31,10 +31,10 @@ const Sidebar = () => {
   // Fetch requests for notification badge
   const { requests } = useRequests();
   const pendingRequestsCount = requests?.filter(request => 
-    request.status === 'Đang duyệt' || 
-    request.status === 'Chờ xử lý' ||
-    request.status === 'dang duyet' ||
-    request.status === 'cho xu ly'
+    request.status === 'Chờ xử lý' || 
+    request.status === 'Đang xử lý' ||
+    request.status === 'cho xu ly' ||
+    request.status === 'dang xu ly'
   ).length || 0;
 
   // Clear hover state when location changes

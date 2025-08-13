@@ -46,6 +46,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ searchTerm = '' }) => {
     return leaves.filter(leave =>
       leave.leaveId?.toLowerCase().includes(searchLower) ||
       leave.workerId?.toLowerCase().includes(searchLower) ||
+      leave.fullName?.toLowerCase().includes(searchLower) ||
       leave.leaveType?.toLowerCase().includes(searchLower) ||
       leave.reason?.toLowerCase().includes(searchLower)
     );
@@ -210,7 +211,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ searchTerm = '' }) => {
                   color: "#374151",
                   borderBottom: "1px solid #e5e7eb"
                 }}>
-                  Mã nhân viên
+                  Tên nhân viên
                 </th>
                 <th style={{
                   padding: "16px 24px",
@@ -279,7 +280,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ searchTerm = '' }) => {
                     fontSize: "14px",
                     color: "#374151"
                   }}>
-                    {leave.workerId}
+                    {leave.fullName || leave.workerId}
                   </td>
                   <td style={{
                     padding: "16px 24px",
@@ -449,6 +450,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ searchTerm = '' }) => {
                   Thông tin đơn nghỉ phép
                 </h3>
                 <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                  <p><strong>Tên nhân viên:</strong> {selectedLeave.fullName || selectedLeave.workerId}</p>
                   <p><strong>Mã nhân viên:</strong> {selectedLeave.workerId}</p>
                   <p><strong>Loại nghỉ:</strong> {selectedLeave.leaveType}</p>
                   <p><strong>Thời gian:</strong> {format(new Date(selectedLeave.startDate), 'dd/MM/yyyy', { locale: vi })} - {format(new Date(selectedLeave.endDate), 'dd/MM/yyyy', { locale: vi })}</p>

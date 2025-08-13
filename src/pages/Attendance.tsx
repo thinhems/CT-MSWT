@@ -19,8 +19,8 @@ const Attendance = () => {
   const sortedRecords = useMemo(() => {
     const copy = [...records];
     copy.sort((a, b) => {
-      const da = new Date(a.date).getTime();
-      const db = new Date(b.date).getTime();
+      const da = new Date(a.attendanceDate).getTime();
+      const db = new Date(b.attendanceDate).getTime();
       if (db !== da) return db - da;
       const ta = a.checkInTime ? new Date(a.checkInTime).getTime() : 0;
       const tb = b.checkInTime ? new Date(b.checkInTime).getTime() : 0;
@@ -68,6 +68,7 @@ const Attendance = () => {
 
         {!isLoading && !error && (
           <div style={{ backgroundColor: "white", borderRadius: 10, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+            
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
               <colgroup>
                 <col style={{ width: "28%" }} />
@@ -78,7 +79,7 @@ const Attendance = () => {
               </colgroup>
               <thead>
                 <tr style={{ backgroundColor: "#FEF6F4", borderBottom: "1px solid #f3f4f6" }}>
-                  <th style={{ textAlign: "left", padding: "12px 14px", fontSize: 12, color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Nhân viên</th>
+                  <th style={{ textAlign: "left", padding: "12px 14px", fontSize: 12, color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Tên nhân viên</th>
                   <th style={{ textAlign: "left", padding: "12px 14px", fontSize: 12, color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Ngày</th>
                   <th style={{ textAlign: "left", padding: "12px 14px", fontSize: 12, color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Check-in</th>
                   <th style={{ textAlign: "left", padding: "12px 14px", fontSize: 12, color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Check-out</th>
@@ -90,12 +91,17 @@ const Attendance = () => {
                   const zebra = index % 2 === 1 ? "#fafafa" : "transparent";
                   const fmt = (iso?: string | null) => (iso ? new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) : "-");
                   return (
-                    <tr key={`${r.id || r.userId}-${r.date}-${index}`}
+                    <tr key={`${r.id || r.employeeId}-${r.attendanceDate}-${index}`}
                         style={{ backgroundColor: zebra, transition: "background-color 0.2s" }}
                         onMouseEnter={(e: any) => (e.currentTarget.style.backgroundColor = "#f9fafb")}
                         onMouseLeave={(e: any) => (e.currentTarget.style.backgroundColor = zebra)}>
-                      <td style={{ padding: "12px 14px", fontSize: 14, color: "#111827" }}>{r.userName || r.userId}</td>
-                      <td style={{ padding: "12px 14px", fontSize: 14, color: "#374151" }}>{new Date(r.date).toLocaleDateString("vi-VN")}</td>
+                      <td style={{ padding: "12px 14px", fontSize: 14, color: "#111827" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                          <span style={{ fontWeight: "500" }}>{r.fullName}</span>
+                          
+                        </div>
+                      </td>
+                      <td style={{ padding: "12px 14px", fontSize: 14, color: "#374151" }}>{new Date(r.attendanceDate).toLocaleDateString("vi-VN")}</td>
                       <td style={{ padding: "12px 14px", fontSize: 14, color: "#374151" }}>{fmt(r.checkInTime)}</td>
                       <td style={{ padding: "12px 14px", fontSize: 14, color: "#374151" }}>{fmt(r.checkOutTime)}</td>
                       <td style={{ padding: "12px 14px", fontSize: 14, color: "#374151" }}>{r.status || ""}</td>

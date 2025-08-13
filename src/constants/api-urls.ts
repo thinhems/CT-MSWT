@@ -14,6 +14,7 @@ export const API_URLS = {
     DELETE: (id: string) => `users/${id}`,
     LOGIN: `users/login`, // Backend xử lý login và trả về token
     REGISTER: `users/register`, // Backend xử lý register
+    GET_UNASSIGNED_WORKERS: `users/unassigned-workers`, // Get unassigned workers for assignment
   },
 
   // Floor management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useFloor.ts
@@ -149,7 +150,7 @@ export const API_URLS = {
   // Request management endpoints
   REQUEST: {
     GET_ALL: `request`, // GET /api/request - Tất cả yêu cầu
-    GET_WITH_ROLE: `request/with-role`, // GET /api/request/with-role - Filter theo role
+    GET_WITH_ROLE: `request`, // Use the same endpoint since /with-role doesn't exist
     GET_BY_ID: (id: string) => `request/${id}`,
     CREATE: `request`,
     CREATE_LEADER: `request/leader`, // POST /api/request/leader - Tạo yêu cầu cho Leader

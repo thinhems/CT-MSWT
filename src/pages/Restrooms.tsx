@@ -22,7 +22,12 @@ const Restrooms = () => {
   const [selectedRestroom, setSelectedRestroom] = useState<Restroom | null>(null);
 
   const [updateRestroomData, setUpdateRestroomData] =
-    useState<RestroomUpdateRequest>();
+    useState<RestroomUpdateRequest>({
+      restroomNumber: "",
+      areaId: "",
+      description: "",
+      status: "Hoạt động",
+    });
   const [newRestroom, setNewRestroom] = useState<RestroomCreateRequest>({
     restroomNumber: "",
     areaId: "",
@@ -30,6 +35,7 @@ const Restrooms = () => {
     status: "Hoạt động",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [notification, setNotification] = useState({
     isVisible: false,
     type: "success",
@@ -64,7 +70,12 @@ const Restrooms = () => {
       setShowViewRestroomModal(true);
     } else if (action === "update") {
       setSelectedRestroom(restroom);
-      setUpdateRestroomData(restroom);
+      setUpdateRestroomData({
+        restroomNumber: restroom.restroomNumber || "",
+        areaId: restroom.areaId || "",
+        description: restroom.description || "",
+        status: restroom.status || "Hoạt động",
+      });
       setShowUpdateRestroomModal(true);
     } else if (action === "delete") {
       if (window.confirm("Bạn có chắc muốn xóa nhà vệ sinh này?")) {
@@ -83,7 +94,13 @@ const Restrooms = () => {
   const handleCloseUpdateModal = () => {
     setShowUpdateRestroomModal(false);
     setSelectedRestroom(null);
-    setUpdateRestroomData({} as Restroom);
+    setUpdateRestroomData({
+      restroomNumber: "",
+      areaId: "",
+      description: "",
+      status: "Hoạt động",
+    });
+    setIsUpdating(false);
   };
 
   const handleUpdateChange = (e: any) => {
@@ -96,9 +113,42 @@ const Restrooms = () => {
 
   const handleSubmitUpdate = async (e: any) => {
     e.preventDefault();
-    await updateAsync(selectedRestroom?.restroomId!, updateRestroomData!);
-    handleCloseUpdateModal();
-    showNotificationMessage("success", "Đã cập nhật nhà vệ sinh thành công!");
+    
+    if (!selectedRestroom?.restroomId) {
+      showNotificationMessage("error", "Không tìm thấy thông tin nhà vệ sinh!");
+      return;
+    }
+    
+    if (!updateRestroomData?.areaId || !updateRestroomData?.restroomNumber?.trim() || !updateRestroomData?.status) {
+      showNotificationMessage("error", "Vui lòng điền đầy đủ thông tin bắt buộc!");
+      return;
+    }
+    
+    try {
+      setIsUpdating(true);
+      await updateAsync(selectedRestroom.restroomId, updateRestroomData);
+      handleCloseUpdateModal();
+      showNotificationMessage("success", "Đã cập nhật nhà vệ sinh thành công!");
+    } catch (error: any) {
+      console.error("❌ Error updating restroom:", error);
+      let errorMessage = "Có lỗi xảy ra khi cập nhật nhà vệ sinh!";
+      
+      if (error?.message) {
+        if (error.message.includes("already exists") || error.message.includes("duplicate")) {
+          errorMessage = "Số phòng này đã tồn tại! Vui lòng chọn số phòng khác.";
+        } else if (error.message.includes("validation") || error.message.includes("invalid")) {
+          errorMessage = "Dữ liệu không hợp lệ! Vui lòng kiểm tra lại thông tin.";
+        } else if (error.message.includes("network") || error.message.includes("fetch")) {
+          errorMessage = "Lỗi kết nối mạng! Vui lòng thử lại.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      showNotificationMessage("error", errorMessage);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleAddRestroom = () => {
@@ -1127,7 +1177,7 @@ const Restrooms = () => {
                 </label>
                 <select
                   name="areaId"
-                  value={updateRestroomData?.areaId}
+                  value={updateRestroomData?.areaId || ""}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -1166,7 +1216,7 @@ const Restrooms = () => {
                 <input
                   type="text"
                   name="restroomNumber"
-                  value={updateRestroomData?.restroomNumber}
+                  value={updateRestroomData?.restroomNumber || ""}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -1197,7 +1247,7 @@ const Restrooms = () => {
                 </label>
                 <select
                   name="status"
-                  value={updateRestroomData?.status}
+                  value={updateRestroomData?.status || ""}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -1235,7 +1285,7 @@ const Restrooms = () => {
                 </label>
                 <textarea
                   name="description"
-                  value={updateRestroomData?.description}
+                  value={updateRestroomData?.description || ""}
                   onChange={handleUpdateChange}
                   rows={4}
                   style={{
@@ -1286,25 +1336,31 @@ const Restrooms = () => {
                 </button>
                 <button
                   type="submit"
+                  disabled={isUpdating}
                   style={{
                     padding: "12px 20px",
                     border: "none",
                     borderRadius: "8px",
                     fontSize: "14px",
                     fontWeight: "500",
-                    backgroundColor: "#FF5B27",
+                    backgroundColor: isUpdating ? "#9ca3af" : "#FF5B27",
                     color: "white",
-                    cursor: "pointer",
+                    cursor: isUpdating ? "not-allowed" : "pointer",
                     transition: "background-color 0.2s",
+                    opacity: isUpdating ? 0.7 : 1,
                   }}
-                  onMouseEnter={(e: any) =>
-                    (e.target.style.backgroundColor = "#E04B1F")
-                  }
-                  onMouseLeave={(e: any) =>
-                    (e.target.style.backgroundColor = "#FF5B27")
-                  }
+                  onMouseEnter={(e: any) => {
+                    if (!isUpdating) {
+                      e.target.style.backgroundColor = "#E04B1F";
+                    }
+                  }}
+                  onMouseLeave={(e: any) => {
+                    if (!isUpdating) {
+                      e.target.style.backgroundColor = "#FF5B27";
+                    }
+                  }}
                 >
-                  Cập nhật
+                  {isUpdating ? "Đang cập nhật..." : "Cập nhật"}
                 </button>
               </div>
             </form>

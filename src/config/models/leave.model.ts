@@ -1,13 +1,19 @@
 export interface Leave {
   leaveId: string;
   workerId: string;
+  fullName: string;
   leaveType: string;
   startDate: string;
   endDate: string;
+  totalDays?: number;
   reason: string;
+  requestDate?: string;
   approvalStatus?: string;
-  createdAt: string;
-  updatedAt: string;
+  approvedBy?: string;
+  approvalDate?: string;
+  note?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LeaveResponse {

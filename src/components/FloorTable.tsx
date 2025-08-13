@@ -220,12 +220,6 @@ const FloorTable: React.FC<FloorTableProps> = ({
                       icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
                       color: "#374151"
                     },
-                    {
-                      action: 'edit',
-                      label: 'Chỉnh sửa',
-                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
-                      color: "#374151"
-                    }
                   ] as any}
                   onItemClick={handleDropdownAction}
                   triggerData={floor as any}

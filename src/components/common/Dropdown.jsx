@@ -7,7 +7,9 @@ const Dropdown = ({
   disabled = false,
   buttonStyle = {},
   dropdownStyle = {},
-  triggerData = null 
+  triggerData = null,
+  buttonText = null,
+  buttonClassName = null
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -85,9 +87,88 @@ const Dropdown = ({
     onItemClick?.(item, triggerData);
   };
 
+  // If buttonText is provided, render a custom button
+  if (buttonText) {
+    return (
+      <>
+        {/* Custom Button */}
+        <button
+          ref={buttonRef}
+          onClick={handleButtonClick}
+          disabled={disabled}
+          className={buttonClassName}
+          style={{
+            cursor: disabled ? "not-allowed" : "pointer",
+            ...buttonStyle
+          }}
+        >
+          {buttonText}
+        </button>
+
+        {/* Dropdown Menu */}
+        {isOpen && (
+          <div
+            data-dropdown-menu
+            style={{
+              position: "fixed",
+              top: `${position.top}px`,
+              left: `${position.left}px`,
+              backgroundColor: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+              zIndex: 9999,
+              minWidth: "160px",
+              maxHeight: "200px",
+              overflow: "auto",
+              ...dropdownStyle
+            }}
+          >
+            {items.map((item, index) => (
+              <button
+                key={item.key || index}
+                onClick={() => handleItemClick(item)}
+                disabled={item.disabled}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "none",
+                  outline: "none",
+                  background: "none",
+                  cursor: item.disabled ? "not-allowed" : "pointer",
+                  fontSize: "14px",
+                  color: item.disabled ? "#9ca3af" : (item.color || "#374151"),
+                  transition: "background-color 0.2s",
+                  textAlign: "left",
+                  borderTop: index > 0 ? "1px solid #f3f4f6" : "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (!item.disabled) {
+                    e.currentTarget.style.backgroundColor = item.hoverColor || "#f9fafb";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!item.disabled) {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }
+                }}
+              >
+                {item.icon && <span style={{ display: "flex", alignItems: "center" }}>{item.icon}</span>}
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
-      {/* Dropdown Button */}
+      {/* Default Dropdown Button */}
       <button
         ref={buttonRef}
         onClick={handleButtonClick}

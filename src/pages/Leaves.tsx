@@ -100,7 +100,7 @@ const Leaves: React.FC = () => {
             </div>
             <input
               type="text"
-              placeholder="Tìm đơn nghỉ phép"
+              placeholder="Tìm đơn nghỉ phép theo mã, tên nhân viên, loại nghỉ..."
               value={searchTerm}
               onChange={handleSearchChange}
               style={{

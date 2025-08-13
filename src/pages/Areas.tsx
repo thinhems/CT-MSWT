@@ -1,11 +1,14 @@
 import { Area } from "@/config/models/restroom.model";
 import { useAreas } from "../hooks/useArea";
+import { useFloors } from "../hooks/useFloor";
 import { useState } from "react";
 import {
   HiOutlineLocationMarker,
   HiOutlinePlus,
   HiOutlineSearch,
   HiX,
+  HiOutlinePencil,
+  HiOutlineEye,
 } from "react-icons/hi";
 import AreaTable from "../components/AreaTable";
 import Pagination from "../components/Pagination";
@@ -29,16 +32,19 @@ const Areas = () => {
     areaId: "",
     floorId: "",
   });
-  const [newArea, setNewArea] = useState<ICreateAreaRequest>({
+  const [newArea, setNewArea] = useState<ICreateAreaRequest & { floorId: string; floorNumber: number }>({
     areaName: "",
     roomBegin: "",
     roomEnd: "",
     description: "",
     status: "Hoạt động",
+    floorId: "",
+    floorNumber: 0,
   });
 
   const itemsPerPage = 5; // Số khu vực hiển thị mỗi trang
   const { areas, createAsync, deleteAsync, updateAsync } = useAreas();
+  const { floors } = useFloors();
 
   const handleActionClick = async ({
     action,
@@ -94,10 +100,20 @@ const Areas = () => {
 
   const handleUpdateChange = (e: any) => {
     const { name, value } = e.target;
-    setUpdateAreaData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    
+    if (name === 'floorId') {
+      const selectedFloor = floors.find(floor => floor.floorId === value);
+      setUpdateAreaData((prev) => ({
+        ...prev,
+        floorId: value,
+        floorNumber: selectedFloor ? selectedFloor.floorNumber : 0,
+      }));
+    } else {
+      setUpdateAreaData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmitUpdate = async (e: any) => {
@@ -110,6 +126,8 @@ const Areas = () => {
       roomEnd: updateAreaData.roomEnd,
       description: updateAreaData.description,
       status: updateAreaData.status,
+      floorId: updateAreaData.floorId,
+      floorNumber: updateAreaData.floorNumber,
     });
 
     alert("✅ Đã cập nhật khu vực thành công!");
@@ -123,6 +141,8 @@ const Areas = () => {
       roomEnd: "",
       description: "",
       status: "Hoạt động",
+      floorId: "",
+      floorNumber: 0,
     });
   };
 
@@ -134,6 +154,17 @@ const Areas = () => {
     }));
   };
 
+  const handleFloorChange = (e: any) => {
+    const floorId = e.target.value;
+    const selectedFloor = floors.find(floor => floor.floorId === floorId);
+    
+    setNewArea((prev) => ({
+      ...prev,
+      floorId: floorId,
+      floorNumber: selectedFloor ? selectedFloor.floorNumber : 0,
+    }));
+  };
+
   const handleSubmitArea = (e: any) => {
     e.preventDefault();
 
@@ -141,7 +172,8 @@ const Areas = () => {
     if (
       !newArea.areaName ||
       !newArea.roomBegin ||
-      !newArea.roomEnd
+      !newArea.roomEnd ||
+      !newArea.floorId
     ) {
       alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
@@ -166,8 +198,8 @@ const Areas = () => {
       alert("Tên khu vực phải có ít nhất 2 ký tự!");
       return;
     }
-    createAsync(newArea);
 
+    createAsync(newArea);
     handleClosePopup();
     alert("✅ Đã thêm khu vực thành công!");
   };
@@ -545,6 +577,55 @@ const Areas = () => {
                 />
               </div>
 
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
+                  Tầng *
+                </label>
+                <select
+                  name="floorId"
+                  value={newArea.floorId}
+                  onChange={handleFloorChange}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                    backgroundColor: "white",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                >
+                  <option value="">Chọn tầng</option>
+                  {floors.map((floor) => (
+                    <option key={floor.floorId} value={floor.floorId}>
+                      Tầng {floor.floorNumber}
+                    </option>
+                  ))}
+                </select>
+                {newArea.floorId && (
+                  <div style={{ 
+                    marginTop: "4px", 
+                    fontSize: "12px", 
+                    color: "#6b7280",
+                    fontStyle: "italic"
+                  }}>
+                    Đã chọn: {floors.find(f => f.floorId === newArea.floorId)?.floorNumber === 0 ? "Tầng trệt" : `Tầng ${floors.find(f => f.floorId === newArea.floorId)?.floorNumber}`}
+                  </div>
+                )}
+              </div>
+
 
 
               <div
@@ -683,6 +764,8 @@ const Areas = () => {
           
                 </select>
               </div>
+
+
 
               {/* Buttons */}
               <div
@@ -860,13 +943,11 @@ const Areas = () => {
                 >
                   Tầng *
                 </label>
-                <input
-                  type="number"
-                  name="floorNumber"
-                  value={updateAreaData.floorNumber}
+                <select
+                  name="floorId"
+                  value={updateAreaData.floorId}
                   onChange={handleUpdateChange}
                   required
-                  min="0"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -875,10 +956,18 @@ const Areas = () => {
                     fontSize: "14px",
                     outline: "none",
                     transition: "border-color 0.2s",
+                    backgroundColor: "white",
                   }}
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
-                />
+                >
+                  <option value="">Chọn tầng</option>
+                  {floors.map((floor) => (
+                    <option key={floor.floorId} value={floor.floorId}>
+                      Tầng {floor.floorNumber}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div
@@ -1177,6 +1266,8 @@ const Areas = () => {
                   </p>
                 </div>
               </div>
+
+              
 
               {/* Area Details */}
               <div

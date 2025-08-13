@@ -15,6 +15,8 @@ export interface ICreateAreaRequest {
   roomBegin: string;
   roomEnd: string;
   areaName: string;
+  floorId: string;
+  floorNumber: number;
 }
 
 export interface IUpdateAreaRequest {
@@ -23,4 +25,6 @@ export interface IUpdateAreaRequest {
   roomBegin: string;
   roomEnd: string;
   areaName: string;
+  floorId: string;
+  floorNumber: number;
 }

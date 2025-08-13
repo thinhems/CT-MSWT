@@ -4,11 +4,11 @@ import { swrFetcher } from "../utils/swr-fetcher";
 
 export interface AttendanceRecord {
   id?: string;
-  userId: string; // mapped from employeeId
-  userName?: string;
-  checkInTime: string;
+  employeeId: string; // API response field
+  fullName: string; // API response field
+  attendanceDate: string; // API response field
+  checkInTime: string | null;
   checkOutTime?: string | null;
-  date: string; // mapped from attendanceDate
   status?: string;
   note?: string | null;
   createdAt?: string;
@@ -28,13 +28,13 @@ export const useAttendanceAll = () => {
   const raw: any[] = normalizeArray(data);
   const records: AttendanceRecord[] = raw.map((item: any) => ({
     id: item.id,
-    userId: item.employeeId,
-    userName: item.user?.name || item.user?.fullName || undefined,
-    checkInTime: item.checkInTime || null,
-    checkOutTime: item.checkOutTime || null,
-    date: item.attendanceDate,
+    employeeId: item.employeeId,
+    fullName: item.fullName,
+    attendanceDate: item.attendanceDate,
+    checkInTime: item.checkInTime,
+    checkOutTime: item.checkOutTime,
     status: item.status,
-    note: item.note ?? null,
+    note: item.note,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   }));
@@ -50,13 +50,13 @@ export const useAttendanceByDate = (date?: string) => {
   const raw: any[] = normalizeArray(data);
   const records: AttendanceRecord[] = raw.map((item: any) => ({
     id: item.id,
-    userId: item.employeeId,
-    userName: item.user?.name || item.user?.fullName || undefined,
-    checkInTime: item.checkInTime || null,
-    checkOutTime: item.checkOutTime || null,
-    date: item.attendanceDate,
+    employeeId: item.employeeId,
+    fullName: item.fullName,
+    attendanceDate: item.attendanceDate,
+    checkInTime: item.checkInTime,
+    checkOutTime: item.checkOutTime,
     status: item.status,
-    note: item.note ?? null,
+    note: item.note,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   }));

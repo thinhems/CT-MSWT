@@ -231,7 +231,7 @@ const RestroomTable = ({
                       color: "#374151"
                     },
                     {
-                      action: 'edit',
+                      action: 'update',
                       label: 'Chỉnh sửa',
                       icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
                       color: "#374151"

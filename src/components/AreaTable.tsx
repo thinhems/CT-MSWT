@@ -86,6 +86,7 @@ const AreaTable = ({
             >
               Tầng
             </th>
+
             <th
               style={{
                 padding: "12px 16px",
@@ -182,6 +183,8 @@ const AreaTable = ({
                   ? "Tầng trệt"
                   : `Tầng ${area.floorNumber}`}
               </td>
+
+
 
               {/* Start Room Column */}
               <td
