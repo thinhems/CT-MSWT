@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSidebar } from "../contexts/SidebarContext";
+import { useRequests } from "../hooks/useRequest";
 import {
   HiOutlineChartBar,
   HiOutlineUsers,
@@ -26,6 +27,15 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const { isCollapsed, isMobile, isMobileOpen, toggleSidebar, closeMobileSidebar, sidebarWidth } = useSidebar();
   const [hoveredItem, setHoveredItem] = useState(null);
+  
+  // Fetch requests for notification badge
+  const { requests } = useRequests();
+  const pendingRequestsCount = requests?.filter(request => 
+    request.status === 'Đang duyệt' || 
+    request.status === 'Chờ xử lý' ||
+    request.status === 'dang duyet' ||
+    request.status === 'cho xu ly'
+  ).length || 0;
 
   // Clear hover state when location changes
   useEffect(() => {
@@ -64,11 +74,11 @@ const Sidebar = () => {
       path: "/floors",
       icon: HiOutlineOfficeBuilding,
     },
-          {
-        title: "Khu vực",
-        path: "/areas",
-        icon: HiOutlineOfficeBuilding,
-      },
+    {
+      title: "Khu vực",
+      path: "/areas",
+      icon: HiOutlineOfficeBuilding,
+    },
     {
       title: "Nhà vệ sinh",
       path: "/restrooms",
@@ -319,6 +329,30 @@ const Sidebar = () => {
                     }}>
                       {item.title}
                     </span>
+                  )}
+                  
+                  {/* Notification badge for "Yêu cầu" */}
+                  {item.title === "Yêu cầu" && pendingRequestsCount > 0 && (
+                    <div style={{
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      minWidth: "18px",
+                      height: "18px",
+                      backgroundColor: "#ef4444",
+                      borderRadius: "9px",
+                      border: "2px solid white",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "10px",
+                      fontWeight: "600",
+                      color: "white",
+                      padding: "0 4px",
+                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
+                    }}>
+                      {pendingRequestsCount > 99 ? "99+" : pendingRequestsCount}
+                    </div>
                   )}
                 </Link>
               </li>
