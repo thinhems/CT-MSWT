@@ -1,9 +1,9 @@
 import { HiOutlineX, HiOutlineClipboardList, HiOutlinePlus } from "react-icons/hi";
 import { Schedule } from "@/config/models/schedule.model";
 import { useScheduleDetails } from "../hooks/useScheduleDetails";
-import { useUnassignedWorkers } from "../hooks/useUnassignedWorkers";
 import { useAssignments } from "../hooks/useAssignments";
 import { useShifts } from "../hooks/useShifts";
+import { useUsers } from "../hooks/useUsers";
 import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 import useSWR from "swr";
@@ -25,7 +25,13 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
   const { assignments } = useAssignments();
   const { shifts } = useShifts(); // Keep for shift name lookup
   const { scheduleDetails, createScheduleDetailForSchedule } = useScheduleDetails(schedule?.scheduleId);
-  const { unassignedWorkers, isLoading: isLoadingWorkers } = useUnassignedWorkers();
+  const { users } = useUsers();
+  
+  // Fetch unassigned workers using API
+  const { data: unassignedWorkers, error: unassignedWorkersError, isLoading: isLoadingWorkers } = useSWR(
+    API_URLS.USER.GET_UNASSIGNED_WORKERS,
+    swrFetcher
+  );
   
   // State for creating new schedule detail
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -108,11 +114,24 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     }
   };
 
-      // Get user name by ID
+      // Get user name by ID - check both unassignedWorkers and users
     const getUserName = (userId: string) => {
-      if (!unassignedWorkers || !userId) return "Chưa gán";
-      const user = unassignedWorkers.find((u: any) => u.userId === userId);
-      return user?.fullName || userId;
+      if (!userId) return "Chưa gán";
+      
+      // First check in unassignedWorkers
+      if (unassignedWorkers) {
+        const user = unassignedWorkers.find((u: any) => u.userId === userId);
+        if (user?.fullName) return user.fullName;
+      }
+      
+      // Then check in users (for supervisors and other users)
+      if (users) {
+        const user = users.find((u: any) => u.id === userId);
+        if (user?.name) return user.name;
+      }
+      
+      // Fallback to userId if no name found
+      return userId;
     };
 
 
@@ -124,7 +143,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
       if (name && name !== "Chưa gán") names.add(name);
     });
     return ["Tất cả", ...Array.from(names)];
-  }, [scheduleDetails, unassignedWorkers]);
+  }, [scheduleDetails, unassignedWorkers, users]);
 
   // Filter schedule details by worker name
   const filteredScheduleDetails = useMemo(() => {
@@ -137,7 +156,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
         getUserName(detail.workerId) === activeWorkerNameTab;
       return matchesName && matchesNameTab;
     });
-  }, [scheduleDetails, detailSearchTerm, activeWorkerNameTab, unassignedWorkers]);
+  }, [scheduleDetails, detailSearchTerm, activeWorkerNameTab, unassignedWorkers, users]);
 
   const getScheduleTypeDisplay = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -476,19 +495,19 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
             }}>
               👨‍💼 Giám sát viên vệ sinh
             </span>
-            <div style={{ 
-              color: displaySchedule.supervisorId ? "#1e40af" : "#6b7280", 
-              fontSize: "13px", 
-              fontWeight: displaySchedule.supervisorId ? "600" : "500",
-              padding: "12px 24px",
-              backgroundColor: displaySchedule.supervisorId ? "#dbeafe" : "#f3f4f6",
-              borderRadius: "8px",
-              display: "inline-block",
-              minWidth: "150px",
-              border: `2px solid ${displaySchedule.supervisorId ? "#bfdbfe" : "#e5e7eb"}`
-            }}>
-              {displaySchedule.supervisorId ? getUserName(displaySchedule.supervisorId) : "Chưa gán"}
-            </div>
+                         <div style={{ 
+               color: displaySchedule.supervisorId ? "#1e40af" : "#6b7280", 
+               fontSize: "13px", 
+               fontWeight: displaySchedule.supervisorId ? "600" : "500",
+               padding: "12px 24px",
+               backgroundColor: displaySchedule.supervisorId ? "#dbeafe" : "#f3f4f6",
+               borderRadius: "8px",
+               display: "inline-block",
+               minWidth: "150px",
+               border: `2px solid ${displaySchedule.supervisorId ? "#bfdbfe" : "#e5e7eb"}`
+             }}>
+               {displaySchedule.supervisorId ? getUserName(displaySchedule.supervisorId) : "Chưa gán"}
+             </div>
           </div>
 
           {/* Area Restrooms Section */}
@@ -790,25 +809,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   marginBottom: "20px",
                   border: "1px solid #e0f2fe"
                 }}>
-                  {/* Info Note about Unassigned Workers API */}
-                  <div style={{
-                    backgroundColor: "#e0f2fe",
-                    borderRadius: "6px",
-                    padding: "8px 12px",
-                    marginBottom: "12px",
-                    border: "1px solid #b3e5fc",
-                  }}>
-                    <div style={{
-                      fontSize: "12px",
-                      color: "#0277bd",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px"
-                    }}>
-                      <span style={{ fontWeight: "500" }}>ℹ️</span>
-                      Dropdown hiển thị chỉ những nhân viên chưa được gán công việc
-                    </div>
-                  </div>
+                  
                   
                   <h5 style={{ 
                     fontSize: "14px", 

@@ -12,6 +12,9 @@ import { useRestrooms } from "../hooks/useRestroom";
 import { useTrashBins } from "../hooks/useTrashBins";
 import { useUsers } from "../hooks/useUsers";
 import { Schedule, ICreateScheduleRequest } from "@/config/models/schedule.model";
+import { API_URLS } from "../constants/api-urls";
+import { swrFetcher } from "../utils/swr-fetcher";
+import useSWR from "swr";
 
 const Schedules = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,8 +39,11 @@ const Schedules = () => {
   const { trashBins } = useTrashBins();
   const { users } = useUsers();
 
-  // Filter supervisors from users
-  const supervisors = users?.filter((user: any) => user.position === "Giám sát viên vệ sinh") || [];
+  // Fetch unassigned supervisors using API
+  const { data: supervisors, error: supervisorsError, isLoading: supervisorsLoading } = useSWR(
+    API_URLS.USER.GET_UNASSIGNED_SUPERVISORS,
+    swrFetcher
+  );
   
 
 
@@ -1342,14 +1348,18 @@ const Schedules = () => {
                   }}
                 >
                   <option value="">Chọn giám sát viên (tùy chọn)</option>
-                  {supervisors && supervisors.length > 0 ? (
+                  {supervisorsLoading ? (
+                    <option disabled>Đang tải dữ liệu giám sát viên...</option>
+                  ) : supervisorsError ? (
+                    <option disabled>Lỗi tải dữ liệu giám sát viên</option>
+                  ) : supervisors && supervisors.length > 0 ? (
                     supervisors.map((supervisor: any) => (
                       <option key={supervisor.id} value={supervisor.id}>
                         {supervisor.name}
                       </option>
                     ))
                   ) : (
-                    <option disabled>Không có giám sát viên nào</option>
+                    <option disabled>Không có giám sát viên nào khả dụng</option>
                   )}
                 </select>
               </div>

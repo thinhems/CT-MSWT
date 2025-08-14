@@ -15,6 +15,7 @@ export const API_URLS = {
     LOGIN: `users/login`, // Backend xử lý login và trả về token
     REGISTER: `users/register`, // Backend xử lý register
     GET_UNASSIGNED_WORKERS: `users/unassigned-workers`, // Get unassigned workers for assignment
+    GET_UNASSIGNED_SUPERVISORS: `users/unassigned-supervisors`, // Get unassigned supervisors for assignment
   },
 
   // Floor management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useFloor.ts
