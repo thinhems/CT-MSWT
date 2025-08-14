@@ -42,8 +42,19 @@ const Schedules = () => {
   // Fetch unassigned supervisors using API
   const { data: supervisors, error: supervisorsError, isLoading: supervisorsLoading } = useSWR(
     API_URLS.USER.GET_UNASSIGNED_SUPERVISORS,
-    swrFetcher
+    swrFetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      errorRetryCount: 3,
+    }
   );
+
+  // Debug: Log supervisors data
+  console.log("🔍 Supervisors Debug Info:");
+  console.log("- Supervisors data:", supervisors);
+  console.log("- Supervisors error:", supervisorsError);
+  console.log("- Supervisors loading:", supervisorsLoading);
   
 
 
@@ -1347,21 +1358,24 @@ const Schedules = () => {
                     fontSize: "14px",
                   }}
                 >
-                  <option value="">Chọn giám sát viên (tùy chọn)</option>
+                  <option value="">Chọn giám sát viên </option>
                   {supervisorsLoading ? (
                     <option disabled>Đang tải dữ liệu giám sát viên...</option>
                   ) : supervisorsError ? (
                     <option disabled>Lỗi tải dữ liệu giám sát viên</option>
-                  ) : supervisors && supervisors.length > 0 ? (
+                  ) : supervisors && Array.isArray(supervisors) && supervisors.length > 0 ? (
                     supervisors.map((supervisor: any) => (
-                      <option key={supervisor.id} value={supervisor.id}>
-                        {supervisor.name}
+                      <option key={supervisor.userId} value={supervisor.userId}>
+                        {supervisor.fullName}
                       </option>
                     ))
                   ) : (
                     <option disabled>Không có giám sát viên nào khả dụng</option>
                   )}
                 </select>
+                
+                  
+                
               </div>
 
 
