@@ -1372,9 +1372,7 @@ const Schedules = () => {
                   ) : (
                     <option disabled>Không có giám sát viên nào khả dụng</option>
                   )}
-                </select>
-                
-                  
+                                </select>
                 
               </div>
 
