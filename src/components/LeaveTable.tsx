@@ -71,7 +71,7 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ searchTerm = '' }) => {
       alert('Cập nhật đơn nghỉ phép thành công!');
     } catch (error) {
       console.error('Error approving leave:', error);
-      alert('Có lỗi xảy ra khi cập nhật đơn nghỉ phép');
+      alert('Đơn nghỉ phép đã được xử lý, không thể thay đổi trạng thái');
     } finally {
       setApprovingId(null);
     }

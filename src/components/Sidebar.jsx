@@ -48,6 +48,11 @@ const Sidebar = () => {
 
   const menuItems = [
     {
+      title: "Yêu cầu",
+      path: "/request-management",
+      icon: HiOutlineClipboardList,
+    },
+    {
       title: "Danh sách báo cáo",
       path: "/report-management",
       icon: HiOutlineChartBar,
@@ -57,16 +62,8 @@ const Sidebar = () => {
       path: "/user-management",
       icon: HiOutlineUsers,
     },
-    {
-      title: "Danh sách thùng rác",
-      path: "/trash",
-      icon: HiOutlineTrash,
-    },
-    {
-      title: "Quản lý công việc",
-      path: "/assignments",
-      icon: HiOutlineClipboardList,
-    },
+    
+    
     {
       title: "Các tầng",
       path: "/floors",
@@ -83,9 +80,19 @@ const Sidebar = () => {
       icon: HiOutlineHome,
     },
     {
+      title: "Danh sách thùng rác",
+      path: "/trash",
+      icon: HiOutlineTrash,
+    },
+    {
       title: "Lịch trình",
       path: "/schedules",
       icon: HiOutlineCalendar,
+    },
+    {
+      title: "Quản lý công việc",
+      path: "/assignments",
+      icon: HiOutlineClipboardList,
     },
     {
       title: "Ca làm việc",
@@ -102,11 +109,7 @@ const Sidebar = () => {
       path: "/attendance",
       icon: HiOutlineUserGroup,
     },
-    {
-      title: "Yêu cầu",
-      path: "/request-management",
-      icon: HiOutlineClipboardList,
-    },
+    
   ];
 
   return (

@@ -228,13 +228,8 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                   color: "#6b7280",
                 }}
               >
-                <div>
-                  <div style={{ fontWeight: "500" }}>
-                    {formatDate(schedule.startDate)}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "#9ca3af" }}>
-                    {formatTime(schedule.startDate)}
-                  </div>
+                <div style={{ fontWeight: "500" }}>
+                  {formatDate(schedule.startDate)}
                 </div>
               </td>
 
@@ -246,13 +241,8 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                   color: "#6b7280",
                 }}
               >
-                <div>
-                  <div style={{ fontWeight: "500" }}>
-                    {formatDate(schedule.endDate)}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "#9ca3af" }}>
-                    {formatTime(schedule.endDate)}
-                  </div>
+                <div style={{ fontWeight: "500" }}>
+                  {formatDate(schedule.endDate)}
                 </div>
               </td>
 
