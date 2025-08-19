@@ -68,13 +68,13 @@ export const PRIORITY_MAPPING_REVERSE = {
 export const STATUS_MAPPING = {
   "Đã gửi": 1,        // DaGui
   "Đang xử lý": 2,    // DangXuLy  
-  "Đã hoàn thành": 3  // DaHoanThanh
+  "Đã xử lý": 3       // DaXuLy
 };
 
 export const STATUS_MAPPING_REVERSE = {
   1: "Đã gửi",        // DaGui
   2: "Đang xử lý",    // DangXuLy
-  3: "Đã hoàn thành"  // DaHoanThanh
+  3: "Đã xử lý"       // DaXuLy
 };
 
 // Hook to get all reports (Báo cáo tổng)
@@ -186,17 +186,6 @@ export const updateReportStatus = async (id: string, statusData: UpdateReportSta
   try {
     const url = `${BASE_API_URL}/${API_URLS.REPORT.UPDATE_STATUS(id)}`;
     const token = localStorage.getItem('accessToken');
-    
-    console.log('🔍 PATCH Request Details:', {
-      url,
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token.substring(0, 20)}...` : 'No token',
-      },
-      body: JSON.stringify(statusData),
-      statusData
-    });
 
     const response = await fetch(url, {
       method: 'PATCH',
@@ -207,16 +196,30 @@ export const updateReportStatus = async (id: string, statusData: UpdateReportSta
       body: JSON.stringify(statusData),
     });
 
-    console.log('🔍 Response Status:', response.status);
-    console.log('🔍 Response Headers:', Object.fromEntries(response.headers.entries()));
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('🔍 Error Response Body:', errorText);
       throw new Error(`Failed to update report status: ${response.status} - ${errorText}`);
     }
 
-    const updatedReport = await response.json();
+    // Try to parse as JSON, fallback to text if it fails
+    let updatedReport;
+    try {
+      const responseText = await response.text();
+      
+      // Try to parse as JSON
+      try {
+        updatedReport = JSON.parse(responseText);
+      } catch (parseError) {
+        // If response is not JSON (like "Cập nhật thành công"), treat as success
+        updatedReport = { 
+          success: true, 
+          message: responseText,
+          id: id // Return the ID we updated
+        };
+      }
+    } catch (textError) {
+      throw new Error(`Failed to read response: ${textError.message}`);
+    }
     
     // Refresh reports data
     mutate(API_URLS.REPORT.GET_ALL);
@@ -225,7 +228,6 @@ export const updateReportStatus = async (id: string, statusData: UpdateReportSta
     
     return updatedReport;
   } catch (error) {
-    console.error('Error updating report status:', error);
     throw error;
   }
 };

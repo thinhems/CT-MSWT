@@ -17,6 +17,9 @@ const ReportTable = ({ reports, onActionClick }) => {
       case "đang duyệt":
       case "dang duyet":
       case "pending":
+      case "đang xử lý":
+      case "dang xu ly":
+      case "processing":
         return { backgroundColor: "#fef3c7", color: "#d97706" }; // Orange/Yellow
       case "hoàn thành":
       case "hoan thanh":
@@ -33,7 +36,7 @@ const ReportTable = ({ reports, onActionClick }) => {
       case "đã xử lý":
       case "da xu ly":
       case "processed":
-        return { backgroundColor: "#e0e7ff", color: "#6366f1" }; // Indigo
+        return { backgroundColor: "#dcfce7", color: "#15803d" }; // Green
       case "chưa xử lý":
       case "chua xu ly":
       case "unprocessed":
@@ -44,17 +47,13 @@ const ReportTable = ({ reports, onActionClick }) => {
   };
 
   const getPriorityDisplay = (priority) => {
-    console.log('Raw priority value:', priority, 'Type:', typeof priority, 'String value:', String(priority));
-    
     // If priority is undefined or null
     if (priority === undefined || priority === null) {
-      console.log('Priority is undefined or null');
       return "Không xác định";
     }
     
     // Convert to string first to handle all cases
     const priorityStr = String(priority).trim().toLowerCase();
-    console.log('Priority as lowercase string:', priorityStr);
     
     // Check direct string matches first (case-insensitive)
     switch (priorityStr) {
@@ -74,7 +73,6 @@ const ReportTable = ({ reports, onActionClick }) => {
     
     // Try numeric conversion as fallback
     const priorityNum = Number(priority);
-    console.log('Priority as number:', priorityNum, 'isNaN:', isNaN(priorityNum));
     
     if (!isNaN(priorityNum)) {
       switch (priorityNum) {
@@ -87,7 +85,6 @@ const ReportTable = ({ reports, onActionClick }) => {
       }
     }
     
-    console.log('No match found, returning default');
     return "Không xác định";
   };
 
@@ -197,9 +194,7 @@ const ReportTable = ({ reports, onActionClick }) => {
             const uniqueKey = report.id || `report-${index}`;
             
             // Debug log to check for duplicate keys
-            if (process.env.NODE_ENV === 'development') {
-              console.log(`Report ${index}: ID=${report.id}, UniqueKey=${uniqueKey}`);
-            }
+
             
             return (
             <tr
@@ -318,7 +313,7 @@ const ReportTable = ({ reports, onActionClick }) => {
                       color: "#374151"
                     },
                     {
-                      action: 'edit',
+                      action: 'update',
                       label: 'Chỉnh sửa',
                       icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
                       color: "#374151"

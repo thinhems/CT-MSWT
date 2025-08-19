@@ -44,12 +44,7 @@ const ReportManagement = () => {
   // Hook for detailed report view
   const { report: detailedReport, isLoading: detailLoading, isError: detailError } = useReport(selectedReportId);
 
-  // Debug detailed report data
-  console.log('🔍 Detailed Report Data:', detailedReport);
-  console.log('🔍 Available fields:', detailedReport ? Object.keys(detailedReport) : 'No data');
-  console.log('🔍 reportedBy field:', detailedReport?.reportedBy);
-  console.log('🔍 createdBy field:', detailedReport?.createdBy);
-  console.log('🔍 userName field:', detailedReport?.userName);
+
 
   // Get reports based on active tab
   const getReportsForTab = () => {
@@ -70,17 +65,10 @@ const ReportManagement = () => {
         return { reports: workerReports, isLoading: roleLoading, isError: roleError };
       case "mine":
         // Filter reports created by current leader specifically
-        console.log('🔍 Filtering current leader reports - User:', user?.username);
-        console.log('🔍 Reports with role data:', reportsWithRole.map(r => ({ 
-          roleName: r.roleName, 
-          userName: r.userName, 
-          createdBy: r.createdBy 
-        })));
         const myLeaderReports = reportsWithRole.filter(report => 
           (report.roleName === "Leader" || report.roleName === "leader") &&
           (report.userName === user?.username || report.createdBy === user?.username)
         );
-        console.log('🔍 My leader reports:', myLeaderReports);
         return { reports: myLeaderReports, isLoading: roleLoading, isError: roleError };
       default:
         return { reports: [], isLoading: false, isError: false };
@@ -130,79 +118,74 @@ const ReportManagement = () => {
 
   const handleSubmitUpdate = (e) => {
     e.preventDefault();
+    
     if (selectedReport && updateReportData.status) {
-      // Convert Vietnamese status to number for API
-      const statusNumber = STATUS_MAPPING[updateReportData.status];
+      // Get report ID with multiple fallbacks
+      const reportId = selectedReport.id || selectedReport._id || selectedReport.reportId;
       
-      if (!statusNumber) {
-        alert("❌ Trạng thái không hợp lệ!");
+      // Validate ID exists
+      if (!reportId) {
+        alert("❌ Lỗi: ID báo cáo không hợp lệ!");
         return;
       }
-      
-      // Try different status formats that API might expect
-      const statusFormats = {
-        number: statusNumber,
-        string: updateReportData.status,
-        enum: statusNumber === 1 ? "DaGui" : statusNumber === 2 ? "DangXuLy" : "DaHoanThanh"
+
+             // Map Vietnamese status to API number format
+       let newStatusNumber;
+       switch (updateReportData.status) {
+         case "Đã gửi":
+           newStatusNumber = 1;
+           break;
+         case "Đang xử lý":
+           newStatusNumber = 2;
+           break;
+         case "Đã xử lý":
+           newStatusNumber = 3;
+           break;
+         default:
+           alert("❌ Trạng thái không hợp lệ!");
+           return;
+       }
+
+      // Prepare status data for API according to Swagger spec
+      const statusData = {
+        newStatus: newStatusNumber
       };
-      
-      console.log('🔄 Trying different status formats:', {
-        reportId: selectedReport.id,
-        statusText: updateReportData.status,
-        statusFormats,
-        apiUrl: `https://capstoneproject-mswt-su25.onrender.com/api/reports/${selectedReport.id}/status`
-      });
-      
-      // Try with number format first
-      updateReportStatus(selectedReport.id, {
-        status: statusNumber
-      })
-      .then(() => {
-        // Refresh all tabs data
-        refreshAll();
-        refreshWithRole();
-        handleCloseUpdateModal();
-        alert("✅ Đã cập nhật trạng thái báo cáo thành công!");
-      })
-      .catch(async (error) => {
-        console.error("Error with number format:", error);
-        
-        // If number format fails, try enum string format
-        try {
-          console.log('🔄 Trying enum string format...');
-          const enumStatus = statusNumber === 1 ? "DaGui" : statusNumber === 2 ? "DangXuLy" : "DaHoanThanh";
-          await updateReportStatus(selectedReport.id, {
-            status: enumStatus
-          });
-          
-          // Success with enum format
+
+      // Call API to update report status
+      updateReportStatus(reportId, statusData)
+        .then((updatedReport) => {
+          // Refresh all tabs data
           refreshAll();
           refreshWithRole();
+          
+          // Close modal and show success message
           handleCloseUpdateModal();
           alert("✅ Đã cập nhật trạng thái báo cáo thành công!");
+        })
+        .catch((error) => {
+          // Show user-friendly error message
+          let errorMessage = "Không thể cập nhật trạng thái báo cáo.";
           
-        } catch (enumError) {
-          console.error("Error with enum format:", enumError);
-          
-          // If enum format also fails, try Vietnamese string
-          try {
-            console.log('🔄 Trying Vietnamese string format...');
-            await updateReportStatus(selectedReport.id, {
-              status: updateReportData.status
-            });
-            
-            // Success with Vietnamese format
-            refreshAll();
-            refreshWithRole();
-            handleCloseUpdateModal();
-            alert("✅ Đã cập nhật trạng thái báo cáo thành công!");
-            
-          } catch (vietnameseError) {
-            console.error("All formats failed:", vietnameseError);
-            alert("❌ Không thể cập nhật báo cáo. Vui lòng kiểm tra lại API: " + vietnameseError.message);
+          if (error.message.includes('401')) {
+            errorMessage += " Vui lòng đăng nhập lại.";
+          } else if (error.message.includes('403')) {
+            errorMessage += " Bạn không có quyền cập nhật báo cáo này.";
+          } else if (error.message.includes('404')) {
+            errorMessage += " Báo cáo không tồn tại.";
+          } else if (error.message.includes('500')) {
+            errorMessage += " Lỗi server. Vui lòng thử lại sau.";
+          } else {
+            errorMessage += ` Lỗi: ${error.message}`;
           }
-        }
-      });
+          
+          alert(`❌ ${errorMessage}`);
+        });
+    } else {
+      if (!selectedReport) {
+        alert("❌ Lỗi: Không có báo cáo được chọn!");
+      } else if (!updateReportData.status) {
+        alert("❌ Vui lòng chọn trạng thái mới!");
+      }
     }
   };
 
@@ -258,12 +241,11 @@ const ReportManagement = () => {
             isUploading: false
           }));
           
-          console.log('✅ Ảnh đã được upload thành công:', uploadResult);
+
         } else {
           throw new Error(uploadResult.error);
         }
       } catch (error) {
-        console.error('❌ Lỗi upload ảnh:', error);
         alert(`Không thể upload ảnh: ${error.message}`);
         
         // Reset state nếu upload thất bại
@@ -290,12 +272,6 @@ const ReportManagement = () => {
 
   const handleSubmitReport = (e) => {
     e.preventDefault();
-    
-    console.log('Form data:', {
-      reportType: newReport.reportType,
-      description: newReport.description,
-      priority: newReport.priority
-    });
 
     if (!newReport.reportType) {
       alert("Vui lòng chọn loại báo cáo!");
@@ -321,8 +297,6 @@ const ReportManagement = () => {
       reportType: parseInt(newReport.reportType),
     };
 
-    console.log('🔄 Sending report data:', reportData);
-
     // Call API to create report
     createReport(reportData)
       .then(() => {
@@ -333,7 +307,6 @@ const ReportManagement = () => {
         alert("✅ Đã tạo báo cáo thành công!");
       })
       .catch((error) => {
-        console.error("Error creating report:", error);
         alert("❌ Có lỗi xảy ra khi tạo báo cáo: " + error.message);
       });
   };
@@ -1420,6 +1393,30 @@ const ReportManagement = () => {
 
              
 
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
+                  Trạng thái hiện tại
+                </label>
+                <div style={{
+                  padding: "12px",
+                  backgroundColor: "#f3f4f6",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  color: "#6b7280",
+                  border: "1px solid #e5e7eb"
+                }}>
+                  {selectedReport?.status || "Không có thông tin"}
+                </div>
+              </div>
+
               <div style={{ marginBottom: "24px" }}>
                 <label
                   style={{
@@ -1450,11 +1447,26 @@ const ReportManagement = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
-                  <option value="">Chọn trạng thái</option>
-                  <option value="Đã gửi">Đã gửi</option>
-                  <option value="Đang xử lý">Đang xử lý</option>
-                  <option value="Đã hoàn thành">Đã hoàn thành</option>
+                                     <option value="">Chọn trạng thái</option>
+                   <option value="Đã gửi">Đã gửi</option>
+                   <option value="Đang xử lý">Đang xử lý</option>
+                   <option value="Đã xử lý">Đã xử lý</option>
                 </select>
+                
+                {/* API Endpoint Info */}
+                <div style={{ 
+                  marginTop: "8px", 
+                  fontSize: "12px", 
+                  color: "#6b7280",
+                  backgroundColor: "#f9fafb",
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid #e5e7eb"
+                }}>
+                                     <strong>API Endpoint:</strong> PATCH /api/reports/{selectedReport?.id || selectedReport?._id || selectedReport?.reportId}/status
+                  <br />
+                                     <strong>Payload:</strong> {"{ newStatus: 1 }"} (1=Đã gửi, 2=Đang xử lý, 3=Đã xử lý)
+                </div>
               </div>
 
               {/* Buttons */}
