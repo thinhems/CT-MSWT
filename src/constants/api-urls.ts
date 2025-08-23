@@ -18,13 +18,13 @@ export const API_URLS = {
     GET_UNASSIGNED_SUPERVISORS: `users/unassigned-supervisors`, // Get unassigned supervisors for assignment
   },
 
-  // Floor management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useFloor.ts
-  FLOOR: {
-    GET_ALL: `floors`,
-    GET_BY_ID: (id: string) => `floors/${id}`,
-    CREATE: `floors`,
-    UPDATE: (id: string) => `floors/${id}`,
-    DELETE: (id: string) => `floors/${id}`,
+  // Building management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useBuilding.ts
+  BUILDING: {
+    GET_ALL: `buildings`,
+    GET_BY_ID: (id: string) => `buildings/${id}`,
+    CREATE: `buildings`,
+    UPDATE: (id: string) => `buildings/${id}`,
+    DELETE: (id: string) => `buildings/${id}`,
   },
 
   // Area management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useArea.ts
@@ -34,7 +34,7 @@ export const API_URLS = {
     CREATE: `areas`,
     UPDATE: (id: string) => `areas/${id}`,
     DELETE: (id: string) => `areas/${id}`,
-    ASSIGN_TO_FLOOR: (areaId: string, floorId: string) => `areas/${areaId}/${floorId}`,
+    ASSIGN_TO_BUILDING: (areaId: string, buildingId: string) => `areas/${areaId}/building/${buildingId}`,
   },
 
   // Shift management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong shifts.ts
@@ -46,16 +46,16 @@ export const API_URLS = {
     DELETE: (id: string) => `shifts/${id}`,
   },
 
-  // Restroom management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useRestroom.ts
-  RESTROOM: {
-    GET_ALL: `restrooms`,
-    GET_BY_ID: (id: string) => `restrooms/${id}`,
-    CREATE: `restrooms`,
-    UPDATE: (id: string) => `restrooms/${id}`,
-    DELETE: (id: string) => `restrooms/${id}`,
+  // Room management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useRoom.ts
+  ROOM: {
+    GET_ALL: `rooms`,
+    GET_BY_ID: (id: string) => `rooms/${id}`,
+    CREATE: `rooms`,
+    UPDATE: (id: string) => `rooms/${id}`,
+    DELETE: (id: string) => `rooms/${id}`,
   },
 
-  // Schedule management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useRestroom.ts
+  // Schedule management endpoints - ĐANG ĐƯỢC SỬ DỤNG trong useSchedule.ts
   SCHEDULE: {
     GET_ALL: `schedules`,
     GET_BY_ID: (id: string) => `schedules/${id}`,

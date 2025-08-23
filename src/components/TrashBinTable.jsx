@@ -1,7 +1,7 @@
 import { HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
 import Dropdown from './common/Dropdown';
 import { useAreas } from "../hooks/useArea";
-import { useRestrooms } from "../hooks/useRestroom";
+import { useRooms } from "../hooks/useRoom";
 
 // Add CSS animation styles
 const dropdownAnimationStyle = `
@@ -24,31 +24,30 @@ const TrashBinTable = ({ trashBins, onActionClick }) => {
   };
 
   const { areas } = useAreas();
-  const { restrooms } = useRestrooms();
+  const { rooms } = useRooms();
 
   // Inject animation styles
 
   // Function to get area name by areaId
   const getAreaInfo = (areaId) => {
     if (!areaId || areaId === "string") {
-      return { areaName: "Không có khu vực", floorNumber: null };
+      return { areaName: "Không có khu vực" };
     }
     
     const area = areas?.find(a => a.areaId === areaId);
     return {
-      areaName: area?.areaName || `Area: ${areaId.slice(-8)}`,
-      floorNumber: area?.floorNumber
+      areaName: area?.areaName || `Area: ${areaId.slice(-8)}`
     };
   };
 
-  // Function to get restroom number by restroomId
-  const getRestroomNumber = (restroomId) => {
-    if (!restroomId || restroomId === "string") {
+  // Function to get room number by roomId
+  const getRoomInfo = (roomId) => {
+    if (!roomId || roomId === "string") {
       return "Không liên kết";
     }
     
-    const restroom = restrooms?.find(r => r.restroomId === restroomId);
-    return restroom?.restroomNumber || `WC-${restroomId.slice(-6)}`;
+    const room = rooms?.find(r => r.roomId === roomId);
+    return room ? `${room.roomNumber} - ${room.roomType}` : `Phòng-${roomId.slice(-6)}`;
   };
 
   const getStatusColor = (status) => {
@@ -197,9 +196,6 @@ const TrashBinTable = ({ trashBins, onActionClick }) => {
                   
                   <div style={{  }}>
                     {getAreaInfo(bin.areaId)?.areaName}
-                    {getAreaInfo(bin.areaId)?.floorNumber !== undefined && 
-                      ` • ${getAreaInfo(bin.areaId).floorNumber === 0 ? "Tầng trệt" : `Tầng ${getAreaInfo(bin.areaId).floorNumber}`}`
-                    }
                   </div>
                 </div>
               </td>

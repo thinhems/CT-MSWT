@@ -1,4 +1,4 @@
-import { Area } from "@/config/models/restroom.model";
+import { Area } from "@/config/models/area.model";
 import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 import useSWR from "swr";
@@ -60,9 +60,9 @@ export function useAreas() {
     }
   };
 
-  const assignAreaToFloor = async (areaId: string, floorId: string) => {
+  const assignAreaToBuilding = async (areaId: string, buildingId: string) => {
     try {
-      const response = await swrFetcher(API_URLS.AREA.ASSIGN_TO_FLOOR(areaId, floorId), {
+      const response = await swrFetcher(API_URLS.AREA.ASSIGN_TO_BUILDING(areaId, buildingId), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -71,7 +71,7 @@ export function useAreas() {
       mutate();
       return response;
     } catch (error) {
-      console.error("Error assigning area to floor:", error);
+      console.error("Error assigning area to building:", error);
       throw error;
     }
   };
@@ -98,13 +98,13 @@ export function useAreas() {
   };
 
   return {
-    areas: data ?? [],
-    isLoading,
+    areas: data || [],
     error,
+    isLoading,
     createAsync,
     deleteAsync,
     updateAsync,
-    assignAreaToFloor,
-    assignMultipleAreasToFloor,
+    assignAreaToBuilding,
+    mutate,
   };
 }

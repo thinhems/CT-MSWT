@@ -1,4 +1,4 @@
-import { Area } from "@/config/models/restroom.model";
+import { Area } from "@/config/models/area.model";
 import { useState } from "react";
 import {
   HiOutlineEye,
@@ -22,7 +22,7 @@ const AreaTable = ({
 }: IProps) => {
   console.log("areas", areas);
   
-  const handleDropdownAction = (item, area) => {
+  const handleDropdownAction = (item: any, area: Area) => {
     onActionClick({ action: item.action, area });
   };
 
@@ -38,10 +38,6 @@ const AreaTable = ({
         return { backgroundColor: "#f3f4f6", color: "#374151" };
     }
   };
-
-  
-
-  
 
   return (
     <div
@@ -84,7 +80,7 @@ const AreaTable = ({
                 color: "#374151",
               }}
             >
-              Tầng
+              Tòa nhà ID
             </th>
 
             <th
@@ -96,18 +92,7 @@ const AreaTable = ({
                 color: "#374151",
               }}
             >
-              Phòng bắt đầu
-            </th>
-            <th
-              style={{
-                padding: "12px 16px",
-                textAlign: "left",
-                fontSize: "12px",
-                fontWeight: "600",
-                color: "#374151",
-              }}
-            >
-              Phòng kết thúc
+              Số phòng
             </th>
             <th
               style={{
@@ -171,7 +156,7 @@ const AreaTable = ({
                 {area.areaName}
               </td>
 
-              {/* Floor Column */}
+              {/* Building Column */}
               <td
                 style={{
                   padding: "12px 16px",
@@ -179,14 +164,10 @@ const AreaTable = ({
                   color: "#6b7280",
                 }}
               >
-                {area.floorNumber === 0
-                  ? "Tầng trệt"
-                  : `Tầng ${area.floorNumber}`}
+                {area.buildingId}
               </td>
 
-
-
-              {/* Start Room Column */}
+              {/* Room Count Column */}
               <td
                 style={{
                   padding: "12px 16px",
@@ -194,18 +175,7 @@ const AreaTable = ({
                   color: "#6b7280",
                 }}
               >
-                {area.roomBegin}
-              </td>
-
-              {/* End Room Column */}
-              <td
-                style={{
-                  padding: "12px 16px",
-                  fontSize: "13px",
-                  color: "#6b7280",
-                }}
-              >
-                {area.roomEnd}
+                {area.rooms ? area.rooms.length : 0}
               </td>
 
               {/* Description Column */}
@@ -233,7 +203,7 @@ const AreaTable = ({
                     fontWeight: "600",
                     borderRadius: "9999px",
                     backgroundColor: getStatusColor(area.status).backgroundColor,
-                color: getStatusColor(area.status).color,
+                    color: getStatusColor(area.status).color,
                   }}
                 >
                   {area.status}
@@ -263,7 +233,7 @@ const AreaTable = ({
                       color: "#374151"
                     }
                   ]}
-                  onItemClick={handleDropdownAction}
+                  onItemClick={(item: any, triggerData: any) => handleDropdownAction(item, triggerData)}
                   triggerData={area}
                 />
               </td>

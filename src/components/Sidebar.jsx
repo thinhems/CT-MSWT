@@ -65,8 +65,8 @@ const Sidebar = () => {
     
     
     {
-      title: "Các tầng",
-      path: "/floors",
+      title: "Tòa",
+      path: "/buildings",
       icon: HiOutlineOfficeBuilding,
     },
     {
@@ -75,8 +75,8 @@ const Sidebar = () => {
       icon: HiOutlineOfficeBuilding,
     },
     {
-      title: "Nhà vệ sinh",
-      path: "/restrooms",
+      title: "Phòng",
+      path: "/rooms",
       icon: HiOutlineHome,
     },
     {

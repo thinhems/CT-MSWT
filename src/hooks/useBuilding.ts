@@ -2,21 +2,21 @@ import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 import useSWR from "swr";
 import {
-  Floor,
-  ICreateFloorRequest,
-  IUpdateFloorRequest,
-} from "../config/models/floor.model";
+  Building,
+  ICreateBuildingRequest,
+  IUpdateBuildingRequest,
+} from "../config/models/building.model";
 
-// Hook to fetch floors for dropdown
-export function useFloors() {
-  const { data, error, isLoading, mutate } = useSWR<Floor[]>(
-    API_URLS.FLOOR.GET_ALL,
+// Hook to fetch buildings for dropdown
+export function useBuildings() {
+  const { data, error, isLoading, mutate } = useSWR<Building[]>(
+    API_URLS.BUILDING.GET_ALL,
     swrFetcher
   );
 
-  const createAsync = async (request: ICreateFloorRequest) => {
+  const createAsync = async (request: ICreateBuildingRequest) => {
     try {
-      const response = await swrFetcher(API_URLS.FLOOR.CREATE, {
+      const response = await swrFetcher(API_URLS.BUILDING.CREATE, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -26,14 +26,14 @@ export function useFloors() {
       mutate();
       return response;
     } catch (error) {
-      console.error("Error creating floor:", error);
+      console.error("Error creating building:", error);
       throw error;
     }
   };
 
-  const updateAsync = async (id: string, request: IUpdateFloorRequest) => {
+  const updateAsync = async (id: string, request: IUpdateBuildingRequest) => {
     try {
-      const response = await swrFetcher(API_URLS.FLOOR.UPDATE(id), {
+      const response = await swrFetcher(API_URLS.BUILDING.UPDATE(id), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -43,25 +43,25 @@ export function useFloors() {
       mutate();
       return response;
     } catch (error) {
-      console.error("Error updating area:", error);
+      console.error("Error updating building:", error);
       throw error;
     }
   };
 
   const deleteAsync = async (id: string) => {
     try {
-      await swrFetcher(API_URLS.FLOOR.DELETE(id), {
+      await swrFetcher(API_URLS.BUILDING.DELETE(id), {
         method: "DELETE",
       });
       mutate();
     } catch (error) {
-      console.error("Error deleting floor:", error);
+      console.error("Error deleting building:", error);
       throw error;
     }
   };
 
   return {
-    floors: data ?? [],
+    buildings: data ?? [],
     isLoading,
     error,
     createAsync,

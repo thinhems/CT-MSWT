@@ -1,6 +1,6 @@
-import { Area } from "@/config/models/restroom.model";
+import { Area } from "@/config/models/area.model";
 import { useAreas } from "../hooks/useArea";
-import { useFloors } from "../hooks/useFloor";
+import { useBuildings } from "../hooks/useBuilding";
 import { useState } from "react";
 import {
   HiOutlineLocationMarker,
@@ -24,27 +24,24 @@ const Areas = () => {
   const [selectedArea, setSelectedArea] = useState<Area | null>(null);
   const [updateAreaData, setUpdateAreaData] = useState<Area>({
     areaName: "",
-    floorNumber: 0,
-    roomBegin: "",
-    roomEnd: "",
+    buildingId: "",
+    buildingName: "",
     description: "",
     status: "",
     areaId: "",
-    floorId: "",
+    rooms: [],
   });
-  const [newArea, setNewArea] = useState<ICreateAreaRequest & { floorId: string; floorNumber: number }>({
+  const [newArea, setNewArea] = useState<ICreateAreaRequest & { buildingName: string }>({
     areaName: "",
-    roomBegin: "",
-    roomEnd: "",
+    buildingId: "",
+    buildingName: "",
     description: "",
     status: "Hoạt động",
-    floorId: "",
-    floorNumber: 0,
   });
 
   const itemsPerPage = 5; // Số khu vực hiển thị mỗi trang
   const { areas, createAsync, deleteAsync, updateAsync } = useAreas();
-  const { floors } = useFloors();
+  const { buildings } = useBuildings();
 
   const handleActionClick = async ({
     action,
@@ -61,13 +58,12 @@ const Areas = () => {
 
       setUpdateAreaData({
         areaName: area.areaName,
-        floorNumber: area.floorNumber,
-        roomBegin: area.roomBegin,
-        roomEnd: area.roomEnd,
+        buildingId: area.buildingId,
+        buildingName: area.buildingName,
         description: area.description,
         status: area.status,
         areaId: area.areaId,
-        floorId: area.floorId,
+        rooms: area.rooms,
       });
       setShowUpdateAreaModal(true);
     } else if (action === "delete") {
@@ -88,25 +84,24 @@ const Areas = () => {
     setSelectedArea(null);
     setUpdateAreaData({
       areaName: "",
-      floorNumber: 0,
-      roomBegin: "",
-      roomEnd: "",
+      buildingId: "",
+      buildingName: "",
       description: "",
       status: "",
       areaId: "",
-      floorId: "",
+      rooms: [],
     });
   };
 
   const handleUpdateChange = (e: any) => {
     const { name, value } = e.target;
     
-    if (name === 'floorId') {
-      const selectedFloor = floors.find(floor => floor.floorId === value);
+    if (name === 'buildingId') {
+      const selectedBuilding = buildings.find(building => building.buildingId === value);
       setUpdateAreaData((prev) => ({
         ...prev,
-        floorId: value,
-        floorNumber: selectedFloor ? selectedFloor.floorNumber : 0,
+        buildingId: value,
+        buildingName: selectedBuilding ? selectedBuilding.buildingName : "",
       }));
     } else {
       setUpdateAreaData((prev) => ({
@@ -122,12 +117,9 @@ const Areas = () => {
 
     await updateAsync(updateAreaData.areaId, {
       areaName: updateAreaData.areaName,
-      roomBegin: updateAreaData.roomBegin,
-      roomEnd: updateAreaData.roomEnd,
+      buildingId: updateAreaData.buildingId,
       description: updateAreaData.description,
       status: updateAreaData.status,
-      floorId: updateAreaData.floorId,
-      floorNumber: updateAreaData.floorNumber,
     });
 
     alert("✅ Đã cập nhật khu vực thành công!");
@@ -137,12 +129,10 @@ const Areas = () => {
     setShowAddAreaPopup(false);
     setNewArea({
       areaName: "",
-      roomBegin: "",
-      roomEnd: "",
+      buildingId: "",
+      buildingName: "",
       description: "",
       status: "Hoạt động",
-      floorId: "",
-      floorNumber: 0,
     });
   };
 
@@ -154,14 +144,14 @@ const Areas = () => {
     }));
   };
 
-  const handleFloorChange = (e: any) => {
-    const floorId = e.target.value;
-    const selectedFloor = floors.find(floor => floor.floorId === floorId);
+  const handleBuildingChange = (e: any) => {
+    const buildingId = e.target.value;
+    const selectedBuilding = buildings.find(building => building.buildingId === buildingId);
     
     setNewArea((prev) => ({
       ...prev,
-      floorId: floorId,
-      floorNumber: selectedFloor ? selectedFloor.floorNumber : 0,
+      buildingId: buildingId,
+      buildingName: selectedBuilding ? selectedBuilding.buildingName : "",
     }));
   };
 
@@ -171,27 +161,25 @@ const Areas = () => {
     // Kiểm tra đầy đủ thông tin
     if (
       !newArea.areaName ||
-      !newArea.roomBegin ||
-      !newArea.roomEnd ||
-      !newArea.floorId
+      !newArea.buildingId
     ) {
       alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
 
     // Kiểm tra số phòng hợp lệ
-    const roomBeginNum = parseInt(newArea.roomBegin.trim());
-    const roomEndNum = parseInt(newArea.roomEnd.trim());
+    // const roomBeginNum = parseInt(newArea.roomBegin.trim());
+    // const roomEndNum = parseInt(newArea.roomEnd.trim());
 
-    if (isNaN(roomBeginNum) || isNaN(roomEndNum)) {
-      alert("Số phòng phải là số hợp lệ!");
-      return;
-    }
+    // if (isNaN(roomBeginNum) || isNaN(roomEndNum)) {
+    //   alert("Số phòng phải là số hợp lệ!");
+    //   return;
+    // }
 
-    if (roomBeginNum >= roomEndNum) {
-      alert("Số phòng bắt đầu phải nhỏ hơn số phòng kết thúc!");
-      return;
-    }
+    // if (roomBeginNum >= roomEndNum) {
+    //   alert("Số phòng bắt đầu phải nhỏ hơn số phòng kết thúc!");
+    //   return;
+    // }
 
     // Kiểm tra tên khu vực
     if (newArea.areaName.trim().length < 2) {
@@ -227,14 +215,15 @@ const Areas = () => {
   // Sort areas by floor number and room begin (ascending)
   const sortedAreas = [...filteredAreas].sort((a, b) => {
     // First sort by floor number (ascending)
-    if (a.floorNumber !== b.floorNumber) {
-      return a.floorNumber - b.floorNumber;
-    }
+    // if (a.floorNumber !== b.floorNumber) {
+    //   return a.floorNumber - b.floorNumber;
+    // }
     
     // Then sort by room begin number (ascending)
-    const aRoomBegin = parseInt(a.roomBegin?.toString() || "0");
-    const bRoomBegin = parseInt(b.roomBegin?.toString() || "0");
-    return aRoomBegin - bRoomBegin;
+    // const aRoomBegin = parseInt(a.roomBegin?.toString() || "0");
+    // const bRoomBegin = parseInt(b.roomBegin?.toString() || "0");
+    // return aRoomBegin - bRoomBegin;
+    return 0; // No sorting by floor number or room begin in this version
   });
 
   // Tính toán pagination
@@ -587,12 +576,12 @@ const Areas = () => {
                     color: "#374151",
                   }}
                 >
-                  Tầng *
+                  Tòa *
                 </label>
                 <select
-                  name="floorId"
-                  value={newArea.floorId}
-                  onChange={handleFloorChange}
+                  name="buildingId"
+                  value={newArea.buildingId}
+                  onChange={handleBuildingChange}
                   required
                   style={{
                     width: "100%",
@@ -607,30 +596,30 @@ const Areas = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
-                  <option value="">Chọn tầng</option>
-                  {floors
-                    .sort((a, b) => a.floorNumber - b.floorNumber)
-                    .map((floor) => (
-                      <option key={floor.floorId} value={floor.floorId}>
-                        Tầng {floor.floorNumber}
+                  <option value="">Chọn tòa</option>
+                  {buildings
+                    .sort((a, b) => a.buildingName.localeCompare(b.buildingName))
+                    .map((building) => (
+                      <option key={building.buildingId} value={building.buildingId}>
+                        {building.buildingName}
                       </option>
                     ))}
                 </select>
-                {newArea.floorId && (
+                {newArea.buildingId && (
                   <div style={{ 
                     marginTop: "4px", 
                     fontSize: "12px", 
                     color: "#6b7280",
                     fontStyle: "italic"
                   }}>
-                    Đã chọn: {floors.find(f => f.floorId === newArea.floorId)?.floorNumber === 0 ? "Tầng trệt" : `Tầng ${floors.find(f => f.floorId === newArea.floorId)?.floorNumber}`}
+                    Đã chọn: {buildings.find(b => b.buildingId === newArea.buildingId)?.buildingName || "Không xác định"}
                   </div>
                 )}
               </div>
 
 
 
-              <div
+              {/* <div
                 style={{ display: "flex", gap: "12px", marginBottom: "16px" }}
               >
                 <div style={{ flex: 1 }}>
@@ -697,7 +686,7 @@ const Areas = () => {
                     onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                   />
                 </div>
-              </div>
+              </div> */}
 
               <div style={{ marginBottom: "16px" }}>
                 <label
@@ -943,11 +932,11 @@ const Areas = () => {
                     color: "#374151",
                   }}
                 >
-                  Tầng *
+                  Tòa *
                 </label>
                 <select
-                  name="floorId"
-                  value={updateAreaData.floorId}
+                  name="buildingId"
+                  value={updateAreaData.buildingId}
                   onChange={handleUpdateChange}
                   required
                   style={{
@@ -963,18 +952,18 @@ const Areas = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
-                  <option value="">Chọn tầng</option>
-                  {floors
-                    .sort((a, b) => a.floorNumber - b.floorNumber)
-                    .map((floor) => (
-                      <option key={floor.floorId} value={floor.floorId}>
-                        Tầng {floor.floorNumber}
+                  <option value="">Chọn tòa</option>
+                  {buildings
+                    .sort((a, b) => a.buildingName.localeCompare(b.buildingName))
+                    .map((building) => (
+                      <option key={building.buildingId} value={building.buildingId}>
+                        {building.buildingName}
                       </option>
                     ))}
                 </select>
               </div>
 
-              <div
+              {/* <div
                 style={{ display: "flex", gap: "12px", marginBottom: "16px" }}
               >
                 <div style={{ flex: 1 }}>
@@ -1039,7 +1028,7 @@ const Areas = () => {
                     onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                   />
                 </div>
-              </div>
+              </div> */}
 
               <div style={{ marginBottom: "16px" }}>
                 <label
@@ -1264,9 +1253,7 @@ const Areas = () => {
                     {selectedArea.areaName}
                   </h4>
                   <p style={{ margin: 0, fontSize: "14px", color: "#6b7280" }}>
-                    {selectedArea.floorNumber === 0
-                      ? "Tầng trệt"
-                      : `Tầng ${selectedArea.floorNumber}`}
+                    {buildings.find(b => b.buildingId === selectedArea.buildingId)?.buildingName || "Không xác định"}
                   </p>
                 </div>
               </div>
@@ -1281,76 +1268,6 @@ const Areas = () => {
                   gap: "20px",
                 }}
               >
-                <div>
-                  <label
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Phòng bắt đầu
-                  </label>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    {selectedArea.roomBegin}
-                  </p>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Phòng kết thúc
-                  </label>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    {selectedArea.roomEnd}
-                  </p>
-                </div>
-
-                {/* <div>
-                  <label
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Ngày tạo
-                  </label>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    {selectedArea.createdDate
-                      ? new Date(selectedArea.createdDate).toLocaleDateString(
-                          "vi-VN"
-                        )
-                      : "Chưa cập nhật"}
-                  </p>
-                </div> */}
-
                 <div>
                   <label
                     style={{
@@ -1393,7 +1310,95 @@ const Areas = () => {
                     </span>
                   </p>
                 </div>
+
+                <div>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Số phòng
+                  </label>
+                  <p
+                    style={{
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      color: "#111827",
+                      margin: "4px 0 0 0",
+                    }}
+                  >
+                    {selectedArea.rooms ? selectedArea.rooms.length : 0} phòng
+                  </p>
+                </div>
               </div>
+
+              {/* Rooms List - Full width */}
+              {selectedArea.rooms && selectedArea.rooms.length > 0 && (
+                <div>
+                  <label
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#6b7280",
+                      marginBottom: "8px",
+                      display: "block",
+                    }}
+                  >
+                    Danh sách phòng
+                  </label>
+                  <div
+                    style={{
+                      backgroundColor: "#f8fafc",
+                      borderRadius: "8px",
+                      padding: "16px",
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+                        gap: "8px",
+                      }}
+                    >
+                      {selectedArea.rooms.map((room) => (
+                        <div
+                          key={room.roomId}
+                          style={{
+                            backgroundColor: "white",
+                            padding: "8px 12px",
+                            borderRadius: "6px",
+                            border: "1px solid #e5e7eb",
+                            textAlign: "center",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "14px",
+                              fontWeight: "600",
+                              color: "#111827",
+                            }}
+                          >
+                            {room.roomNumber}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              color: "#6b7280",
+                              marginTop: "2px",
+                            }}
+                          >
+                            {room.roomType}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Description - Full width */}
               <div>

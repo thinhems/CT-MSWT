@@ -5,9 +5,9 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import Profile from "../pages/Profile";
-import Restrooms from "../pages/Restrooms";
+import Rooms from "../pages/Rooms";
 import Shifts from "../pages/Shifts";
-import Floors from "../pages/Floors";
+import Buildings from "../pages/Buildings";
 import UserManagement from "../pages/UserManagement";
 import ReportManagement from "../pages/ReportManagement";
 import TrashBinList from "../pages/TrashBinList";
@@ -42,16 +42,16 @@ export const router = createBrowserRouter([
         element: <Dashboard />,
       },
       {
-        path: "restrooms",
-        element: <Restrooms />,
+        path: "rooms",
+        element: <Rooms />,
       },
       {
         path: "shifts",
         element: <Shifts />,
       },
       {
-        path: "floors",
-        element: <Floors />,
+        path: "buildings",
+        element: <Buildings />,
       },
       {
         path: "trash",

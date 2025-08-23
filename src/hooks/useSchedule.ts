@@ -8,8 +8,8 @@ import {
   IUpdateScheduleRequest,
 } from "@/config/models/schedule.model";
 import { useAreas } from "./useArea";
-import { useFloors } from "./useFloor";
-import { useRestrooms } from "./useRestroom";
+import { useBuildings } from "./useBuilding";
+import { useRooms } from "./useRoom";
 import { useShifts } from "./useShifts";
 import { useAssignments } from "./useAssignments";
 
@@ -21,8 +21,8 @@ export function useSchedules() {
 
   // Fetch related data for name lookups
   const { areas } = useAreas();
-  const { floors } = useFloors();
-  const { restrooms } = useRestrooms();
+  const { buildings } = useBuildings();
+  const { rooms } = useRooms();
   const { shifts } = useShifts();
   const { assignments } = useAssignments();
 
@@ -35,21 +35,21 @@ export function useSchedules() {
     return lookup;
   }, [areas]);
 
-  const restroomLookup = useMemo(() => {
+  const roomLookup = useMemo(() => {
     const lookup = new Map();
-    restrooms.forEach((restroom) => {
-      lookup.set(restroom.restroomId, `Nhà vệ sinh ${restroom.restroomNumber}`);
+    rooms.forEach((room) => {
+      lookup.set(room.roomId, `Phòng ${room.roomNumber}`);
     });
     return lookup;
-  }, [restrooms]);
+  }, [rooms]);
 
-  const floorLookup = useMemo(() => {
+  const buildingLookup = useMemo(() => {
     const lookup = new Map();
-    floors.forEach((floor) => {
-      lookup.set(floor.floorId, `Tầng ${floor.floorNumber}`);
+    buildings.forEach((building) => {
+      lookup.set(building.buildingId, building.buildingName);
     });
     return lookup;
-  }, [floors]);
+  }, [buildings]);
 
   const shiftLookup = useMemo(() => {
     const lookup = new Map();
@@ -76,13 +76,13 @@ export function useSchedules() {
     return data.map((schedule) => ({
       ...schedule,
       // Use scheduleName from API if available, otherwise create a descriptive name
-      scheduleName: schedule.scheduleName || `${schedule.scheduleType} - ${areaLookup.get(schedule.areaId) || schedule.areaId}${restroomLookup.get(schedule.restroomId) ? ` - ${restroomLookup.get(schedule.restroomId)}` : ''}`,
+      scheduleName: schedule.scheduleName || `${schedule.scheduleType} - ${areaLookup.get(schedule.areaId) || schedule.areaId}${roomLookup.get(schedule.roomId) ? ` - ${roomLookup.get(schedule.roomId)}` : ''}`,
       areaName: areaLookup.get(schedule.areaId) || schedule.areaId,
-      restroomName: restroomLookup.get(schedule.restroomId) || schedule.restroomId,
+      roomName: roomLookup.get(schedule.roomId) || schedule.roomId,
       shiftName: shiftLookup.get(schedule.shiftId) || (schedule.shiftId ? `Ca ${schedule.shiftId.slice(0, 8)}` : 'N/A'),
       assignmentName: assignmentLookup.get(schedule.assignmentId) || (schedule.assignmentId ? `Assignment ${schedule.assignmentId.slice(0, 8)}` : 'N/A'),
     }));
-  }, [data, areaLookup, restroomLookup, floorLookup, shiftLookup, assignmentLookup]);
+  }, [data, areaLookup, roomLookup, buildingLookup, shiftLookup, assignmentLookup]);
 
   const createSchedule = async (newSchedule: ICreateScheduleRequest) => {
     try {

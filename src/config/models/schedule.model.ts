@@ -1,4 +1,4 @@
-import { Area } from "./restroom.model";
+import { Area } from "./area.model";
 import { Floor } from "./floor.model";
 
 export interface Schedule {
@@ -18,22 +18,25 @@ export interface Schedule {
   restroomName?: string;
   shiftName?: string;
   assignmentName?: string;
+  // Additional fields for compatibility
+  roomId?: string;
+  roomName?: string;
+  supervisorId?: string;
 }
 
 export interface ICreateScheduleRequest {
-  areaId: string;
   scheduleName: string;
+  areaId: string;
   assignmentId: string;
   startDate: string;
   endDate: string;
-  restroomId?: string;
+  restroomId: string;
   scheduleType: string;
   shiftId: string;
   supervisorId?: string;
 }
 
 export interface IUpdateScheduleRequest {
-  scheduleName?: string; // Add scheduleName to update request
   areaId?: string;
   assignmentId?: string;
   startDate?: string;

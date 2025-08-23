@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { HiOutlinePlus, HiOutlineSearch } from "react-icons/hi";
 import ScheduleTable from "../components/ScheduleTable";
 import ScheduleDetailsModal from "../components/ScheduleDetailsModal";
+
 import StaffAssignmentModal from "../components/StaffAssignmentModal";
 import Pagination from "../components/Pagination";
 import Notification from "../components/Notification";
 import { useSchedules } from "../hooks/useSchedule";
-import { useAreas } from "../hooks/useArea";
+
 import { useShifts } from "../hooks/useShifts";
-import { useRestrooms } from "../hooks/useRestroom";
+import { useRooms } from "../hooks/useRoom";
 import { useTrashBins } from "../hooks/useTrashBins";
 import { useUsers } from "../hooks/useUsers";
 import { Schedule, ICreateScheduleRequest } from "@/config/models/schedule.model";
@@ -22,6 +23,7 @@ const Schedules = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -33,9 +35,9 @@ const Schedules = () => {
   });
 
   const { schedules, isLoading, error, createSchedule, updateSchedule } = useSchedules();
-  const { areas, isLoading: areasLoading, error: areasError } = useAreas();
+
   const { shifts, isLoading: shiftsLoading, error: shiftsError } = useShifts();
-  const { restrooms } = useRestrooms();
+  const { rooms } = useRooms();
   const { trashBins } = useTrashBins();
   const { users } = useUsers();
 
@@ -63,8 +65,8 @@ const Schedules = () => {
 
   // Form state for new schedule
   const [newSchedule, setNewSchedule] = useState<ICreateScheduleRequest>({
-    areaId: "",
     scheduleName: "",
+    areaId: "",
     assignmentId: "",
     startDate: "",
     endDate: "",
@@ -83,7 +85,6 @@ const Schedules = () => {
   // Form state for updating schedule information
   const [updateScheduleData, setUpdateScheduleData] = useState<{
     scheduleName: string;
-    areaId: string;
     assignmentId: string;
     startDate: string;
     endDate: string;
@@ -92,7 +93,6 @@ const Schedules = () => {
     shiftId: string;
   }>({
     scheduleName: "",
-    areaId: "",
     assignmentId: "",
     startDate: "",
     endDate: "",
@@ -112,12 +112,12 @@ const Schedules = () => {
     if (action === "view") {
       setSelectedSchedule(schedule);
       setShowViewModal(true);
+
     } else if (action === "edit") {
       setSelectedSchedule(schedule);
       // Populate form with current schedule data
       setUpdateScheduleData({
         scheduleName: schedule.scheduleName || "",
-        areaId: schedule.areaId || "",
         assignmentId: schedule.assignmentId || "",
         startDate: schedule.startDate || "",
         endDate: schedule.endDate || "",
@@ -159,7 +159,7 @@ const Schedules = () => {
     // Search filtering - search by names and type only (no IDs)
     const matchesSearch = !searchTerm || 
       (schedule.areaName && schedule.areaName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (schedule.restroomName && schedule.restroomName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (schedule.roomName && schedule.roomName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (schedule.shiftName && schedule.shiftName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (schedule.assignmentName && schedule.assignmentName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       schedule.scheduleType.toLowerCase().includes(searchTerm.toLowerCase());
@@ -202,8 +202,8 @@ const Schedules = () => {
   const handleCloseAddModal = () => {
     setShowAddModal(false);
     setNewSchedule({
-      areaId: "",
       scheduleName: "",
+      areaId: "",
       assignmentId: "",
       startDate: "",
       endDate: "",
@@ -225,7 +225,7 @@ const Schedules = () => {
   const handleSubmitNewSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newSchedule.areaId || !newSchedule.scheduleName ||
+    if (!newSchedule.scheduleName ||
         !newSchedule.startDate || !newSchedule.endDate || !newSchedule.shiftId) {
       showNotificationMessage("error", "Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
@@ -253,16 +253,15 @@ const Schedules = () => {
   // Handlers for editing schedule information
   const handleCloseEditScheduleModal = () => {
     setShowEditScheduleModal(false);
-    setUpdateScheduleData({
-      scheduleName: "",
-      areaId: "",
-      assignmentId: "",
-      startDate: "",
-      endDate: "",
-      restroomId: "",
-      scheduleType: "Hằng ngày",
-      shiftId: "",
-    });
+          setUpdateScheduleData({
+        scheduleName: "",
+        assignmentId: "",
+        startDate: "",
+        endDate: "",
+        restroomId: "",
+        scheduleType: "Hằng ngày",
+        shiftId: "",
+      });
     setSelectedSchedule(null);
   };
 
@@ -282,7 +281,7 @@ const Schedules = () => {
       return;
     }
 
-    if (!updateScheduleData.scheduleName.trim() || !updateScheduleData.areaId || 
+    if (!updateScheduleData.scheduleName.trim() || 
         !updateScheduleData.startDate || !updateScheduleData.endDate || !updateScheduleData.shiftId) {
       showNotificationMessage("error", "Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
@@ -633,6 +632,8 @@ const Schedules = () => {
         onClose={() => setShowViewModal(false)}
       />
 
+
+
       {/* Staff Assignment Modal */}
       <StaffAssignmentModal
         schedule={selectedSchedule}
@@ -694,12 +695,12 @@ const Schedules = () => {
                 </h4>
                 <div style={{ fontSize: "13px", color: "#6b7280" }}>
                   <div>🏢 Khu vực: <strong>{selectedSchedule.areaName}</strong></div>
-                  <div>🚻 Nhà vệ sinh: <strong>{selectedSchedule.restroomName || "Chưa gán"}</strong></div>
+                  <div>🚪 Phòng: <strong>{selectedSchedule.roomName || "Chưa gán"}</strong></div>
                   <div>🗑️ Thùng rác: <strong>{selectedSchedule.assignmentName || "Chưa gán"}</strong></div>
                 </div>
               </div>
 
-              {/* Restroom Selection */}
+              {/* Room Selection */}
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ 
                   display: "block", 
@@ -708,7 +709,7 @@ const Schedules = () => {
                   fontWeight: "500",
                   color: "#374151"
                 }}>
-                  🚻 Nhà vệ sinh
+                  🚪 Phòng
                 </label>
                 <select
                   name="restroomId"
@@ -723,18 +724,15 @@ const Schedules = () => {
                     backgroundColor: "white",
                   }}
                 >
-                  <option value="">Không gán nhà vệ sinh</option>
-                  {restrooms && restrooms.length > 0 ? (
-                    restrooms.map((restroom) => (
-                      <option key={restroom.restroomId} value={restroom.restroomId}>
-                        Nhà vệ sinh số {restroom.restroomNumber}
-                        {restroom.area?.floorNumber !== undefined && 
-                          ` (Tầng ${restroom.area.floorNumber === 0 ? "trệt" : restroom.area.floorNumber})`
-                        }
+                  <option value="">Không gán phòng</option>
+                  {rooms && rooms.length > 0 ? (
+                    rooms.map((room) => (
+                      <option key={room.roomId} value={room.roomId}>
+                        Phòng số {room.roomNumber} - {room.roomType}
                       </option>
                     ))
                   ) : (
-                    <option disabled>Không có dữ liệu nhà vệ sinh</option>
+                    <option value="" disabled>Đang tải danh sách phòng...</option>
                   )}
                 </select>
               </div>
@@ -929,38 +927,7 @@ const Schedules = () => {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-                {/* Area Selection */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
-                    Khu vực *
-                  </label>
-                  <select
-                    name="areaId"
-                    value={updateScheduleData.areaId}
-                    onChange={handleEditScheduleInputChange}
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "6px",
-                      fontSize: "14px",
-                    }}
-                  >
-                    <option value="">-- Chọn khu vực --</option>
-                    {areas && areas.length > 0 ? (
-                      areas.map((area) => (
-                        <option key={area.areaId} value={area.areaId}>
-                          {area.areaName}
-                        </option>
-                      ))
-                    ) : (
-                      <option disabled>Không có dữ liệu khu vực</option>
-                    )}
-                  </select>
-                </div>
-
+              <div style={{ marginBottom: "16px" }}>
                 {/* Shift Selection */}
                 <div>
                   <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
@@ -1070,11 +1037,11 @@ const Schedules = () => {
               {/* Optional Fields
               <div style={{ marginBottom: "20px" }}>
                 <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "500" }}>
-                  Nhà vệ sinh (tùy chọn)
+                  Phòng (tùy chọn)
                 </label>
                 <select
-                  name="restroomId"
-                  value={updateScheduleData.restroomId}
+                  name="roomId"
+                  value={updateScheduleData.roomId}
                   onChange={handleEditScheduleInputChange}
                   style={{
                     width: "100%",
@@ -1084,15 +1051,15 @@ const Schedules = () => {
                     fontSize: "14px",
                   }}
                 >
-                  <option value="">-- Chọn nhà vệ sinh --</option>
-                  {restrooms && restrooms.length > 0 ? (
-                    restrooms.map((restroom) => (
-                      <option key={restroom.restroomId} value={restroom.restroomId}>
-                        Nhà vệ sinh {restroom.restroomNumber}
+                  <option value="">-- Chọn phòng --</option>
+                  {rooms && rooms.length > 0 ? (
+                    rooms.map((room) => (
+                      <option key={room.roomId} value={room.roomId}>
+                        Phòng số {room.roomNumber}
                       </option>
                     ))
                   ) : (
-                    <option disabled>Không có dữ liệu nhà vệ sinh</option>
+                    <option disabled>Không có dữ liệu phòng</option>
                   )}
                 </select>
               </div> */}
@@ -1225,43 +1192,7 @@ const Schedules = () => {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-                {/* Area */}
-                <div>
-                  <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
-                    Khu vực *
-                  </label>
-                  <select
-                    name="areaId"
-                    value={newSchedule.areaId}
-                    onChange={handleInputChange}
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "6px",
-                      fontSize: "14px",
-                    }}
-                  >
-                    <option value="">Chọn khu vực</option>
-                    {areasLoading ? (
-                      <option disabled>Đang tải dữ liệu khu vực...</option>
-                    ) : areasError ? (
-                      <option disabled>Lỗi tải dữ liệu khu vực</option>
-                    ) : areas && areas.length > 0 ? (
-                      areas.map((area) => (
-                        <option key={area.areaId} value={area.areaId}>
-                          {area.areaName}
-                        </option>
-                      ))
-                    ) : (
-                      <option disabled>Không có dữ liệu khu vực</option>
-                    )}
-                  </select>
-                </div>
-
-                
+              <div style={{ marginBottom: "16px" }}>
                 {/* Shift */}
                 <div>
                   <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
@@ -1339,6 +1270,80 @@ const Schedules = () => {
                     }}
                   />
                 </div>
+              </div>
+
+              {/* Area Selection */}
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
+                  Khu vực *
+                </label>
+                <select
+                  name="areaId"
+                  value={newSchedule.areaId}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                  }}
+                >
+                  <option value="">Chọn khu vực</option>
+                  {/* You can add area options here if you have areas data */}
+                  <option value="area1">Khu vực 1</option>
+                  <option value="area2">Khu vực 2</option>
+                </select>
+              </div>
+
+              {/* Assignment Selection */}
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
+                  Loại công việc *
+                </label>
+                <select
+                  name="assignmentId"
+                  value={newSchedule.assignmentId}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                  }}
+                >
+                  <option value="">Chọn loại công việc</option>
+                  {/* You can add assignment options here if you have assignments data */}
+                  <option value="assignment1">Dọn dẹp</option>
+                  <option value="assignment2">Bảo trì</option>
+                </select>
+              </div>
+
+              {/* Restroom Selection */}
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
+                  Nhà vệ sinh (tùy chọn)
+                </label>
+                <select
+                  name="restroomId"
+                  value={newSchedule.restroomId}
+                  onChange={handleInputChange}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                  }}
+                >
+                  <option value="">Không chọn</option>
+                  {/* You can add restroom options here if you have restrooms data */}
+                  <option value="restroom1">Nhà vệ sinh 1</option>
+                  <option value="restroom2">Nhà vệ sinh 2</option>
+                </select>
               </div>
 
               {/* Supervisor Selection */}

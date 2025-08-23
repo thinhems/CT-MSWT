@@ -86,7 +86,6 @@ export function useAssignments() {
       const apiPayload = {
         assigmentName: newAssignment.assignmentName, // Map to API's typo field name
         description: newAssignment.description,
-        timesPerDay: newAssignment.timesPerDay,
         status: newAssignment.status
       };
 
@@ -130,7 +129,6 @@ export function useAssignments() {
       const apiPayload = {
         assigmentName: updatedData.assignmentName, // Map to API's typo field name
         description: updatedData.description,
-        timesPerDay: updatedData.timesPerDay,
         status: updatedData.status
       };
 

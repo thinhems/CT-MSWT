@@ -1,30 +1,25 @@
+import { Room } from "./room.model";
+
 export interface Area {
   areaId: string;
-  floorId: string;
+  buildingId: string;
+  buildingName: string;
   description: string;
   status: string;
-  roomBegin: string;
-  roomEnd: string;
   areaName: string;
-  floorNumber: number;
+  rooms: Room[];
 }
 
 export interface ICreateAreaRequest {
+  buildingId: string;
   description: string;
   status: string;
-  roomBegin: string;
-  roomEnd: string;
   areaName: string;
-  floorId: string;
-  floorNumber: number;
 }
 
 export interface IUpdateAreaRequest {
+  buildingId: string;
   description: string;
   status: string;
-  roomBegin: string;
-  roomEnd: string;
   areaName: string;
-  floorId: string;
-  floorNumber: number;
 }

@@ -1,4 +1,4 @@
-import { HiOutlineX, HiOutlineClipboardList, HiOutlinePlus } from "react-icons/hi";
+import { HiOutlineX, HiOutlineClipboardList, HiOutlinePlus, HiOutlineClock, HiOutlineUser, HiOutlineMap } from "react-icons/hi";
 import { Schedule } from "@/config/models/schedule.model";
 import { useScheduleDetails } from "../hooks/useScheduleDetails";
 import { useAssignments } from "../hooks/useAssignments";
@@ -8,6 +8,49 @@ import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 import useSWR from "swr";
 import { useMemo, useState } from "react";
+
+interface ScheduleDetailResponse {
+  scheduleDetailId: string;
+  scheduleId: string;
+  description: string;
+  date: string;
+  status: string;
+  supervisorId: string;
+  supervisorName: string;
+  rating: number | null;
+  workerGroupId: string;
+  backupForUserId: string | null;
+  endTime: string;
+  startTime: string;
+  isBackup: boolean | null;
+  groupAssignmentId: string;
+  comment: string | null;
+  areaId: string;
+  schedule: {
+    scheduleId: string;
+    startDate: string;
+    endDate: string;
+    scheduleType: string;
+    shiftId: string;
+    scheduleName: string;
+  };
+  workers: Array<{
+    workGroupMemberId: string;
+    workGroupId: string;
+    userId: string;
+    roleId: string;
+    joinedAt: string;
+    leftAt: string | null;
+    fullName: string;
+  }>;
+  assignments: Array<{
+    assignmentId: string;
+    description: string;
+    status: string;
+    assigmentName: string;
+    groupAssignmentId: string;
+  }>;
+}
 
 interface IProps {
   schedule: Schedule | null;
@@ -22,9 +65,15 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     swrFetcher
   );
 
+  // Fetch schedule details from the new API endpoint
+  const { data: scheduleDetails, error: detailsError, isLoading: detailsLoading } = useSWR(
+    schedule?.scheduleId ? API_URLS.SCHEDULE_DETAILS.GET_BY_SCHEDULE_ID(schedule.scheduleId) : null,
+    swrFetcher
+  );
+
   const { assignments } = useAssignments();
   const { shifts } = useShifts(); // Keep for shift name lookup
-  const { scheduleDetails, createScheduleDetailForSchedule } = useScheduleDetails(schedule?.scheduleId);
+  const { createScheduleDetailForSchedule } = useScheduleDetails(schedule?.scheduleId);
   const { users } = useUsers();
   
   // Fetch unassigned workers using API
@@ -138,25 +187,30 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
   const workerNameTabs = useMemo(() => {
     if (!scheduleDetails) return ["Tất cả"];
     const names = new Set<string>();
-    scheduleDetails.forEach((d: any) => {
-      const name = getUserName(d.workerId);
-      if (name && name !== "Chưa gán") names.add(name);
+    scheduleDetails.forEach((d: ScheduleDetailResponse) => {
+      if (d.workers && d.workers.length > 0) {
+        d.workers.forEach(worker => {
+          if (worker.fullName) names.add(worker.fullName);
+        });
+      }
     });
     return ["Tất cả", ...Array.from(names)];
-  }, [scheduleDetails, unassignedWorkers, users]);
+  }, [scheduleDetails]);
 
   // Filter schedule details by worker name
   const filteredScheduleDetails = useMemo(() => {
     if (!scheduleDetails) return [];
     const term = detailSearchTerm.toLowerCase();
-    return scheduleDetails.filter((detail: any) => {
-      const matchesName = !term || getUserName(detail.workerId).toLowerCase().includes(term);
+    return scheduleDetails.filter((detail: ScheduleDetailResponse) => {
+      const hasMatchingWorker = !term || (detail.workers && detail.workers.some(worker => 
+        worker.fullName.toLowerCase().includes(term)
+      ));
       const matchesNameTab =
         activeWorkerNameTab === "Tất cả" ||
-        getUserName(detail.workerId) === activeWorkerNameTab;
-      return matchesName && matchesNameTab;
+        (detail.workers && detail.workers.some(worker => worker.fullName === activeWorkerNameTab));
+      return hasMatchingWorker && matchesNameTab;
     });
-  }, [scheduleDetails, detailSearchTerm, activeWorkerNameTab, unassignedWorkers, users]);
+  }, [scheduleDetails, detailSearchTerm, activeWorkerNameTab]);
 
   const getScheduleTypeDisplay = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -919,75 +973,290 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
               </form>
             )}
 
-            {/* Schedule Details List */}
+                        {/* Schedule Details List */}
             <div style={{ marginBottom: "16px" }}>
-              {filteredScheduleDetails && filteredScheduleDetails.length > 0 ? (
+              {detailsLoading ? (
                 <div style={{ 
-                  backgroundColor: "white", 
-                  borderRadius: "10px", 
-                  border: "1px solid #e5e7eb",
-                  overflow: "hidden"
+                  textAlign: "center", 
+                  color: "#6b7280", 
+                  fontSize: "14px",
+                  padding: "32px",
+                  backgroundColor: "#f9fafb",
+                  borderRadius: "8px"
                 }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <colgroup>
-                      <col style={{ width: "28%" }} />
-                      <col style={{ width: "18%" }} />
-                      <col style={{ width: "32%" }} />
-                      <col style={{ width: "12%" }} />
-                      <col style={{ width: "10%" }} />
-                    </colgroup>
-                    <thead>
-                      <tr style={{ backgroundColor: "#FEF6F4", borderBottom: "1px solid #f3f4f6" }}>
-                        <th style={{ textAlign: "left", padding: "12px 14px", fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Tên chi tiết công việc</th>
-                        <th style={{ textAlign: "left", padding: "12px 14px", fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Loại công việc</th>
-                        <th style={{ textAlign: "left", padding: "12px 14px", fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Mô tả</th>
-                        <th style={{ textAlign: "left", padding: "12px 14px", fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Ngày</th>
-                        <th style={{ textAlign: "left", padding: "12px 14px", fontSize: "11px", color: "#374151", textTransform: "uppercase", letterSpacing: "0.03em" }}>Đánh giá</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredScheduleDetails.map((detail: any, index: number) => {
-                        const ratingValue = detail.rating ? parseInt(detail.rating) : 0;
-                        const zebra = index % 2 === 1 ? "#fafafa" : "transparent";
-                        return (
-                          <tr key={detail.scheduleDetailId} style={{ backgroundColor: zebra, transition: "background-color 0.2s" }}
-                              onMouseEnter={(e: any) => (e.currentTarget.style.backgroundColor = "#f9fafb")}
-                              onMouseLeave={(e: any) => (e.currentTarget.style.backgroundColor = zebra)}>
-                            <td style={{ padding: "12px 14px", fontSize: "13px", color: "#111827", verticalAlign: "top" }}>
-                              <div style={{ fontWeight: 600 }}>{`Chi tiết công việc #${detail.scheduleDetailId.slice(0, 8)}`}</div>
-                            </td>
-                            <td style={{ padding: "12px 14px", fontSize: "13px", color: "#374151", verticalAlign: "top" }}>
-                              <span style={{ backgroundColor: "#f3f4f6", padding: "4px 10px", borderRadius: 6, display: "inline-block", fontSize: "12px" }}>
-                                {detail.assignmentName || "Chưa xác định"}
-                              </span>
-                            </td>
-                            <td style={{ padding: "12px 14px", fontSize: "13px", color: "#374151", verticalAlign: "top", whiteSpace: "pre-wrap" }}>
-                              {detail.description || "Không có mô tả"}
-                            </td>
-                            <td style={{ padding: "12px 14px", fontSize: "13px", color: "#374151", verticalAlign: "top" }}>
-                              {new Date(detail.date).toLocaleDateString("vi-VN")}
-                            </td>
-                            <td style={{ padding: "12px 14px", fontSize: "13px", color: "#374151", verticalAlign: "top" }}>
-                              {ratingValue > 0 ? (
-                                <span>
-                                  {[1,2,3,4,5].map((star) => (
-                                    <span key={star} style={{ color: star <= ratingValue ? "#f59e0b" : "#d1d5db", marginRight: 2 }}>★</span>
-                                  ))}
-                                  <span style={{ marginLeft: 6, color: "#6b7280", fontSize: "12px" }}>
-                                    {ratingValue}/5
-                                  </span>
-                                </span>
-                              ) : (
-                                <span style={{ color: "#6b7280", fontSize: "12px" }}>
-                                  Chưa đánh giá
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                  Đang tải chi tiết công việc...
+                </div>
+              ) : detailsError ? (
+                <div style={{ 
+                  textAlign: "center", 
+                  color: "#dc2626", 
+                  fontSize: "14px",
+                  padding: "32px",
+                  backgroundColor: "#fef2f2",
+                  borderRadius: "8px"
+                }}>
+                  Không thể tải chi tiết công việc
+                </div>
+              ) : filteredScheduleDetails && filteredScheduleDetails.length > 0 ? (
+                filteredScheduleDetails.map((detail: ScheduleDetailResponse) => (
+                  <div
+                    key={detail.scheduleDetailId}
+                    style={{
+                      backgroundColor: "#f9fafb",
+                      borderRadius: "8px",
+                      padding: "24px",
+                      marginBottom: "24px",
+                      border: "1px solid #e5e7eb",
+                    }}
+                  >
+                    {/* Header Row */}
+                    <div style={{ 
+                      display: "flex", 
+                      justifyContent: "space-between", 
+                      alignItems: "flex-start",
+                      marginBottom: "20px",
+                      flexWrap: "wrap",
+                      gap: "16px"
+                    }}>
+                      <div>
+                        <h4 style={{ 
+                          fontSize: "18px", 
+                          fontWeight: "600", 
+                          color: "#374151",
+                          margin: "0 0 8px 0",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px"
+                        }}>
+                          <HiOutlineClipboardList style={{ width: "20px", height: "20px" }} />
+                          Chi tiết #{detail.scheduleDetailId.slice(0, 8)}
+                        </h4>
+                        <p style={{ 
+                          margin: 0, 
+                          color: "#6b7280", 
+                          fontSize: "14px",
+                          fontStyle: "italic"
+                        }}>
+                          {detail.description || "Không có mô tả"}
+                        </p>
+                      </div>
+                      <div style={{
+                        padding: "8px 16px",
+                        borderRadius: "20px",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        backgroundColor: "#fef3c7",
+                        color: "#d97706",
+                        border: "2px solid #fed7aa",
+                      }}>
+                        {detail.status}
+                      </div>
+                    </div>
+
+                    {/* Time Information */}
+                    <div style={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      gap: "8px",
+                      marginBottom: "16px",
+                      padding: "12px 16px",
+                      backgroundColor: "white",
+                      borderRadius: "8px",
+                      border: "1px solid #e5e7eb"
+                    }}>
+                      <HiOutlineClock style={{ width: "20px", height: "20px", color: "#FF5B27" }} />
+                      <span style={{ fontWeight: "600", color: "#374151" }}>Thời gian:</span>
+                      <span style={{ color: "#6b7280" }}>
+                        {detail.startTime?.substring(0, 5) || "N/A"} - {detail.endTime?.substring(0, 5) || "N/A"}
+                      </span>
+                    </div>
+
+                    {/* Supervisor Information */}
+                    <div style={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      gap: "8px",
+                      marginBottom: "16px",
+                      padding: "12px 16px",
+                      backgroundColor: "white",
+                      borderRadius: "8px",
+                      border: "1px solid #e5e7eb"
+                    }}>
+                      <HiOutlineUser style={{ width: "20px", height: "20px", color: "#FF5B27" }} />
+                      <span style={{ fontWeight: "600", color: "#374151" }}>Giám sát viên:</span>
+                      <span style={{ color: "#6b7280" }}>
+                        {detail.supervisorName || "Chưa gán"}
+                      </span>
+                    </div>
+
+                    {/* Rating */}
+                    {detail.rating && (
+                      <div style={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        gap: "8px",
+                        marginBottom: "16px",
+                        padding: "12px 16px",
+                        backgroundColor: "white",
+                        borderRadius: "8px",
+                        border: "1px solid #e5e7eb"
+                      }}>
+                        <span style={{ fontSize: "20px" }}>⭐</span>
+                        <span style={{ fontWeight: "600", color: "#374151" }}>Đánh giá:</span>
+                        <span style={{ color: "#6b7280" }}>
+                          {detail.rating}/5
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Workers Section */}
+                    {detail.workers && detail.workers.length > 0 && (
+                      <div style={{ marginBottom: "20px" }}>
+                        <h5 style={{ 
+                          fontSize: "16px", 
+                          fontWeight: "600", 
+                          color: "#374151",
+                          margin: "0 0 12px 0",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px"
+                        }}>
+                          <HiOutlineUser style={{ width: "18px", height: "18px" }} />
+                          Nhân viên thực hiện
+                        </h5>
+                        <div style={{ 
+                          display: "grid", 
+                          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", 
+                          gap: "12px" 
+                        }}>
+                          {detail.workers.map((worker) => (
+                            <div key={worker.workGroupMemberId} style={{
+                              backgroundColor: "white",
+                              padding: "16px",
+                              borderRadius: "8px",
+                              border: "1px solid #e5e7eb",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "12px"
+                            }}>
+                              <div style={{
+                                width: "40px",
+                                height: "40px",
+                                borderRadius: "50%",
+                                backgroundColor: "#FF5B27",
+                                color: "white",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "16px",
+                                fontWeight: "600"
+                              }}>
+                                {worker.fullName.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: "600", color: "#111827", marginBottom: "4px" }}>
+                                  {worker.fullName}
+                                </div>
+                                <div style={{ color: "#6b7280", fontSize: "12px" }}>
+                                  ID: {worker.userId}
+                                </div>
+                                <div style={{ color: "#6b7280", fontSize: "12px" }}>
+                                  Vai trò: {worker.roleId}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Assignments Section */}
+                    {detail.assignments && detail.assignments.length > 0 && (
+                      <div style={{ marginBottom: "20px" }}>
+                        <h5 style={{ 
+                          fontSize: "16px", 
+                          fontWeight: "600", 
+                          color: "#374151",
+                          margin: "0 0 12px 0",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px"
+                        }}>
+                          <HiOutlineMap style={{ width: "18px", height: "18px" }} />
+                          Công việc được giao
+                        </h5>
+                        <div style={{ 
+                          display: "grid", 
+                          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", 
+                          gap: "12px" 
+                        }}>
+                          {detail.assignments.map((assignment) => (
+                            <div key={assignment.assignmentId} style={{
+                              backgroundColor: "white",
+                              padding: "16px",
+                              borderRadius: "8px",
+                              border: "1px solid #e5e7eb",
+                            }}>
+                              <div style={{ fontWeight: "600", color: "#111827", marginBottom: "8px" }}>
+                                {assignment.assigmentName}
+                              </div>
+                              <div style={{ color: "#6b7280", fontSize: "14px", marginBottom: "8px" }}>
+                                {assignment.description}
+                              </div>
+                              <div style={{ 
+                                fontSize: "12px", 
+                                padding: "4px 8px", 
+                                borderRadius: "4px",
+                                display: "inline-block",
+                                backgroundColor: assignment.status === "Hoạt động" ? "#dcfce7" : "#fee2e2",
+                                color: assignment.status === "Hoạt động" ? "#15803d" : "#dc2626"
+                              }}>
+                                {assignment.status}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Comment Section */}
+                    {detail.comment && (
+                      <div style={{ 
+                        backgroundColor: "white",
+                        padding: "16px",
+                        borderRadius: "8px",
+                        border: "1px solid #e5e7eb"
+                      }}>
+                        <h5 style={{ 
+                          fontSize: "16px", 
+                          fontWeight: "600", 
+                          color: "#374151",
+                          margin: "0 0 12px 0"
+                        }}>
+                          💬 Ghi chú
+                        </h5>
+                        <p style={{ 
+                          margin: 0, 
+                          color: "#6b7280", 
+                          fontSize: "14px",
+                          fontStyle: "italic"
+                        }}>
+                          {detail.comment}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : scheduleDetails && scheduleDetails.length === 0 ? (
+                <div style={{ 
+                  textAlign: "center", 
+                  color: "#6b7280", 
+                  fontSize: "14px",
+                  padding: "32px",
+                  backgroundColor: "#f9fafb",
+                  borderRadius: "8px"
+                }}>
+                  Không có chi tiết công việc nào được tạo
                 </div>
               ) : (
                 <div style={{ 

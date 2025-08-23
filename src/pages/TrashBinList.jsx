@@ -4,7 +4,7 @@ import Pagination from "../components/Pagination";
 import TrashBinTable from "../components/TrashBinTable";
 import { useTrashBins, useTrashBinDetail } from "../hooks/useTrashBins";
 import { useAreas } from "../hooks/useArea";
-import { useRestrooms } from "../hooks/useRestroom";
+import { useRooms } from "../hooks/useRoom";
 import { BASE_API_URL, API_URLS } from "../constants/api-urls";
 
 
@@ -23,7 +23,7 @@ const TrashBinList = () => {
   const [newTrashBin, setNewTrashBin] = useState({
     areaId: "",
     location: "",
-    restroomId: ""
+    roomId: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState({
@@ -35,14 +35,14 @@ const TrashBinList = () => {
   // Use API data instead of static data
   const { trashBins, isLoading, error, updateAsync, createAsync, mutate } = useTrashBins();
   const { areas } = useAreas();
-  const { restrooms } = useRestrooms();
+  const { rooms } = useRooms();
   
   // Get detailed data for selected trash bin
   const { trashBinDetail, isLoadingDetail, errorDetail } = useTrashBinDetail(selectedBinId);
 
   console.log('🔍 TrashBinList - API data:', { trashBins, isLoading, error });
   console.log('🏢 Areas data:', areas);
-  console.log('🚻 Restrooms data:', restrooms);
+  console.log('🚪 Rooms data:', rooms);
   console.log('📋 Selected Bin Detail:', { selectedBinId, trashBinDetail, isLoadingDetail, errorDetail });
 
   // Add spinner CSS
@@ -98,7 +98,7 @@ const TrashBinList = () => {
       bin.trashBinId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bin.area?.areaName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bin.areaId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bin.restroomId?.toLowerCase().includes(searchTerm.toLowerCase());
+      bin.roomId?.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Status filter (keep this for backward compatibility)
     const matchesStatus = statusFilter === "" || bin.status === statusFilter;
@@ -260,21 +260,21 @@ const TrashBinList = () => {
     setIsSubmitting(true);
     
     try {
-      const submitData = {
+      const createData = {
         areaId: newTrashBin.areaId,
         location: newTrashBin.location.trim(),
-        restroomId: newTrashBin.restroomId || ""
+        roomId: newTrashBin.roomId || ""
       };
 
-      console.log('🔄 Creating trash bin:', submitData);
-      const response = await createAsync(submitData);
+      console.log('🔄 Creating trash bin:', createData);
+      const response = await createAsync(createData);
       console.log('✅ Trash bin created successfully:', response);
 
       // Reset form
       setNewTrashBin({
         areaId: "",
         location: "",
-        restroomId: ""
+        roomId: ""
       });
       setShowAddModal(false);
       showNotificationMessage("success", "🎉 Đã thêm thùng rác thành công!");
@@ -292,7 +292,7 @@ const TrashBinList = () => {
     setNewTrashBin({
       areaId: "",
       location: "",
-      restroomId: ""
+      roomId: ""
     });
   };
 
@@ -783,15 +783,15 @@ const TrashBinList = () => {
 
                         
 
-                        {displayData.restroomId && displayData.restroomId !== "string" && (
+                        {displayData.roomId && displayData.roomId !== "string" && (
                           <>
-                            <strong style={{ color: "#374151" }}>Nhà vệ sinh:</strong>
+                            <strong style={{ color: "#374151" }}>Phòng:</strong>
                             <span style={{ color: "#6b7280" }}>
                               {(() => {
-                                const linkedRestroom = restrooms?.find(r => r.restroomId === displayData.restroomId);
-                                return linkedRestroom 
-                                  ? `${linkedRestroom.restroomNumber}`
-                                  : displayData.restroomId;
+                                const linkedRoom = rooms?.find(r => r.roomId === displayData.roomId);
+                                return linkedRoom 
+                                  ? `${linkedRoom.roomNumber} - ${linkedRoom.roomType}`
+                                  : displayData.roomId;
                               })()}
                             </span>
                           </>
@@ -914,10 +914,7 @@ const TrashBinList = () => {
                 </span>
                 <br />
                 <span style={{ color: "#6b7280", fontSize: "14px" }}>
-                  🏢 {editingBin.area?.areaName || "Khu vực chưa xác định"} - {editingBin.area?.floorNumber !== undefined 
-                    ? (editingBin.area.floorNumber === 0 ? "Tầng trệt" : `Tầng ${editingBin.area.floorNumber}`)
-                    : "Tầng chưa xác định"
-                  }
+                  🏢 {editingBin.area?.areaName || "Khu vực chưa xác định"}
                 </span>
               </div>
 
@@ -1169,7 +1166,7 @@ const TrashBinList = () => {
                   <option value="">Chọn khu vực</option>
                   {areas?.map((area) => (
                     <option key={area.areaId} value={area.areaId}>
-                      {area.areaName} - Tầng {area.floorNumber === 0 ? "trệt" : area.floorNumber}
+                      {area.areaName}
                     </option>
                   ))}
                 </select>
@@ -1193,7 +1190,7 @@ const TrashBinList = () => {
                   name="location"
                   value={newTrashBin.location}
                   onChange={handleInputChange}
-                  placeholder="VD: Tầng 1 nhà vệ sinh 111"
+                  placeholder="VD: Tầng 1 phòng 111"
                   required
                   style={{
                     width: "100%",
@@ -1304,24 +1301,24 @@ const TrashBinList = () => {
                 </div>
               </div> */}
 
-              {/* Restroom Selection */}
-              <div style={{ marginBottom: "24px" }}>
+              {/* Room Selection */}
+              <div style={{ marginBottom: "16px" }}>
                 <label
                   style={{
                     display: "block",
-                    marginBottom: "8px",
+                    marginBottom: "6px",
                     fontSize: "14px",
                     fontWeight: "500",
                     color: "#374151",
                   }}
                 >
-                  Nhà vệ sinh (tùy chọn)
+                  Phòng liên kết (tùy chọn)
                 </label>
                 <select
-                  name="restroomId"
-                  value={newTrashBin.restroomId}
+                  name="roomId"
+                  value={newTrashBin.roomId}
                   onChange={handleInputChange}
-                  disabled={!restrooms || restrooms.length === 0}
+                  disabled={!rooms || rooms.length === 0}
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -1330,20 +1327,18 @@ const TrashBinList = () => {
                     fontSize: "14px",
                     outline: "none",
                     backgroundColor: "white",
-                    opacity: (!restrooms || restrooms.length === 0) ? 0.6 : 1,
+                    opacity: (!rooms || rooms.length === 0) ? 0.6 : 1,
                   }}
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
                   <option value="">
-                    {!restrooms ? "Đang tải nhà vệ sinh..." : "Không liên kết với nhà vệ sinh"}
+                    {!rooms ? "Đang tải phòng..." : "Không liên kết với phòng"}
                   </option>
-                  {restrooms?.map((restroom) => (
-                    <option key={restroom.restroomId} value={restroom.restroomId}>
-                      {restroom.restroomNumber} - {restroom.area?.areaName || "Khu vực không xác định"} 
-                      {restroom.area?.floorNumber !== undefined && 
-                        ` (Tầng ${restroom.area.floorNumber === 0 ? "trệt" : restroom.area.floorNumber})`
-                      }
+                  {rooms?.map((room) => (
+                    <option key={room.roomId} value={room.roomId}>
+                      {room.roomNumber} - {room.roomType}
+                      {room.areaId && ` (Khu vực: ${room.areaId})`}
                     </option>
                   ))}
                 </select>

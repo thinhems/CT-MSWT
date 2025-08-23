@@ -1,41 +1,39 @@
-import { Floor } from "../config/models/floor.model";
-
+import { Room } from "@/config/models/room.model";
+import { useState } from "react";
 import {
   HiOutlineEye,
   HiOutlinePencil,
+  HiOutlineTrash,
 } from "react-icons/hi";
 import Dropdown from './common/Dropdown';
-import { useAreas } from "../hooks/useArea";
 
-interface FloorTableProps {
-  floors: Floor[];
-  onActionClick: (params: {
-    action: "view" | "delete" | "assign";
-    floor: Floor;
-  }) => void;
+interface IProps {
+  rooms: Room[];
+  onActionClick: (action: IAction) => void;
 }
 
-const FloorTable: React.FC<FloorTableProps> = ({
-  floors,
+interface IAction {
+  action: string;
+  room: Room;
+}
+
+const RoomTable = ({
+  rooms,
   onActionClick,
-}) => {
+}: IProps) => {
+  console.log("rooms", rooms);
   
-  const handleDropdownAction = (item: any, floor: Floor) => {
-    onActionClick({ action: item.action, floor });
-  };
-
-  const { areas } = useAreas();
-
-  // Function to get areas for a specific floor
-  const getAreasForFloor = (floorId: string) => {
-    return areas.filter(area => area.floorId === floorId);
+  const handleDropdownAction = (item: any, room: Room) => {
+    onActionClick({ action: item.action, room });
   };
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "hoạt động":
+    switch (status) {
+      case "Hoạt động":
         return { backgroundColor: "#dcfce7", color: "#15803d" };
-      case "bảo trì":
+      case "Bảo trì":
+        return { backgroundColor: "#fef3c7", color: "#d97706" };
+      case "Tạm ngưng":
         return { backgroundColor: "#fee2e2", color: "#dc2626" };
       default:
         return { backgroundColor: "#f3f4f6", color: "#374151" };
@@ -48,17 +46,21 @@ const FloorTable: React.FC<FloorTableProps> = ({
         marginLeft: "32px",
         marginRight: "32px",
         marginTop: "0px",
-        marginBottom: "12px",
         backgroundColor: "white",
         borderRadius: "12px",
         border: "1px solid #f0f0f0",
-        overflow: "visible",
+        overflow: "auto",
         boxShadow: "0 2px 8px 0 rgba(0, 0, 0, 0.06)",
       }}
     >
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ backgroundColor: "#FEF6F4" }}>
+        <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
+          <tr
+            style={{
+              backgroundColor: "#FEF6F4",
+              borderBottom: "2px solid #e5e7eb",
+            }}
+          >
             <th
               style={{
                 padding: "12px 16px",
@@ -66,10 +68,20 @@ const FloorTable: React.FC<FloorTableProps> = ({
                 fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
-                position: "relative",
               }}
-              >
-                Tầng
+            >
+              Số phòng
+            </th>
+            <th
+              style={{
+                padding: "12px 16px",
+                textAlign: "left",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#374151",
+              }}
+            >
+              Loại phòng
             </th>
             <th
               style={{
@@ -81,6 +93,17 @@ const FloorTable: React.FC<FloorTableProps> = ({
               }}
             >
               Khu vực
+            </th>
+            <th
+              style={{
+                padding: "12px 16px",
+                textAlign: "left",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#374151",
+              }}
+            >
+              Mô tả
             </th>
             <th
               style={{
@@ -106,10 +129,10 @@ const FloorTable: React.FC<FloorTableProps> = ({
             </th>
           </tr>
         </thead>
-        <tbody>
-          {floors.map((floor, index) => (
+        <tbody style={{ borderTop: "2px solid transparent" }}>
+          {rooms.map((room, index) => (
             <tr
-              key={floor.floorId}
+              key={room.roomId}
               style={{
                 borderTop: index > 0 ? "1px solid #f0f0f0" : "none",
                 transition: "background-color 0.2s",
@@ -121,7 +144,7 @@ const FloorTable: React.FC<FloorTableProps> = ({
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
-              {/* Floor Name Column */}
+              {/* Room Number Column */}
               <td
                 style={{
                   padding: "12px 16px",
@@ -130,60 +153,44 @@ const FloorTable: React.FC<FloorTableProps> = ({
                   color: "#111827",
                 }}
               >
-                {floor.floorNumber}
+                {room.roomNumber}
               </td>
 
-              {/* Areas Column */}
-              <td style={{ padding: "12px 16px" }}>
-                {(() => {
-                  const floorAreas = getAreasForFloor(floor.floorId);
-                  if (floorAreas.length === 0) {
-                    return (
-                      <span style={{
-                        color: "#6b7280",
-                        fontSize: "12px",
-                        fontStyle: "italic"
-                      }}>
-                        Chưa có khu vực
-                      </span>
-                    );
-                  }
-                  
-                  return (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                      {floorAreas.slice(0, 3).map((area) => (
-                        <span
-                          key={area.areaId}
-                          style={{
-                            display: "inline-flex",
-                            padding: "2px 8px",
-                            fontSize: "11px",
-                            fontWeight: "500",
-                            borderRadius: "4px",
-                            backgroundColor: "#dbeafe",
-                            color: "#1e40af",
-                            border: "1px solid #bfdbfe",
-                          }}
-                          title={`${area.areaName} (Phòng ${area.roomBegin} - ${area.roomEnd})`}
-                        >
-                          {area.areaName}
-                        </span>
-                      ))}
-                      {floorAreas.length > 3 && (
-                        <span 
-                          style={{
-                            fontSize: "11px",
-                            color: "#6b7280",
-                            fontWeight: "500"
-                          }}
-                          title={`Tổng cộng ${floorAreas.length} khu vực: ${floorAreas.map(a => a.areaName).join(', ')}`}
-                        >
-                          +{floorAreas.length - 3} khác
-                        </span>
-                      )}
-                    </div>
-                  );
-                })()}
+              {/* Room Type Column */}
+              <td
+                style={{
+                  padding: "12px 16px",
+                  fontSize: "13px",
+                  color: "#6b7280",
+                }}
+              >
+                {room.roomType}
+              </td>
+
+              {/* Area Column */}
+              <td
+                style={{
+                  padding: "12px 16px",
+                  fontSize: "13px",
+                  color: "#6b7280",
+                }}
+              >
+                {room.areaId || "Chưa phân công"}
+              </td>
+
+              {/* Description Column */}
+              <td
+                style={{
+                  padding: "12px 16px",
+                  fontSize: "13px",
+                  color: "#6b7280",
+                  maxWidth: "180px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {room.description || "Không có mô tả"}
               </td>
 
               {/* Status Column */}
@@ -195,11 +202,11 @@ const FloorTable: React.FC<FloorTableProps> = ({
                     fontSize: "11px",
                     fontWeight: "600",
                     borderRadius: "9999px",
-                    backgroundColor: getStatusColor(floor.status).backgroundColor,
-                color: getStatusColor(floor.status).color,
+                    backgroundColor: getStatusColor(room.status).backgroundColor,
+                    color: getStatusColor(room.status).color,
                   }}
                 >
-                  {floor.status}
+                  {room.status}
                 </span>
               </td>
 
@@ -209,7 +216,6 @@ const FloorTable: React.FC<FloorTableProps> = ({
                   padding: "12px 16px",
                   textAlign: "center",
                   position: "relative",
-                  overflow: "visible",
                 }}
               >
                 <Dropdown
@@ -220,9 +226,21 @@ const FloorTable: React.FC<FloorTableProps> = ({
                       icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
                       color: "#374151"
                     },
-                  ] as any}
-                  onItemClick={handleDropdownAction}
-                  triggerData={floor as any}
+                    {
+                      action: 'edit',
+                      label: 'Chỉnh sửa',
+                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
+                    },
+                    {
+                      action: 'delete',
+                      label: 'Xóa',
+                      icon: <HiOutlineTrash style={{ width: "14px", height: "14px" }} />,
+                      color: "#dc2626"
+                    }
+                  ]}
+                  onItemClick={(item: any, triggerData: any) => handleDropdownAction(item, triggerData)}
+                  triggerData={room}
                 />
               </td>
             </tr>
@@ -233,4 +251,4 @@ const FloorTable: React.FC<FloorTableProps> = ({
   );
 };
 
-export default FloorTable;
+export default RoomTable;

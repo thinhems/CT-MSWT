@@ -17,13 +17,11 @@ const AssignmentManagement = () => {
   const [newAssignment, setNewAssignment] = useState({
     assignmentName: "",
     description: "",
-    timesPerDay: "",
     status: "Hoạt động"
   });
   const [updateAssignmentData, setUpdateAssignmentData] = useState({
     assignmentName: "",
     description: "",
-    timesPerDay: "",
     status: ""
   });
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
@@ -111,7 +109,6 @@ const AssignmentManagement = () => {
       setUpdateAssignmentData({
         assignmentName: assignment.assignmentName || "",
         description: assignment.description || "",
-        timesPerDay: assignment.timesPerDay || "",
         status: assignment.status || "Hoạt động"
       });
       setShowUpdateModal(true);
@@ -134,7 +131,6 @@ const AssignmentManagement = () => {
     setUpdateAssignmentData({
       assignmentName: "",
       description: "",
-      timesPerDay: "",
       status: ""
     });
   };
@@ -144,7 +140,6 @@ const AssignmentManagement = () => {
     setNewAssignment({
       assignmentName: "",
       description: "",
-      timesPerDay: "",
       status: "Hoạt động"
     });
   };
@@ -175,18 +170,12 @@ const AssignmentManagement = () => {
       return;
     }
 
-    if (!newAssignment.timesPerDay.trim()) {
-      showNotification("❌ Vui lòng điền số lần thực hiện mỗi ngày!", "error");
-      return;
-    }
-
     setIsSubmitting(true);
     
     try {
       await createAsync({
         assignmentName: newAssignment.assignmentName.trim(),
         description: newAssignment.description.trim() || "",
-        timesPerDay: newAssignment.timesPerDay.trim(),
         status: newAssignment.status
       });
       
@@ -211,18 +200,12 @@ const AssignmentManagement = () => {
       return;
     }
 
-    if (!updateAssignmentData.timesPerDay.trim()) {
-      showNotification("❌ Vui lòng điền số lần thực hiện mỗi ngày!", "error");
-      return;
-    }
-
     setIsSubmitting(true);
     
     try {
       await updateAsync(selectedAssignment.assignmentId, {
         assignmentName: updateAssignmentData.assignmentName.trim(),
         description: updateAssignmentData.description.trim() || "",
-        timesPerDay: updateAssignmentData.timesPerDay.trim(),
         status: updateAssignmentData.status
       });
       
@@ -467,15 +450,6 @@ const AssignmentManagement = () => {
                   fontSize: "13px",
                   color: "#374151"
                 }}>
-                  Số lần/ngày
-                </th>
-                <th style={{ 
-                  padding: "16px 24px", 
-                  textAlign: "left", 
-                  fontWeight: "600",
-                  fontSize: "13px",
-                  color: "#374151"
-                }}>
                   Trạng thái
                 </th>
                 <th style={{ 
@@ -526,14 +500,6 @@ const AssignmentManagement = () => {
                       color: "#6b7280" 
                     }}>
                       {assignment.description || "Không có mô tả"}
-                    </td>
-                    <td style={{ 
-                      padding: "16px 24px", 
-                      fontSize: "14px", 
-                      color: "#111827",
-                      fontWeight: "500"
-                    }}>
-                      {assignment.timesPerDay || "N/A"}
                     </td>
                     <td style={{ 
                       padding: "16px 24px", 
@@ -664,7 +630,7 @@ const AssignmentManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" style={{ 
+                  <td colSpan="5" style={{ 
                     padding: "32px", 
                     textAlign: "center", 
                     color: "#6b7280",
@@ -767,36 +733,6 @@ const AssignmentManagement = () => {
                     borderRadius: "6px",
                     fontSize: "13px",
                     resize: "vertical",
-                    outline: "none"
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: "6px", 
-                  fontWeight: "500",
-                  fontSize: "13px",
-                  color: "#374151"
-                }}>
-                  Số lần thực hiện mỗi ngày *
-                </label>
-                <input
-                  type="number"
-                  name="timesPerDay"
-                  value={newAssignment.timesPerDay}
-                  onChange={handleInputChange}
-                  placeholder="Nhập số lần..."
-                  min="1"
-                  max="10"
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "13px",
                     outline: "none"
                   }}
                 />
@@ -986,31 +922,6 @@ const AssignmentManagement = () => {
                       boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.05)"
                     }}>
                       {detailedAssignment?.description || selectedAssignment.description || "Không có mô tả"}
-                    </div>
-                  </div>
-
-                  {/* Times Per Day */}
-                  <div style={{ marginBottom: "20px" }}>
-                    <label style={{ 
-                      display: "block", 
-                      marginBottom: "8px", 
-                      fontWeight: "600",
-                      fontSize: "14px",
-                      color: "#374151"
-                    }}>
-                      Số lần thực hiện mỗi ngày
-                    </label>
-                    <div style={{ 
-                      padding: "12px 16px",
-                      backgroundColor: "#ffffff",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      color: "#111827",
-                      fontWeight: "500",
-                      boxShadow: "inset 0 1px 2px rgba(0, 0, 0, 0.05)"
-                    }}>
-                      {detailedAssignment?.timesPerDay || selectedAssignment.timesPerDay || "N/A"}
                     </div>
                   </div>
 
@@ -1213,36 +1124,6 @@ const AssignmentManagement = () => {
                     borderRadius: "6px",
                     fontSize: "13px",
                     resize: "vertical",
-                    outline: "none"
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: "6px", 
-                  fontWeight: "500",
-                  fontSize: "13px",
-                  color: "#374151"
-                }}>
-                  Số lần thực hiện mỗi ngày *
-                </label>
-                <input
-                  type="number"
-                  name="timesPerDay"
-                  value={updateAssignmentData.timesPerDay}
-                  onChange={handleUpdateInputChange}
-                  placeholder="Nhập số lần..."
-                  min="1"
-                  max="10"
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "13px",
                     outline: "none"
                   }}
                 />

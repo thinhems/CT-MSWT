@@ -102,18 +102,6 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                 color: "#374151",
               }}
             >
-              Khu vực
-            </th>
-           
-            <th
-              style={{
-                padding: "12px 16px",
-                textAlign: "left",
-                fontSize: "12px",
-                fontWeight: "600",
-                color: "#374151",
-              }}
-            >
               Loại lịch trình
             </th>
             <th
@@ -190,19 +178,6 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
               >
                 {schedule.scheduleName || `Schedule ${schedule.scheduleId.slice(0, 8)}`}
               </td>
-
-              {/* Area Name Column */}
-              <td
-                style={{
-                  padding: "12px 16px",
-                  fontSize: "13px",
-                  color: "#6b7280",
-                }}
-              >
-                {schedule.areaName || schedule.areaId}
-              </td>
-
-              
               {/* Schedule Type Column */}
               <td style={{ padding: "12px 16px" }}>
                 <span
@@ -256,9 +231,6 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
               >
                 {schedule.shiftName || `Shift ${schedule.shiftId.slice(0, 8)}`}
               </td>
-
-
-
               {/* Action Column */}
               <td
                 style={{
@@ -281,7 +253,7 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                       icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
                       color: "#374151"
                     }
-                  ]}
+                  ] as any[]}
                   onItemClick={handleDropdownAction}
                   triggerData={schedule}
                 />
