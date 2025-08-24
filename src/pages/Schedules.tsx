@@ -41,22 +41,7 @@ const Schedules = () => {
   const { trashBins } = useTrashBins();
   const { users } = useUsers();
 
-  // Fetch unassigned supervisors using API
-  const { data: supervisors, error: supervisorsError, isLoading: supervisorsLoading } = useSWR(
-    API_URLS.USER.GET_UNASSIGNED_SUPERVISORS,
-    swrFetcher,
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      errorRetryCount: 3,
-    }
-  );
 
-  // Debug: Log supervisors data
-  console.log("🔍 Supervisors Debug Info:");
-  console.log("- Supervisors data:", supervisors);
-  console.log("- Supervisors error:", supervisorsError);
-  console.log("- Supervisors loading:", supervisorsLoading);
   
 
 
@@ -73,7 +58,6 @@ const Schedules = () => {
     restroomId: "",
     scheduleType: "Hằng ngày",
     shiftId: "",
-    supervisorId: "",
   });
 
   // Form state for updating schedule assignments
@@ -210,7 +194,6 @@ const Schedules = () => {
       restroomId: "",
       scheduleType: "Hằng ngày",
       shiftId: "",
-      supervisorId: "",
     });
   };
 
@@ -1346,40 +1329,7 @@ const Schedules = () => {
                 </select>
               </div>
 
-              {/* Supervisor Selection */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
-                  Giám sát viên vệ sinh
-                </label>
-                <select
-                  name="supervisorId"
-                  value={newSchedule.supervisorId}
-                  onChange={handleInputChange}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                  }}
-                >
-                  <option value="">Chọn giám sát viên </option>
-                  {supervisorsLoading ? (
-                    <option disabled>Đang tải dữ liệu giám sát viên...</option>
-                  ) : supervisorsError ? (
-                    <option disabled>Lỗi tải dữ liệu giám sát viên</option>
-                  ) : supervisors && Array.isArray(supervisors) && supervisors.length > 0 ? (
-                    supervisors.map((supervisor: any) => (
-                      <option key={supervisor.userId} value={supervisor.userId}>
-                        {supervisor.fullName}
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>Không có giám sát viên nào khả dụng</option>
-                  )}
-                                </select>
-                
-              </div>
+
 
 
 

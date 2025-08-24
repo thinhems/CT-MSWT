@@ -448,7 +448,7 @@ const Areas = () => {
 
       {/* Content Area */}
       <div style={{ flex: "0 0 auto" }}>
-        <AreaTable areas={currentAreas} onActionClick={handleActionClick} />
+        <AreaTable areas={currentAreas} onActionClick={handleActionClick} buildings={buildings} />
       </div>
 
       {/* Pagination */}

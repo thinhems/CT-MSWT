@@ -19,6 +19,7 @@ import AssignmentManagement from "../pages/AssignmentManagement";
 import Leaves from "../pages/Leaves";
 import Attendance from "../pages/Attendance";
 import RequestManagement from "../pages/RequestManagement";
+import GroupManagement from "../pages/GroupManagement";
 
 export const router = createBrowserRouter([
   {
@@ -96,6 +97,10 @@ export const router = createBrowserRouter([
       {
         path: "request-management",
         element: <RequestManagement />,
+      },
+      {
+        path: "group-management",
+        element: <GroupManagement />,
       },
       {
         path: "*",

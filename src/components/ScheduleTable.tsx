@@ -239,21 +239,21 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                   position: "relative",
                 }}
               >
-                <Dropdown
-                  items={[
-                    {
-                      action: 'view',
-                      label: 'Xem chi tiết',
-                      icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
-                      color: "#374151"
-                    },
-                    {
-                      action: 'edit',
-                      label: 'Sửa lịch trình',
-                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
-                      color: "#374151"
-                    }
-                  ] as any[]}
+                                                  <Dropdown
+                   items={[
+                     {
+                       action: 'view',
+                       label: 'Xem chi tiết',
+                       icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
+                       color: "#374151"
+                     },
+                     {
+                       action: 'edit',
+                       label: 'Sửa lịch trình',
+                       icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
+                       color: "#374151"
+                     }
+                   ]}
                   onItemClick={handleDropdownAction}
                   triggerData={schedule}
                 />

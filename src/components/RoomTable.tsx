@@ -1,4 +1,5 @@
 import { Room } from "@/config/models/room.model";
+import { Area } from "@/config/models/area.model";
 import { useState } from "react";
 import {
   HiOutlineEye,
@@ -10,6 +11,7 @@ import Dropdown from './common/Dropdown';
 interface IProps {
   rooms: Room[];
   onActionClick: (action: IAction) => void;
+  areas?: Area[];
 }
 
 interface IAction {
@@ -20,6 +22,7 @@ interface IAction {
 const RoomTable = ({
   rooms,
   onActionClick,
+  areas = [],
 }: IProps) => {
   console.log("rooms", rooms);
   
@@ -38,6 +41,12 @@ const RoomTable = ({
       default:
         return { backgroundColor: "#f3f4f6", color: "#374151" };
     }
+  };
+
+  const getAreaName = (areaId: string | null) => {
+    if (!areaId) return "Chưa phân công";
+    const area = areas.find(a => a.areaId === areaId);
+    return area ? area.areaName : areaId;
   };
 
   return (
@@ -175,7 +184,7 @@ const RoomTable = ({
                   color: "#6b7280",
                 }}
               >
-                {room.areaId || "Chưa phân công"}
+                {getAreaName(room.areaId)}
               </td>
 
               {/* Description Column */}

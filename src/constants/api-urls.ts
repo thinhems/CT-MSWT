@@ -159,4 +159,14 @@ export const API_URLS = {
     UPDATE_STATUS: (id: string) => `request/${id}/status`, // PATCH /api/request/{id}/status
     DELETE: (id: string) => `request/${id}`,
   },
+
+  // Worker Group management endpoints
+  WORKER_GROUP: {
+    GET_ALL: `workerGroup`, // GET /api/workerGroup - Tất cả nhóm làm việc
+    GET_BY_ID: (id: string) => `workerGroup/${id}`,
+    CREATE: `workerGroup`,
+    UPDATE: (id: string) => `workerGroup/${id}`,
+    DELETE: (id: string) => `workerGroup/${id}`,
+    GET_ALL_MEMBERS: `workGroupMember/all-members`, // GET /api/workGroupMember/all-members - Tất cả thành viên nhóm
+  },
 };

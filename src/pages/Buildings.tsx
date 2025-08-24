@@ -537,7 +537,7 @@ const Buildings = () => {
                    margin: 0,
                  }}
                >
-                 Thông tin tòa - Debug: {showViewBuildingModal ? 'OPEN' : 'CLOSED'}
+                 Thông tin tòa 
                </h2>
               <button
                 onClick={handleCloseViewModal}
@@ -651,7 +651,7 @@ const Buildings = () => {
                            {area.description}
                          </div>
                          <div style={{ fontSize: "11px", color: "#9ca3af" }}>
-                           ID: {area.areaId}
+                           Tên: {area.areaName}
                          </div>
                          {area.rooms && area.rooms.length > 0 && (
                            <div style={{ fontSize: "11px", color: "#9ca3af", marginTop: "2px" }}>

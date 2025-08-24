@@ -1,13 +1,15 @@
-import { HiOutlineX, HiOutlineClipboardList, HiOutlinePlus, HiOutlineClock, HiOutlineUser, HiOutlineMap } from "react-icons/hi";
+import { HiOutlineX, HiOutlineClipboardList, HiOutlinePlus, HiOutlineClock, HiOutlineUser, HiOutlineMap, HiOutlineCalendar, HiOutlineSearch, HiOutlineFilter } from "react-icons/hi";
 import { Schedule } from "@/config/models/schedule.model";
 import { useScheduleDetails } from "../hooks/useScheduleDetails";
 import { useAssignments } from "../hooks/useAssignments";
 import { useShifts } from "../hooks/useShifts";
 import { useUsers } from "../hooks/useUsers";
-import { API_URLS } from "../constants/api-urls";
+import { API_URLS, BASE_API_URL } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 import useSWR from "swr";
 import { useMemo, useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface ScheduleDetailResponse {
   scheduleDetailId: string;
@@ -15,10 +17,9 @@ interface ScheduleDetailResponse {
   description: string;
   date: string;
   status: string;
-  supervisorId: string;
-  supervisorName: string;
   rating: number | null;
   workerGroupId: string;
+  workerGroupName: string;
   backupForUserId: string | null;
   endTime: string;
   startTime: string;
@@ -33,6 +34,7 @@ interface ScheduleDetailResponse {
     scheduleType: string;
     shiftId: string;
     scheduleName: string;
+    areaName?: string;
   };
   workers: Array<{
     workGroupMemberId: string;
@@ -65,9 +67,9 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     swrFetcher
   );
 
-  // Fetch schedule details from the new API endpoint
+  // Fetch schedule details from the API endpoint
   const { data: scheduleDetails, error: detailsError, isLoading: detailsLoading } = useSWR(
-    schedule?.scheduleId ? API_URLS.SCHEDULE_DETAILS.GET_BY_SCHEDULE_ID(schedule.scheduleId) : null,
+    schedule?.scheduleId ? API_URLS.SCHEDULE_DETAILS.GET_ALL : null,
     swrFetcher
   );
 
@@ -81,16 +83,45 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     API_URLS.USER.GET_UNASSIGNED_WORKERS,
     swrFetcher
   );
+
+  // Fetch schedule details data for dropdowns
+  const { data: scheduleDetailsData, error: scheduleDetailsDataError, isLoading: isLoadingScheduleDetailsData } = useSWR(
+    API_URLS.SCHEDULE_DETAILS.GET_ALL,
+    swrFetcher
+  );
+
+  // Fetch areas data for area dropdown
+  const { data: areasData, error: areasError, isLoading: isLoadingAreas } = useSWR(
+    API_URLS.AREA.GET_ALL,
+    swrFetcher
+  );
+
+  // Fetch assignments data for group assignment dropdown
+  const { data: assignmentsData, error: assignmentsError, isLoading: isLoadingAssignments } = useSWR(
+    API_URLS.ASSIGNMENTS.GET_ALL,
+    swrFetcher
+  );
+
+  // Fetch worker groups data for worker group dropdown
+  const { data: workerGroupsData, error: workerGroupsError, isLoading: isLoadingWorkerGroups } = useSWR(
+    API_URLS.WORKER_GROUP.GET_ALL,
+    swrFetcher
+  );
   
   // State for creating new schedule detail
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [detailSearchTerm, setDetailSearchTerm] = useState("");
-  const [activeWorkerNameTab, setActiveWorkerNameTab] = useState("Tất cả");
+  const [activeWorkerGroupTab, setActiveWorkerGroupTab] = useState("Tất cả");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [newDetail, setNewDetail] = useState({
-    assignmentId: "",
     description: "",
-    workerId: "",
+    date: "",
+    status: "",
+    workerGroupId: "",
+    startTime: "",
+    groupAssignmentId: "",
+    areaId: "",
   });
   
   // Filter unassigned workers by position for staff assignment
@@ -114,6 +145,9 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
   console.log("- Schedule detail data:", scheduleDetail);
   console.log("- Schedule error:", scheduleError);
   console.log("- Schedule loading:", scheduleLoading);
+  console.log("- Schedule Details API URL:", schedule?.scheduleId ? API_URLS.SCHEDULE_DETAILS.GET_ALL : "No URL");
+  console.log("- Schedule Details data:", scheduleDetails);
+  console.log("- Schedule Details error:", detailsError);
 
   // Handle form input changes
   const handleDetailInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -127,33 +161,69 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
   // Handle form submission
   const handleSubmitDetail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!schedule?.scheduleId || !newDetail.description.trim() || !newDetail.assignmentId.trim()) {
-      alert("Vui lòng nhập đầy đủ thông tin công việc và chọn loại công việc!");
+    if (!schedule?.scheduleId || !newDetail.description.trim()) {
+      alert("Vui lòng nhập đầy đủ thông tin mô tả công việc!");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Create FormData object
-      const formData = new FormData();
-      formData.append('Description', newDetail.description);
-      formData.append('Date', new Date().toISOString()); // Use current date
-      formData.append('Status', ''); // Send empty status
-      formData.append('WorkerId', newDetail.workerId || '');
-      formData.append('AssignmentId', newDetail.assignmentId);
+      // Create JSON object according to API format - wrap in detailDto and fix startTime
+      const requestBody = {
+        detailDto: {
+          description: newDetail.description,
+          date: newDetail.date || new Date().toISOString(),
+          status: newDetail.status || "Chưa bắt đầu", // Use selected status or default
+          workerGroupId: newDetail.workerGroupId || "",
+          startTime: newDetail.startTime || null, // Send null for TimeOnly compatibility
+          groupAssignmentId: newDetail.groupAssignmentId || "",
+          areaId: newDetail.areaId || ""
+        }
+      };
       
-      await createScheduleDetailForSchedule(schedule.scheduleId, formData);
+      console.log("Sending request body:", requestBody);
+      console.log("Request body JSON:", JSON.stringify(requestBody, null, 2));
       
-      const assignmentMsg = newDetail.workerId 
-        ? " và đã gán nhân viên thực hiện"
-        : "";
-      
-      alert(`✅ Tạo chi tiết lịch trình thành công${assignmentMsg}!`);
+      // Call API using swrFetcher for proper CORS handling and authentication
+      try {
+        const response = await swrFetcher(API_URLS.SCHEDULE_DETAILS.CREATE_FOR_SCHEDULE(schedule.scheduleId), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        alert(`✅ Tạo chi tiết lịch trình thành công!`);
+      } catch (error: any) {
+        console.error("SWR Fetcher Error:", error);
+        
+        // Try to get detailed error information
+        if (error.serverData) {
+          console.error("Server Error Data:", error.serverData);
+          
+          if (error.serverData.errors) {
+            alert(`❌ Lỗi validation: ${JSON.stringify(error.serverData.errors)}`);
+          } else if (error.serverData.message) {
+            alert(`❌ Lỗi server: ${error.serverData.message}`);
+          } else {
+            alert(`❌ Lỗi tạo chi tiết lịch trình: ${JSON.stringify(error.serverData)}`);
+          }
+        } else {
+          alert(`❌ Lỗi tạo chi tiết lịch trình: ${error.message}`);
+        }
+        
+        throw error;
+      }
       setShowCreateForm(false);
       setNewDetail({
-        assignmentId: "",
         description: "",
-        workerId: "",
+        date: "",
+        status: "",
+        workerGroupId: "",
+        startTime: "",
+        groupAssignmentId: "",
+        areaId: "",
       });
     } catch (error) {
       console.error("Error creating schedule detail:", error);
@@ -173,7 +243,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
         if (user?.fullName) return user.fullName;
       }
       
-      // Then check in users (for supervisors and other users)
+      // Then check in users
       if (users) {
         const user = users.find((u: any) => u.id === userId);
         if (user?.name) return user.name;
@@ -184,33 +254,47 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     };
 
 
-  const workerNameTabs = useMemo(() => {
-    if (!scheduleDetails) return ["Tất cả"];
-    const names = new Set<string>();
-    scheduleDetails.forEach((d: ScheduleDetailResponse) => {
-      if (d.workers && d.workers.length > 0) {
-        d.workers.forEach(worker => {
-          if (worker.fullName) names.add(worker.fullName);
-        });
+  // Filter schedule details for the current schedule
+  const currentScheduleDetails = useMemo(() => {
+    if (!scheduleDetails || !schedule?.scheduleId) return [];
+    return scheduleDetails.filter((detail: ScheduleDetailResponse) => 
+      detail.scheduleId === schedule.scheduleId
+    );
+  }, [scheduleDetails, schedule?.scheduleId]);
+
+  console.log("- Current Schedule Details:", currentScheduleDetails);
+
+  const workerGroupTabs = useMemo(() => {
+    if (!currentScheduleDetails) return ["Tất cả"];
+    const groups = new Set<string>();
+    currentScheduleDetails.forEach((d: ScheduleDetailResponse) => {
+      if (d.workerGroupName) {
+        groups.add(d.workerGroupName);
       }
     });
-    return ["Tất cả", ...Array.from(names)];
-  }, [scheduleDetails]);
+    return ["Tất cả", ...Array.from(groups)];
+  }, [currentScheduleDetails]);
 
-  // Filter schedule details by worker name
+  // Filter schedule details by worker group name and date
   const filteredScheduleDetails = useMemo(() => {
-    if (!scheduleDetails) return [];
+    if (!currentScheduleDetails) return [];
     const term = detailSearchTerm.toLowerCase();
-    return scheduleDetails.filter((detail: ScheduleDetailResponse) => {
-      const hasMatchingWorker = !term || (detail.workers && detail.workers.some(worker => 
-        worker.fullName.toLowerCase().includes(term)
-      ));
-      const matchesNameTab =
-        activeWorkerNameTab === "Tất cả" ||
-        (detail.workers && detail.workers.some(worker => worker.fullName === activeWorkerNameTab));
-      return hasMatchingWorker && matchesNameTab;
+    return currentScheduleDetails.filter((detail: ScheduleDetailResponse) => {
+      const hasMatchingGroup = !term || (detail.workerGroupName && 
+        detail.workerGroupName.toLowerCase().includes(term)
+      );
+      const matchesGroupTab =
+        activeWorkerGroupTab === "Tất cả" ||
+        (detail.workerGroupName && detail.workerGroupName === activeWorkerGroupTab);
+      
+      // Filter by date
+      const matchesDate = !selectedDate || (detail.date && selectedDate && 
+        detail.date.startsWith(selectedDate.toISOString().split('T')[0])
+      );
+      
+      return hasMatchingGroup && matchesGroupTab && matchesDate;
     });
-  }, [scheduleDetails, detailSearchTerm, activeWorkerNameTab]);
+  }, [currentScheduleDetails, detailSearchTerm, activeWorkerGroupTab, selectedDate]);
 
   const getScheduleTypeDisplay = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -224,6 +308,40 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
   };
 
   if (!isVisible || !schedule) return null;
+
+  // Custom CSS for DatePicker
+  const datePickerStyles = `
+    .custom-datepicker {
+      border: none !important;
+      outline: none !important;
+      font-size: 13px !important;
+      padding: 6px 8px !important;
+      border-radius: 4px !important;
+      background-color: transparent !important;
+      color: #374151 !important;
+      font-weight: 500 !important;
+      min-width: 130px !important;
+      font-family: inherit !important;
+    }
+    .custom-datepicker:focus {
+      box-shadow: none !important;
+    }
+    .react-datepicker-wrapper {
+      width: auto !important;
+    }
+    .react-datepicker__input-container input {
+      border: none !important;
+      outline: none !important;
+      font-size: 13px !important;
+      padding: 6px 8px !important;
+      border-radius: 4px !important;
+      background-color: transparent !important;
+      color: #374151 !important;
+      font-weight: 500 !important;
+      min-width: 130px !important;
+      font-family: inherit !important;
+    }
+  `;
 
   // Show loading state while fetching schedule details
   if (scheduleLoading) {
@@ -314,6 +432,8 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
   const displaySchedule = scheduleDetail || schedule;
 
   return (
+    <>
+      <style>{datePickerStyles}</style>
     <div
       style={{
         position: "fixed",
@@ -476,26 +596,6 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                 </div>
               </div>
 
-              <div>
-                <span style={{ 
-                  fontWeight: "600", 
-                  color: "#6b7280",
-                  fontSize: "14px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em"
-                }}>
-                  Khu vực
-                </span>
-                <div style={{ 
-                  color: "#111827", 
-                  fontSize: "16px", 
-                  fontWeight: "500",
-                  marginTop: "4px"
-                }}>
-                  {displaySchedule.areaName}
-                </div>
-              </div>
-
               
 
               <div>
@@ -522,47 +622,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
             </div>
           </div>
 
-          {/* Supervisor Section - Separate from main table */}
-          <div style={{
-            backgroundColor: "#f0f9ff",
-            border: "1px solid #e0f2fe",
-            borderRadius: "12px",
-            padding: "10px",
-            marginTop: "14px",
-            marginBottom: "14px",
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center"
-          }}>
-            <span style={{ 
-              fontWeight: "700", 
-              color: "#1e40af",
-              fontSize: "13px",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "12px"
-            }}>
-              👨‍💼 Giám sát viên vệ sinh
-            </span>
-                         <div style={{ 
-               color: displaySchedule.supervisorId ? "#1e40af" : "#6b7280", 
-               fontSize: "13px", 
-               fontWeight: displaySchedule.supervisorId ? "600" : "500",
-               padding: "12px 24px",
-               backgroundColor: displaySchedule.supervisorId ? "#dbeafe" : "#f3f4f6",
-               borderRadius: "8px",
-               display: "inline-block",
-               minWidth: "150px",
-               border: `2px solid ${displaySchedule.supervisorId ? "#bfdbfe" : "#e5e7eb"}`
-             }}>
-               {displaySchedule.supervisorId ? getUserName(displaySchedule.supervisorId) : "Chưa gán"}
-             </div>
-          </div>
+
 
           {/* Area Restrooms Section */}
           {displaySchedule.areaRestrooms && displaySchedule.areaRestrooms.length > 0 && (
@@ -690,22 +750,205 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
               }}>
                 Chi tiết công việc
               </h3>
-              {/* Search input */}
-              <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+              {/* Search and Filter inputs */}
+              <div style={{ 
+                flex: 1, 
+                display: "flex", 
+                justifyContent: "flex-end", 
+                gap: "20px", 
+                alignItems: "flex-start"
+              }}>
+                {/* Date Filter Section */}
+                <div style={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  alignItems: "flex-start",
+                  gap: "6px",
+                  minWidth: "200px"
+                }}>
+                  
+                  
+                  {/* Date Picker */}
+                  <div style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    backgroundColor: "white",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    padding: "4px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                    width: "100%",
+                    height: "40px"
+                  }}>
+                    <DatePicker
+                      selected={selectedDate}
+                      onChange={(date: Date | null) => setSelectedDate(date)}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="Chọn ngày..."
+                      isClearable
+                      showYearDropdown
+                      showMonthDropdown
+                      dropdownMode="select"
+                      className="custom-datepicker"
+                    />
+                  </div>
+                  
+                  {/* Quick Date Buttons */}
+                  <div style={{ 
+                    display: "flex", 
+                    gap: "4px",
+                    flexWrap: "wrap",
+                    justifyContent: "center"
+                  }}>
+                    <button
+                      onClick={() => {
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        setSelectedDate(yesterday);
+                      }}
+                      style={{
+                        padding: "4px 8px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        backgroundColor: selectedDate && selectedDate.toDateString() === (() => {
+                          const yesterday = new Date();
+                          yesterday.setDate(yesterday.getDate() - 1);
+                          return yesterday.toDateString();
+                        })() ? "#FF5B27" : "white",
+                        color: selectedDate && selectedDate.toDateString() === (() => {
+                          const yesterday = new Date();
+                          yesterday.setDate(yesterday.getDate() - 1);
+                          return yesterday.toDateString();
+                        })() ? "white" : "#6b7280",
+                        fontSize: "11px",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        minWidth: "60px"
+                      }}
+                      title="Hôm qua"
+                    >
+                      Hôm qua
+                    </button>
+                    <button
+                      onClick={() => setSelectedDate(new Date())}
+                      style={{
+                        padding: "4px 8px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        backgroundColor: selectedDate && selectedDate.toDateString() === new Date().toDateString() ? "#FF5B27" : "white",
+                        color: selectedDate && selectedDate.toDateString() === new Date().toDateString() ? "white" : "#6b7280",
+                        fontSize: "11px",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        minWidth: "60px"
+                      }}
+                      title="Hôm nay"
+                    >
+                      Hôm nay
+                    </button>
+                    <button
+                      onClick={() => {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        setSelectedDate(tomorrow);
+                      }}
+                      style={{
+                        padding: "4px 8px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        backgroundColor: selectedDate && selectedDate.toDateString() === (() => {
+                          const tomorrow = new Date();
+                          tomorrow.setDate(tomorrow.getDate() + 1);
+                          return tomorrow.toDateString();
+                        })() ? "#FF5B27" : "white",
+                        color: selectedDate && selectedDate.toDateString() === (() => {
+                          const tomorrow = new Date();
+                          tomorrow.setDate(tomorrow.getDate() + 1);
+                          return tomorrow.toDateString();
+                        })() ? "white" : "#6b7280",
+                        fontSize: "11px",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        minWidth: "60px"
+                      }}
+                      title="Ngày mai"
+                    >
+                      Ngày mai
+                    </button>
+                    <button
+                      onClick={() => setSelectedDate(null)}
+                      style={{
+                        padding: "4px 8px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        backgroundColor: !selectedDate ? "#FF5B27" : "white",
+                        color: !selectedDate ? "white" : "#6b7280",
+                        fontSize: "11px",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        minWidth: "60px"
+                      }}
+                      title="Tất cả ngày"
+                    >
+                      Tất cả
+                    </button>
+                  </div>
+                </div>
+
+                {/* Group Name Search Section */}
+                <div style={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  alignItems: "flex-start",
+                  gap: "6px",
+                  minWidth: "200px"
+                }}>
+                  
+                  <div style={{ position: "relative", width: "100%" }}>
+                    <HiOutlineSearch 
+                      style={{ 
+                        position: "absolute", 
+                        left: "12px", 
+                        top: "50%", 
+                        transform: "translateY(-50%)", 
+                        color: "#9ca3af",
+                        width: "16px",
+                        height: "16px"
+                      }} 
+                    />
                 <input
                   type="text"
-                  placeholder="Lọc theo tên nhân viên"
+                      placeholder="Nhập tên nhóm..."
                   value={detailSearchTerm}
                   onChange={(e) => setDetailSearchTerm(e.target.value)}
                   style={{
-                    width: "60%",
-                    maxWidth: "280px",
-                    padding: "8px 12px",
+                        padding: "8px 12px 8px 36px",
                     border: "1px solid #d1d5db",
-                    borderRadius: "6px",
+                        borderRadius: "8px",
                     fontSize: "13px",
-                  }}
-                />
+                        width: "100%",
+                        height: "40px",
+                        backgroundColor: "white",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                        transition: "all 0.2s"
+                      }}
+                      onFocus={(e) => {
+                        (e.target as HTMLInputElement).style.borderColor = "#3b82f6";
+                        (e.target as HTMLInputElement).style.boxShadow = "0 0 0 3px rgba(59, 130, 246, 0.1)";
+                      }}
+                      onBlur={(e) => {
+                        (e.target as HTMLInputElement).style.borderColor = "#d1d5db";
+                        (e.target as HTMLInputElement).style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+                      }}
+                    />
+                  </div>
+                </div>
+
+
               </div>
               <button
                 onClick={() => {
@@ -713,9 +956,13 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   if (!showCreateForm) {
                     // Reset form when opening
                     setNewDetail({
-                      assignmentId: "",
                       description: "",
-                      workerId: "",
+                      date: "",
+                      status: "",
+                      workerGroupId: "",
+                      startTime: "",
+                      groupAssignmentId: "",
+                      areaId: "",
                     });
                   }
                 }}
@@ -725,13 +972,15 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   gap: "6px",
                   backgroundColor: "#FF5B27",
                   color: "white",
-                  padding: "8px 16px",
+                  padding: "12px 20px",
                   border: "none",
-                  borderRadius: "6px",
+                  borderRadius: "8px",
                   fontSize: "14px",
                   fontWeight: "500",
                   cursor: "pointer",
                   transition: "background-color 0.2s",
+                  height: "40px",
+                  alignSelf: "flex-start"
                 }}
                 onMouseEnter={(e: any) => (e.target.style.backgroundColor = "#E04B1F")}
                 onMouseLeave={(e: any) => (e.target.style.backgroundColor = "#FF5B27")}
@@ -743,12 +992,12 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
 
             {/* Worker name tabs only */}
 
-            {/* Worker name tabs */}
+            {/* Worker group tabs */}
             <div style={{ marginBottom: "12px", borderBottom: "1px solid #e5e7eb", display: "flex", gap: "12px", overflowX: "auto" }}>
-              {workerNameTabs.map((tab) => (
+              {workerGroupTabs.map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveWorkerNameTab(tab)}
+                  onClick={() => setActiveWorkerGroupTab(tab)}
                   style={{
                     padding: "8px 12px",
                     border: "none",
@@ -757,8 +1006,8 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                     fontWeight: 500,
                     cursor: "pointer",
                     whiteSpace: "nowrap",
-                    borderBottom: activeWorkerNameTab === tab ? "2px solid #FF5B27" : "2px solid transparent",
-                    color: activeWorkerNameTab === tab ? "#FF5B27" : "#6b7280",
+                    borderBottom: activeWorkerGroupTab === tab ? "2px solid #FF5B27" : "2px solid transparent",
+                    color: activeWorkerGroupTab === tab ? "#FF5B27" : "#6b7280",
                   }}
                 >
                   {tab}
@@ -785,7 +1034,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   Chi tiết lịch trình
                 </h4>
                 
-                {/* Assignment Selection */}
+                {/* Date Selection */}
                 <div style={{ marginBottom: "20px" }}>
                   <div style={{ 
                     marginBottom: "8px"
@@ -795,14 +1044,43 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                       fontWeight: "500",
                       color: "#374151"
                     }}>
-                      Loại công việc
+                      Ngày thực hiện
+                    </label>
+                  </div>
+                  <input
+                    type="date"
+                    name="date"
+                    value={newDetail.date}
+                    onChange={handleDetailInputChange}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      backgroundColor: "white",
+                      fontFamily: "inherit"
+                    }}
+                  />
+                </div>
+
+                {/* Status Selection */}
+                <div style={{ marginBottom: "20px" }}>
+                  <div style={{ 
+                    marginBottom: "8px"
+                  }}>
+                    <label style={{ 
+                      fontSize: "14px", 
+                      fontWeight: "500",
+                      color: "#374151"
+                    }}>
+                      Trạng thái
                     </label>
                   </div>
                   <select
-                    name="assignmentId"
-                    value={newDetail.assignmentId}
+                    name="status"
+                    value={newDetail.status}
                     onChange={handleDetailInputChange}
-                    required
                     style={{
                       width: "100%",
                       padding: "12px",
@@ -813,14 +1091,184 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                       fontFamily: "inherit"
                     }}
                   >
-                    <option value="">-- Chọn loại công việc --</option>
-                    {assignments.map((assignment) => (
-                      <option key={assignment.assignmentId} value={assignment.assignmentId}>
-                        {assignment.assignmentName}
-                      </option>
-                    ))}
+                    <option value="">-- Chọn trạng thái --</option>
+                    <option value="Chưa bắt đầu">Chưa bắt đầu</option>
+                    <option value="Đang thực hiện">Đang thực hiện</option>
+                    <option value="Hoàn thành">Hoàn thành</option>
+                    <option value="Tạm dừng">Tạm dừng</option>
                   </select>
                 </div>
+
+
+                
+                {/* Worker Group Selection */}
+                <div style={{ marginBottom: "20px" }}>
+                  <div style={{ 
+                    marginBottom: "8px"
+                  }}>
+                    <label style={{ 
+                      fontSize: "14px", 
+                      fontWeight: "500",
+                      color: "#374151"
+                    }}>
+                      Chọn nhóm công nhân
+                    </label>
+                  </div>
+                  <select
+                    name="workerGroupId"
+                    value={newDetail.workerGroupId}
+                    onChange={handleDetailInputChange}
+                    disabled={isLoadingWorkerGroups}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      backgroundColor: isLoadingWorkerGroups ? "#f3f4f6" : "white",
+                      fontFamily: "inherit",
+                      cursor: isLoadingWorkerGroups ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    <option value="">
+                      {isLoadingWorkerGroups ? "Đang tải..." : "-- Chọn tên nhóm công nhân --"}
+                    </option>
+                    {!isLoadingWorkerGroups && workerGroupsData && workerGroupsData.length > 0 ? (
+                      workerGroupsData.map((group: any) => (
+                        <option key={group.workerGroupId} value={group.workerGroupId}>
+                          {group.workerGroupName || group.workerGroupId}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        {isLoadingWorkerGroups ? "Đang tải..." : "Không có dữ liệu nhóm công nhân"}
+                      </option>
+                    )}
+                  </select>
+                </div>
+
+                {/* Start Time Selection */}
+                <div style={{ marginBottom: "20px" }}>
+                <div style={{ 
+                    marginBottom: "8px"
+                  }}>
+                    <label style={{ 
+                    fontSize: "14px", 
+                      fontWeight: "500",
+                      color: "#374151"
+                    }}>
+                      Thời gian bắt đầu
+                    </label>
+                  </div>
+                  <input
+                    type="time"
+                    name="startTime"
+                    value={newDetail.startTime}
+                    onChange={handleDetailInputChange}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      backgroundColor: "white",
+                      fontFamily: "inherit"
+                    }}
+                  />
+                </div>
+
+                {/* Group Assignment Selection */}
+                <div style={{ marginBottom: "20px" }}>
+                    <div style={{ 
+                      marginBottom: "8px"
+                    }}>
+                      <label style={{ 
+                      fontSize: "14px", 
+                        fontWeight: "500",
+                        color: "#374151"
+                      }}>
+                      Chọn phân công nhóm
+                      </label>
+                    </div>
+                                      <select
+                    name="groupAssignmentId"
+                    value={newDetail.groupAssignmentId}
+                    onChange={handleDetailInputChange}
+                    disabled={isLoadingAssignments}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      backgroundColor: isLoadingAssignments ? "#f3f4f6" : "white",
+                      fontFamily: "inherit",
+                      cursor: isLoadingAssignments ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    <option value="">
+                      {isLoadingAssignments ? "Đang tải..." : "-- Chọn tên phân công nhóm --"}
+                    </option>
+                    {!isLoadingAssignments && assignmentsData && assignmentsData.length > 0 ? (
+                      assignmentsData.map((assignment: any) => (
+                        <option key={assignment.assignmentId} value={assignment.assignmentId}>
+                          {assignment.assignmentName || assignment.assignmentId}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        {isLoadingAssignments ? "Đang tải..." : "Không có dữ liệu phân công nhóm"}
+                      </option>
+                    )}
+                  </select>
+                </div>
+
+
+                {/* Area Selection */}
+                <div style={{ marginBottom: "20px" }}>
+                  <div style={{ 
+                    marginBottom: "8px"
+                  }}>
+                    <label style={{ 
+                      fontSize: "14px", 
+                      fontWeight: "500",
+                      color: "#374151"
+                    }}>
+                      Khu vực
+                    </label>
+                  </div>
+                  <select
+                    name="areaId"
+                    value={newDetail.areaId}
+                    onChange={handleDetailInputChange}
+                    disabled={isLoadingAreas}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      backgroundColor: isLoadingAreas ? "#f3f4f6" : "white",
+                      fontFamily: "inherit",
+                      cursor: isLoadingAreas ? "not-allowed" : "pointer"
+                    }}
+                  >
+                    <option value="">
+                      {isLoadingAreas ? "Đang tải..." : "-- Chọn khu vực --"}
+                        </option>
+                    {!isLoadingAreas && areasData && areasData.length > 0 ? (
+                      areasData.map((area: any) => (
+                        <option key={area.areaId} value={area.areaId}>
+                          {area.areaName || area.areaId}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="" disabled>
+                        {isLoadingAreas ? "Đang tải..." : "Không có dữ liệu khu vực"}
+                      </option>
+                    )}
+                    </select>
+                  </div>
                 
                 {/* Description */}
                 <div style={{ marginBottom: "20px" }}>
@@ -855,74 +1303,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   />
                 </div>
 
-                {/* Staff Assignment Section */}
-                <div style={{ 
-                  backgroundColor: "#f0f9ff", 
-                  borderRadius: "8px", 
-                  padding: "16px", 
-                  marginBottom: "20px",
-                  border: "1px solid #e0f2fe"
-                }}>
-                  
-                  
-                  <h5 style={{ 
-                    fontSize: "14px", 
-                    fontWeight: "600", 
-                    color: "#374151",
-                    marginBottom: "12px",
-                    marginTop: "0",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px"
-                  }}>
-                    👥 Gán nhân viên
-                  </h5>
-                  
-                  {/* Worker Selection */}
-                  <div>
-                    <div style={{ 
-                      marginBottom: "8px"
-                    }}>
-                      <label style={{ 
-                        fontSize: "13px", 
-                        fontWeight: "500",
-                        color: "#374151"
-                      }}>
-                        Nhân viên thực hiện
-                      </label>
-                    </div>
-                    <select
-                      name="workerId"
-                      value={newDetail.workerId}
-                      onChange={handleDetailInputChange}
-                      disabled={isLoadingWorkers}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "6px",
-                        fontSize: "13px",
-                        backgroundColor: isLoadingWorkers ? "#f3f4f6" : "white",
-                        fontFamily: "inherit",
-                        cursor: isLoadingWorkers ? "not-allowed" : "pointer",
-                      }}
-                    >
-                      <option value="">
-                        {isLoadingWorkers ? "Đang tải..." : "-- Chọn nhân viên --"}
-                      </option>
-                      {!isLoadingWorkers && workers.length === 0 && (
-                        <option value="" disabled>
-                          Không có nhân viên vệ sinh nào khả dụng
-                        </option>
-                      )}
-                      {workers.map((worker: any) => (
-                        <option key={worker.userId} value={worker.userId}>
-                          {worker.fullName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                
 
                 {/* Action Buttons */}
                 <div style={{ 
@@ -935,9 +1316,13 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                     onClick={() => {
                       setShowCreateForm(false);
                       setNewDetail({
-                        assignmentId: "",
                         description: "",
-                        workerId: "",
+                        date: "",
+                        status: "",
+                        workerGroupId: "",
+                        startTime: "",
+                        groupAssignmentId: "",
+                        areaId: "",
                       });
                     }}
                     style={{
@@ -1029,13 +1414,27 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                           gap: "8px"
                         }}>
                           <HiOutlineClipboardList style={{ width: "20px", height: "20px" }} />
-                          Chi tiết #{detail.scheduleDetailId.slice(0, 8)}
+                          {detail.workerGroupName || `Chi tiết #${detail.scheduleDetailId.slice(0, 8)}`}
                         </h4>
+                        {detail.schedule?.areaName && (
+                          <p style={{ 
+                            margin: "0 0 8px 0", 
+                            fontSize: "14px",
+                            color: "#6b7280",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px"
+                          }}>
+                            <HiOutlineMap style={{ width: "16px", height: "16px" }} />
+                            Khu vực: {detail.schedule.areaName}
+                          </p>
+                        )}
                         <p style={{ 
                           margin: 0, 
                           color: "#6b7280", 
                           fontSize: "14px",
-                          fontStyle: "italic"
+                          fontStyle: "italic",
+                          marginBottom: "8px"
                         }}>
                           {detail.description || "Không có mô tả"}
                         </p>
@@ -1053,7 +1452,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                       </div>
                     </div>
 
-                    {/* Time Information */}
+                    {/* Date and Time Information */}
                     <div style={{ 
                       display: "flex", 
                       alignItems: "center", 
@@ -1065,29 +1464,17 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                       border: "1px solid #e5e7eb"
                     }}>
                       <HiOutlineClock style={{ width: "20px", height: "20px", color: "#FF5B27" }} />
+                      <span style={{ fontWeight: "600", color: "#374151" }}>Ngày:</span>
+                      <span style={{ color: "#6b7280", marginRight: "16px" }}>
+                        {detail.date ? new Date(detail.date).toLocaleDateString("vi-VN") : "N/A"}
+                      </span>
                       <span style={{ fontWeight: "600", color: "#374151" }}>Thời gian:</span>
                       <span style={{ color: "#6b7280" }}>
                         {detail.startTime?.substring(0, 5) || "N/A"} - {detail.endTime?.substring(0, 5) || "N/A"}
                       </span>
                     </div>
 
-                    {/* Supervisor Information */}
-                    <div style={{ 
-                      display: "flex", 
-                      alignItems: "center", 
-                      gap: "8px",
-                      marginBottom: "16px",
-                      padding: "12px 16px",
-                      backgroundColor: "white",
-                      borderRadius: "8px",
-                      border: "1px solid #e5e7eb"
-                    }}>
-                      <HiOutlineUser style={{ width: "20px", height: "20px", color: "#FF5B27" }} />
-                      <span style={{ fontWeight: "600", color: "#374151" }}>Giám sát viên:</span>
-                      <span style={{ color: "#6b7280" }}>
-                        {detail.supervisorName || "Chưa gán"}
-                      </span>
-                    </div>
+
 
                     {/* Rating */}
                     {detail.rating && (
@@ -1247,7 +1634,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                     )}
                   </div>
                 ))
-              ) : scheduleDetails && scheduleDetails.length === 0 ? (
+              ) : currentScheduleDetails && currentScheduleDetails.length === 0 ? (
                 <div style={{ 
                   textAlign: "center", 
                   color: "#6b7280", 
@@ -1309,6 +1696,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

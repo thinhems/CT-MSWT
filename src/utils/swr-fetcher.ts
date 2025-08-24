@@ -74,14 +74,20 @@ swrAxios.interceptors.response.use(
       throw new Error("Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.");
     }
 
-    // Handle API errors
+    // Handle API errors - preserve original error data
     const message =
       error.response?.data?.message ||
       error.response?.data?.errors?.[0] ||
       getErrorMessage(error.response?.status) ||
       "Đã có lỗi xảy ra";
 
-    throw new Error(message);
+    // Create custom error that preserves server response
+    const customError = new Error(message);
+    (customError as any).response = error.response;
+    (customError as any).status = error.response?.status;
+    (customError as any).serverData = error.response?.data;
+    
+    throw customError;
   }
 );
 

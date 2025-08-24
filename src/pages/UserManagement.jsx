@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { HiOutlineSearch, HiOutlinePlus, HiX } from "react-icons/hi";
+import { HiOutlineSearch, HiOutlinePlus, HiX, HiOutlineUserGroup } from "react-icons/hi";
+import { useNavigate } from "react-router-dom";
 import UserTable from "../components/UserTable";
 import Pagination from "../components/Pagination";
 import useUsers from "../hooks/useUsers";
@@ -8,6 +9,7 @@ import ApiTestDebug from "../components/ApiTestDebug";
 import QuickApiTest from "../components/QuickApiTest";
 
 const UserManagement = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all"); // "all", "worker", "supervisor", "manager"
@@ -703,7 +705,29 @@ const UserManagement = () => {
 
           {/* Action Buttons */}
           <div style={{ display: "flex", gap: "12px", marginLeft: "24px" }}>
-          
+            {/* Group Management Button */}
+            <button
+              onClick={() => navigate('/group-management')}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                backgroundColor: "#3B82F6",
+                color: "white",
+                padding: "12px 20px",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "background-color 0.2s",
+              }}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = "#2563EB")}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = "#3B82F6")}
+            >
+              <HiOutlineUserGroup style={{ width: "16px", height: "16px" }} />
+              Quản lý nhóm
+            </button>
 
             {/* Add User Button */}
             <button

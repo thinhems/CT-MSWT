@@ -322,7 +322,7 @@ const Rooms = () => {
 
       {/* Content Area */}
       <div style={{ flex: "0 0 auto" }}>
-        <RoomTable rooms={currentRooms} onActionClick={handleActionClick} />
+        <RoomTable rooms={currentRooms} onActionClick={handleActionClick} areas={areas} />
       </div>
 
       {/* Pagination */}
@@ -625,7 +625,7 @@ const Rooms = () => {
 
                 <div>
                   <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>Khu vực</label>
-                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>{selectedRoom.areaId || "Chưa phân công"}</p>
+                  <p style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: "4px 0 0 0" }}>{selectedRoom.areaId ? areas.find(a => a.areaId === selectedRoom.areaId)?.areaName || selectedRoom.areaId : "Chưa phân công"}</p>
                 </div>
 
                 <div>

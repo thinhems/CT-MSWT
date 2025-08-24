@@ -87,7 +87,7 @@ export const useNotification = (id: string) => {
 // Function to create a new alert
 export const createNotification = async (alertData: CreateAlertData): Promise<Alert> => {
   try {
-    const response = await swrFetcher(`${BASE_API_URL}/${API_URLS.ALERTS.CREATE}`, {
+    const response = await swrFetcher(API_URLS.ALERTS.CREATE, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ export const createNotification = async (alertData: CreateAlertData): Promise<Al
 // Function to update an alert
 export const updateNotification = async (id: string, alertData: Partial<CreateAlertData>): Promise<Alert> => {
   try {
-    const response = await swrFetcher(`${BASE_API_URL}/${API_URLS.ALERTS.UPDATE(id)}`, {
+    const response = await swrFetcher(API_URLS.ALERTS.UPDATE(id), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ export const updateNotification = async (id: string, alertData: Partial<CreateAl
 // Function to mark alert as resolved
 export const markNotificationAsRead = async (id: string): Promise<Alert> => {
   try {
-    const response = await swrFetcher(`${BASE_API_URL}/${API_URLS.ALERTS.MARK_AS_READ(id)}`, {
+    const response = await swrFetcher(API_URLS.ALERTS.MARK_AS_READ(id), {
       method: 'PUT',
     }) as Response;
 
@@ -149,7 +149,7 @@ export const markNotificationAsRead = async (id: string): Promise<Alert> => {
 // Function to mark all notifications as read for a user
 export const markAllNotificationsAsRead = async (userId: string): Promise<void> => {
   const token = localStorage.getItem('authToken');
-  const response = await enhancedFetch(`${BASE_API_URL}/${API_URLS.ALERTS.MARK_ALL_AS_READ(userId)}`, {
+  const response = await enhancedFetch(API_URLS.ALERTS.MARK_ALL_AS_READ(userId), {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -165,7 +165,7 @@ export const markAllNotificationsAsRead = async (userId: string): Promise<void> 
 // Function to delete a notification
 export const deleteNotification = async (id: string): Promise<void> => {
   const token = localStorage.getItem('authToken');
-  const response = await enhancedFetch(`${BASE_API_URL}/${API_URLS.ALERTS.DELETE(id)}`, {
+  const response = await enhancedFetch(API_URLS.ALERTS.DELETE(id), {
     method: 'DELETE',
     headers: {
       ...(token && { Authorization: `Bearer ${token}` }),

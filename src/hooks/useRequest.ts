@@ -217,7 +217,7 @@ export const updateRequest = async (id: string, requestData: UpdateRequestData):
 export const updateRequestStatus = async (requestId: string, status: number): Promise<Request> => {
   try {
     // Use the endpoint from Swagger documentation: PUT /api/request/status
-    const response = await swrFetcher(`${BASE_API_URL}/request/status`, {
+    const response = await swrFetcher(`request/status`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
