@@ -26,7 +26,6 @@ const Schedules = () => {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showEditScheduleModal, setShowEditScheduleModal] = useState(false); // New modal for editing schedule info
   const [notification, setNotification] = useState({
     isVisible: false,
@@ -50,37 +49,24 @@ const Schedules = () => {
 
   // Form state for new schedule
   const [newSchedule, setNewSchedule] = useState<ICreateScheduleRequest>({
-    scheduleName: "",
-    areaId: "",
-    assignmentId: "",
     startDate: "",
     endDate: "",
-    restroomId: "",
     scheduleType: "Hằng ngày",
     shiftId: "",
-  });
-
-  // Form state for updating schedule assignments
-  const [updateData, setUpdateData] = useState({
-    restroomId: "",
-    trashBinId: "",
+    scheduleName: "",
   });
 
   // Form state for updating schedule information
   const [updateScheduleData, setUpdateScheduleData] = useState<{
     scheduleName: string;
-    assignmentId: string;
     startDate: string;
     endDate: string;
-    restroomId: string;
     scheduleType: string;
     shiftId: string;
   }>({
     scheduleName: "",
-    assignmentId: "",
     startDate: "",
     endDate: "",
-    restroomId: "",
     scheduleType: "Hằng ngày",
     shiftId: "",
   });
@@ -102,10 +88,8 @@ const Schedules = () => {
       // Populate form with current schedule data
       setUpdateScheduleData({
         scheduleName: schedule.scheduleName || "",
-        assignmentId: schedule.assignmentId || "",
         startDate: schedule.startDate || "",
         endDate: schedule.endDate || "",
-        restroomId: schedule.restroomId || "",
         scheduleType: schedule.scheduleType || "Hằng ngày",
         shiftId: schedule.shiftId || "",
       });
@@ -113,13 +97,6 @@ const Schedules = () => {
     } else if (action === "assign") {
       setSelectedSchedule(schedule);
       setShowAssignModal(true);
-    } else if (action === "update") {
-      setSelectedSchedule(schedule);
-      setUpdateData({
-        restroomId: schedule.restroomId || "",
-        trashBinId: schedule.assignmentId || "",
-      });
-      setShowUpdateModal(true);
     }
   };
 
@@ -186,14 +163,11 @@ const Schedules = () => {
   const handleCloseAddModal = () => {
     setShowAddModal(false);
     setNewSchedule({
-      scheduleName: "",
-      areaId: "",
-      assignmentId: "",
       startDate: "",
       endDate: "",
-      restroomId: "",
       scheduleType: "Hằng ngày",
       shiftId: "",
+      scheduleName: "",
     });
   };
 
@@ -224,24 +198,12 @@ const Schedules = () => {
     }
   };
 
-  const handleCloseUpdateModal = () => {
-    setShowUpdateModal(false);
-    setUpdateData({
-      restroomId: "",
-      trashBinId: "",
-    });
-    setSelectedSchedule(null);
-  };
-
-  // Handlers for editing schedule information
   const handleCloseEditScheduleModal = () => {
     setShowEditScheduleModal(false);
           setUpdateScheduleData({
         scheduleName: "",
-        assignmentId: "",
         startDate: "",
         endDate: "",
-        restroomId: "",
         scheduleType: "Hằng ngày",
         shiftId: "",
       });
@@ -277,44 +239,6 @@ const Schedules = () => {
     } catch (error) {
       console.error("Error updating schedule:", error);
       showNotificationMessage("error", "Có lỗi xảy ra khi cập nhật lịch trình!");
-    }
-  };
-
-  const handleUpdateDataChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setUpdateData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmitUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedSchedule) {
-      showNotificationMessage("error", "Không có lịch trình được chọn!");
-      return;
-    }
-
-    if (!updateData.restroomId && !updateData.trashBinId) {
-      showNotificationMessage("error", "Vui lòng chọn ít nhất một vị trí để gán!");
-      return;
-    }
-
-    try {
-      // Create update payload
-      const updatePayload = {
-        ...selectedSchedule,
-        restroomId: updateData.restroomId || selectedSchedule.restroomId,
-        assignmentId: updateData.trashBinId || selectedSchedule.assignmentId,
-      };
-
-      await updateSchedule(selectedSchedule.scheduleId, updatePayload);
-      showNotificationMessage("success", "Đã cập nhật gán vị trí thành công!");
-      handleCloseUpdateModal();
-    } catch (error) {
-      console.error("Error updating schedule assignments:", error);
-      showNotificationMessage("error", "Có lỗi xảy ra khi cập nhật gán vị trí!");
     }
   };
 
@@ -625,181 +549,7 @@ const Schedules = () => {
       />
 
       {/* Update Schedule Assignment Modal */}
-      {showUpdateModal && selectedSchedule && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) handleCloseUpdateModal();
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              borderRadius: "12px",
-              padding: "24px",
-              width: "90%",
-              maxWidth: "500px",
-              maxHeight: "90vh",
-              overflow: "auto",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-            }}
-          >
-            <div style={{ marginBottom: "20px" }}>
-              <h2 style={{ fontSize: "20px", fontWeight: "600", margin: 0, color: "#111827" }}>
-                🏗️ Cập nhật gán vị trí
-              </h2>
-              <p style={{ fontSize: "14px", color: "#6b7280", margin: "8px 0 0 0" }}>
-                Lịch trình: <strong>{selectedSchedule.scheduleName}</strong>
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmitUpdate}>
-              {/* Current Assignment Info */}
-              <div style={{ 
-                backgroundColor: "#f9fafb", 
-                padding: "16px", 
-                borderRadius: "8px", 
-                marginBottom: "20px",
-                border: "1px solid #e5e7eb"
-              }}>
-                <h4 style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: "600", color: "#374151" }}>
-                  📋 Thông tin hiện tại
-                </h4>
-                <div style={{ fontSize: "13px", color: "#6b7280" }}>
-                  <div>🏢 Khu vực: <strong>{selectedSchedule.areaName}</strong></div>
-                  <div>🚪 Phòng: <strong>{selectedSchedule.roomName || "Chưa gán"}</strong></div>
-                  <div>🗑️ Thùng rác: <strong>{selectedSchedule.assignmentName || "Chưa gán"}</strong></div>
-                </div>
-              </div>
-
-              {/* Room Selection */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: "8px", 
-                  fontSize: "14px", 
-                  fontWeight: "500",
-                  color: "#374151"
-                }}>
-                  🚪 Phòng
-                </label>
-                <select
-                  name="restroomId"
-                  value={updateData.restroomId}
-                  onChange={handleUpdateDataChange}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                    backgroundColor: "white",
-                  }}
-                >
-                  <option value="">Không gán phòng</option>
-                  {rooms && rooms.length > 0 ? (
-                    rooms.map((room) => (
-                      <option key={room.roomId} value={room.roomId}>
-                        Phòng số {room.roomNumber} - {room.roomType}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="" disabled>Đang tải danh sách phòng...</option>
-                  )}
-                </select>
-              </div>
-
-              {/* Trash Bin Selection */}
-              <div style={{ marginBottom: "24px" }}>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: "8px", 
-                  fontSize: "14px", 
-                  fontWeight: "500",
-                  color: "#374151"
-                }}>
-                  🗑️ Thùng rác
-                </label>
-                <select
-                  name="trashBinId"
-                  value={updateData.trashBinId}
-                  onChange={handleUpdateDataChange}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                    backgroundColor: "white",
-                  }}
-                >
-                  <option value="">Không gán thùng rác</option>
-                                     {trashBins && trashBins.length > 0 ? (
-                     trashBins.map((trashBin) => (
-                       <option key={trashBin.trashBinId} value={trashBin.trashBinId}>
-                         Thùng #{trashBin.trashBinId?.slice(-8)} 
-                         {trashBin.area?.areaName && ` (${trashBin.area.areaName})`}
-                       </option>
-                     ))
-                   ) : (
-                     <option disabled>Không có dữ liệu thùng rác</option>
-                   )}
-                </select>
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
-                <button
-                  type="button"
-                  onClick={handleCloseUpdateModal}
-                  style={{
-                    padding: "10px 20px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    backgroundColor: "white",
-                    color: "#374151",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = "#f9fafb"}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = "white"}
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  style={{
-                    padding: "10px 20px",
-                    border: "none",
-                    borderRadius: "6px",
-                    backgroundColor: "#FF5B27",
-                    color: "white",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                    transition: "background-color 0.2s",
-                  }}
-                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = "#E04B1F"}
-                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = "#FF5B27"}
-                >
-                  💾 Cập nhật gán vị trí
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* This modal is no longer used, so it's removed */}
 
       {/* Edit Schedule Modal */}
       {showEditScheduleModal && selectedSchedule && (
@@ -943,36 +693,6 @@ const Schedules = () => {
                 </div>
               </div>
 
-              {/* Assignment Selection
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
-                  Loại công việc
-                </label>
-                <select
-                  name="assignmentId"
-                  value={updateScheduleData.assignmentId}
-                  onChange={handleEditScheduleInputChange}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                  }}
-                >
-                                     <option value="">-- Chọn loại công việc --</option>
-                   {assignments && assignments.length > 0 ? (
-                     assignments.map((assignment) => (
-                       <option key={assignment.assignmentId} value={assignment.assignmentId}>
-                         {assignment.assignmentName}
-                       </option>
-                     ))
-                   ) : (
-                     <option disabled>Không có dữ liệu loại công việc</option>
-                   )}
-                </select>
-              </div> */}
-
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
                 {/* Start Date */}
                 <div>
@@ -1016,36 +736,6 @@ const Schedules = () => {
                   />
                 </div>
               </div>
-
-              {/* Optional Fields
-              <div style={{ marginBottom: "20px" }}>
-                <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "500" }}>
-                  Phòng (tùy chọn)
-                </label>
-                <select
-                  name="roomId"
-                  value={updateScheduleData.roomId}
-                  onChange={handleEditScheduleInputChange}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                  }}
-                >
-                  <option value="">-- Chọn phòng --</option>
-                  {rooms && rooms.length > 0 ? (
-                    rooms.map((room) => (
-                      <option key={room.roomId} value={room.roomId}>
-                        Phòng số {room.roomNumber}
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>Không có dữ liệu phòng</option>
-                  )}
-                </select>
-              </div> */}
 
               {/* Action Buttons */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
@@ -1254,84 +944,6 @@ const Schedules = () => {
                   />
                 </div>
               </div>
-
-              {/* Area Selection */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
-                  Khu vực *
-                </label>
-                <select
-                  name="areaId"
-                  value={newSchedule.areaId}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                  }}
-                >
-                  <option value="">Chọn khu vực</option>
-                  {/* You can add area options here if you have areas data */}
-                  <option value="area1">Khu vực 1</option>
-                  <option value="area2">Khu vực 2</option>
-                </select>
-              </div>
-
-              {/* Assignment Selection */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
-                  Loại công việc *
-                </label>
-                <select
-                  name="assignmentId"
-                  value={newSchedule.assignmentId}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                  }}
-                >
-                  <option value="">Chọn loại công việc</option>
-                  {/* You can add assignment options here if you have assignments data */}
-                  <option value="assignment1">Dọn dẹp</option>
-                  <option value="assignment2">Bảo trì</option>
-                </select>
-              </div>
-
-              {/* Restroom Selection */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
-                  Nhà vệ sinh (tùy chọn)
-                </label>
-                <select
-                  name="restroomId"
-                  value={newSchedule.restroomId}
-                  onChange={handleInputChange}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: "6px",
-                    fontSize: "14px",
-                  }}
-                >
-                  <option value="">Không chọn</option>
-                  {/* You can add restroom options here if you have restrooms data */}
-                  <option value="restroom1">Nhà vệ sinh 1</option>
-                  <option value="restroom2">Nhà vệ sinh 2</option>
-                </select>
-              </div>
-
-
-
-
 
               {/* Action Buttons */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>

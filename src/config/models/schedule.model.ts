@@ -3,17 +3,14 @@ import { Floor } from "./floor.model";
 
 export interface Schedule {
   scheduleId: string;
-  areaId: string;
-  assignmentId: string;
   startDate: string;
   endDate: string;
-  restroomId: string;
   scheduleType: string;
   shiftId: string;
+  scheduleName: string;
   // Related entity information for display
   area?: Area;
   floor?: Floor;
-  scheduleName?: string;
   areaName?: string;
   restroomName?: string;
   shiftName?: string;
@@ -25,23 +22,17 @@ export interface Schedule {
 }
 
 export interface ICreateScheduleRequest {
-  scheduleName: string;
-  areaId: string;
-  assignmentId: string;
   startDate: string;
   endDate: string;
-  restroomId: string;
   scheduleType: string;
   shiftId: string;
-  supervisorId?: string;
+  scheduleName: string;
 }
 
 export interface IUpdateScheduleRequest {
-  areaId?: string;
-  assignmentId?: string;
   startDate?: string;
   endDate?: string;
-  restroomId?: string;
   scheduleType?: string;
   shiftId?: string;
+  scheduleName?: string;
 } 
