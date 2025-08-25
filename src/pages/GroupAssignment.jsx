@@ -5,6 +5,7 @@ import Notification from "../components/Notification";
 import Pagination from "../components/Pagination";
 import GroupAssignmentTable from "../components/GroupAssignmentTable";
 import JobSelectionDropdown from "../components/common/JobSelectionDropdown";
+import { useAssignments } from "../hooks/useAssignments";
 
 const GroupAssignment = () => {
   const navigate = useNavigate();
@@ -23,21 +24,11 @@ const GroupAssignment = () => {
     selectedJobs: []
   });
 
-  // Fake job data for demonstration
-  const fakeJobs = [
-    { id: 1, name: "Dọn dẹp nhà vệ sinh", category: "Vệ sinh" },
-    { id: 2, name: "Lau chùi sàn nhà", category: "Vệ sinh" },
-    { id: 3, name: "Đổ rác", category: "Vệ sinh" },
-    { id: 4, name: "Lau bảng", category: "Phòng học" },
-    { id: 5, name: "Sắp xếp bàn ghế", category: "Phòng học" },
-    { id: 6, name: "Lau cửa sổ", category: "Phòng học" },
-    { id: 7, name: "Dọn dẹp hành lang", category: "Khu vực chung" },
-    { id: 8, name: "Lau cầu thang", category: "Khu vực chung" },
-    { id: 9, name: "Dọn dẹp sân trường", category: "Khu vực chung" },
-    { id: 10, name: "Kiểm tra hệ thống điện", category: "Bảo trì" },
-    { id: 11, name: "Kiểm tra hệ thống nước", category: "Bảo trì" },
-    { id: 12, name: "Bảo dưỡng máy móc", category: "Bảo trì" }
-  ];
+  // Sử dụng dữ liệu thực từ API assignments
+  const { assignments, isLoading: assignmentsLoading, error: assignmentsError } = useAssignments();
+  
+  // Sử dụng dữ liệu thực thay vì fake data
+  const realJobs = assignments || [];
 
   const itemsPerPage = 5;
 
@@ -143,9 +134,9 @@ const GroupAssignment = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const selectedJobNames = fakeJobs
-        .filter(job => newGroup.selectedJobs.includes(job.id.toString()))
-        .map(job => job.name);
+              const selectedJobNames = realJobs
+          .filter(job => newGroup.selectedJobs.includes(job.assignmentId?.toString() || job.id?.toString()))
+          .map(job => job.assignmentName || job.name);
       showNotification(`🎉 Đã tạo nhóm công việc thành công với ${newGroup.selectedJobs.length} công việc: ${selectedJobNames.join(", ")}`);
       handleCloseAddModal();
       
@@ -541,20 +532,20 @@ const GroupAssignment = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: "16px" }}>
-                <JobSelectionDropdown
-                  jobs={fakeJobs}
-                  selectedJobs={newGroup.selectedJobs}
-                  onSelectionChange={(selectedJobs) => {
-                    setNewGroup(prev => ({
-                      ...prev,
-                      selectedJobs
-                    }));
-                  }}
-                  label="Chọn công việc"
-                  placeholder="Chọn công việc cho nhóm..."
-                />
-              </div>
+                              <div style={{ marginBottom: "16px" }}>
+                  <JobSelectionDropdown
+                    jobs={realJobs}
+                    selectedJobs={newGroup.selectedJobs}
+                    onSelectionChange={(selectedJobs) => {
+                      setNewGroup(prev => ({
+                        ...prev,
+                        selectedJobs
+                      }));
+                    }}
+                    label="Chọn công việc"
+                    placeholder="Chọn công việc cho nhóm..."
+                  />
+                </div>
 
               <div style={{ marginBottom: "24px" }}>
                 <label
@@ -673,7 +664,7 @@ const GroupAssignment = () => {
               backgroundColor: "white",
               borderRadius: "12px",
               padding: "24px",
-              width: "500px",
+              width: "600px",
               maxWidth: "90vw",
               maxHeight: "90vh",
               overflow: "auto",
@@ -740,7 +731,7 @@ const GroupAssignment = () => {
                     {selectedGroup.assignmentGroupName}
                   </h4>
                   <p style={{ margin: 0, fontSize: "14px", color: "#6b7280" }}>
-                    ID: {selectedGroup.groupAssignmentId}
+                    ID: {selectedGroup.groupAssignmentId || "Chưa có ID"}
                   </p>
                 </div>
               </div>
@@ -778,16 +769,12 @@ const GroupAssignment = () => {
                         fontWeight: "600",
                         borderRadius: "9999px",
                         backgroundColor:
-                          selectedGroup.status === "Hoàn thành"
+                          selectedGroup.status === "Hoạt động"
                             ? "#dcfce7"
-                            : selectedGroup.status === "Đang thực hiện"
-                            ? "#dbeafe"
                             : "#fee2e2",
                         color:
-                          selectedGroup.status === "Hoàn thành"
+                          selectedGroup.status === "Hoạt động"
                             ? "#15803d"
-                            : selectedGroup.status === "Đang thực hiện"
-                            ? "#1d4ed8"
                             : "#dc2626",
                       }}
                     >
@@ -804,7 +791,7 @@ const GroupAssignment = () => {
                       color: "#6b7280",
                     }}
                   >
-                    Tiến độ
+                    Số công việc
                   </label>
                   <p
                     style={{
@@ -814,7 +801,7 @@ const GroupAssignment = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedGroup.progress || 0}%
+                    {selectedGroup.workCount || 0} công việc
                   </p>
                 </div>
 
@@ -826,7 +813,7 @@ const GroupAssignment = () => {
                       color: "#6b7280",
                     }}
                   >
-                    Ngày bắt đầu
+                    Ngày tạo
                   </label>
                   <p
                     style={{
@@ -836,7 +823,7 @@ const GroupAssignment = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedGroup.startDate ? new Date(selectedGroup.startDate).toLocaleDateString('vi-VN') : "Không xác định"}
+                    {selectedGroup.createdAt ? new Date(selectedGroup.createdAt).toLocaleDateString('vi-VN') : "Không xác định"}
                   </p>
                 </div>
 
@@ -848,7 +835,7 @@ const GroupAssignment = () => {
                       color: "#6b7280",
                     }}
                   >
-                    Ngày kết thúc
+                    Loại nhóm
                   </label>
                   <p
                     style={{
@@ -858,72 +845,8 @@ const GroupAssignment = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedGroup.endDate ? new Date(selectedGroup.endDate).toLocaleDateString('vi-VN') : "Không xác định"}
+                    Nhóm công việc
                   </p>
-                </div>
-
-                <div>
-                                     <label
-                     style={{
-                       fontSize: "14px",
-                       fontWeight: "500",
-                       color: "#6b7280",
-                     }}
-                   >
-                     Số công việc
-                   </label>
-                   <p
-                     style={{
-                       fontSize: "16px",
-                       fontWeight: "600",
-                       color: "#111827",
-                       margin: "4px 0 0 0",
-                     }}
-                   >
-                     {selectedGroup.workCount || 0} công việc
-                   </p>
-                </div>
-              </div>
-
-              {/* Progress Bar - Full width */}
-              <div>
-                <label
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#6b7280",
-                    marginBottom: "8px",
-                    display: "block",
-                  }}
-                >
-                  Tiến độ thực hiện
-                </label>
-                <div style={{ 
-                  width: "100%", 
-                  height: "12px", 
-                  backgroundColor: "#e5e7eb", 
-                  borderRadius: "6px",
-                  overflow: "hidden"
-                }}>
-                  <div style={{
-                    width: `${selectedGroup.progress || 0}%`,
-                    height: "100%",
-                    backgroundColor: (selectedGroup.progress || 0) === 100 ? "#10b981" : "#3b82f6",
-                    transition: "width 0.3s ease"
-                  }} />
-                </div>
-                <div style={{ 
-                  display: "flex", 
-                  justifyContent: "space-between", 
-                  marginTop: "4px",
-                  fontSize: "12px",
-                  color: "#6b7280"
-                }}>
-                  <span>0%</span>
-                  <span style={{ fontWeight: "600", color: "#111827" }}>
-                    {selectedGroup.progress || 0}%
-                  </span>
-                  <span>100%</span>
                 </div>
               </div>
 
@@ -950,6 +873,118 @@ const GroupAssignment = () => {
                   {selectedGroup.description || "Không có mô tả"}
                 </p>
               </div>
+
+             
+               
+               {/* Jobs List */}
+               <div>
+                 <label
+                   style={{
+                     fontSize: "14px",
+                     fontWeight: "500",
+                     color: "#6b7280",
+                   }}
+                 >
+                   Danh sách công việc ({realJobs.length} công việc)
+                 </label>
+                                    <div style={{ marginTop: "8px" }}>
+                     {realJobs.length > 0 ? (
+                       <div style={{ 
+                         display: "flex", 
+                         flexDirection: "column", 
+                         gap: "8px",
+                         maxHeight: "300px",
+                         overflowY: "auto"
+                       }}>
+                         {realJobs.map((job, index) => (
+                           <div key={job.assignmentId || job.id} style={{
+                             padding: "12px",
+                             backgroundColor: "#f8fafc",
+                             borderRadius: "8px",
+                             border: "1px solid #e5e7eb",
+                             display: "flex",
+                             alignItems: "center",
+                             gap: "12px"
+                           }}>
+                             {/* Job Number */}
+                             <div style={{
+                               width: "28px",
+                               height: "28px",
+                               borderRadius: "50%",
+                               backgroundColor: "#FF5B27",
+                               color: "white",
+                               display: "flex",
+                               alignItems: "center",
+                               justifyContent: "center",
+                               fontSize: "12px",
+                               fontWeight: "600",
+                               flexShrink: 0
+                             }}>
+                               {index + 1}
+                             </div>
+                             
+                             {/* Job Info */}
+                             <div style={{ flex: 1 }}>
+                               <div style={{
+                                 fontSize: "14px",
+                                 fontWeight: "600",
+                                 color: "#111827",
+                                 marginBottom: "4px"
+                               }}>
+                                 {job.assignmentName || job.name || "Không có tên"}
+                               </div>
+                               <div style={{
+                                 fontSize: "12px",
+                                 color: "#6b7280",
+                                 marginBottom: "2px"
+                               }}>
+                                 {job.description || "Không có mô tả"}
+                               </div>
+                             </div>
+                             
+                             {/* Status Badge */}
+                             <div style={{
+                               display: "flex",
+                               alignItems: "center",
+                               gap: "8px"
+                             }}>
+                               <span
+                                 style={{
+                                   display: "inline-flex",
+                                   padding: "4px 8px",
+                                   fontSize: "10px",
+                                   fontWeight: "600",
+                                   borderRadius: "12px",
+                                   backgroundColor:
+                                     job.status === "Hoạt động"
+                                       ? "#dcfce7"
+                                       : "#fee2e2",
+                                   color:
+                                     job.status === "Hoạt động"
+                                       ? "#15803d"
+                                       : "#dc2626",
+                                 }}
+                               >
+                                 {job.status || "Không xác định"}
+                               </span>
+                             </div>
+                           </div>
+                         ))}
+                       </div>
+                     ) : (
+                       <div style={{
+                         padding: "16px",
+                         textAlign: "center",
+                         color: "#6b7280",
+                         backgroundColor: "#f9fafb",
+                         borderRadius: "8px",
+                         border: "1px dashed #d1d5db"
+                       }}>
+                         Chưa có công việc nào được gán cho nhóm này
+                       </div>
+                     )}
+                   </div>
+               </div>
             </div>
 
             {/* Close Button */}
