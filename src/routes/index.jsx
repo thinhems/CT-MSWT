@@ -20,6 +20,8 @@ import Leaves from "../pages/Leaves";
 import Attendance from "../pages/Attendance";
 import RequestManagement from "../pages/RequestManagement";
 import GroupManagement from "../pages/GroupManagement";
+import GroupAssignment from "../pages/GroupAssignment";
+import WorkerGroupManagement from "../pages/WorkerGroupManagement";
 
 export const router = createBrowserRouter([
   {
@@ -101,6 +103,14 @@ export const router = createBrowserRouter([
       {
         path: "group-management",
         element: <GroupManagement />,
+      },
+      {
+        path: "group-assignment",
+        element: <GroupAssignment />,
+      },
+      {
+        path: "worker-group-management",
+        element: <WorkerGroupManagement />,
       },
       {
         path: "*",

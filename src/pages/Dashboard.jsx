@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   HiOutlineUsers, 
   HiOutlineTrash, 
@@ -16,6 +17,7 @@ import UserRoleInfo from '../components/UserRoleInfo';
 import { useDashboardStats, useRecentActivities, useChartData } from '../hooks/useDashboard';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
   
   // Fetch real data from APIs
@@ -464,26 +466,37 @@ const Dashboard = () => {
           {[
             { title: "Thêm báo cáo", description: "Tạo báo cáo mới", color: "#FF5B27" },
             { title: "Quản lý nhân viên", description: "Thêm/sửa thông tin", color: "#3b82f6" },
+            { title: "Quản lý nhóm", description: "Quản lý nhóm làm việc", color: "#8b5cf6" },
+            { title: "Nhóm Công việc", description: "Quản lý nhóm công việc", color: "#f59e0b" },
             { title: "Kiểm tra thùng rác", description: "Trạng thái hiện tại", color: "#10b981" },
-            { title: "Lịch làm việc", description: "Xem ca làm việc", color: "#8b5cf6" }
+            { title: "Lịch làm việc", description: "Xem ca làm việc", color: "#ef4444" }
           ].map((action, index) => (
-            <button key={index} style={{
-              backgroundColor: hexToRgba(action.color, 0.1),
-              border: `1px solid ${hexToRgba(action.color, 0.3)}`,
-              borderRadius: "8px",
-              padding: "16px",
-              textAlign: "left",
-              cursor: "pointer",
-              transition: "all 0.2s"
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = hexToRgba(action.color, 0.2);
-              e.target.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = hexToRgba(action.color, 0.1);
-              e.target.style.transform = "translateY(0)";
-            }}>
+            <button key={index} 
+              onClick={() => {
+                if (action.title === "Thêm báo cáo") navigate('/report-management');
+                else if (action.title === "Quản lý nhân viên") navigate('/user-management');
+                else if (action.title === "Quản lý nhóm") navigate('/worker-group-management');
+                else if (action.title === "Nhóm Công việc") navigate('/group-assignment');
+                else if (action.title === "Kiểm tra thùng rác") navigate('/trash');
+                else if (action.title === "Lịch làm việc") navigate('/shifts');
+              }}
+              style={{
+                backgroundColor: hexToRgba(action.color, 0.1),
+                border: `1px solid ${hexToRgba(action.color, 0.3)}`,
+                borderRadius: "8px",
+                padding: "16px",
+                textAlign: "left",
+                cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = hexToRgba(action.color, 0.2);
+                e.target.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = hexToRgba(action.color, 0.1);
+                e.target.style.transform = "translateY(0)";
+              }}>
               <div style={{ 
                 fontSize: "16px", 
                 fontWeight: "600", 

@@ -95,6 +95,16 @@ const Sidebar = () => {
       icon: HiOutlineClipboardList,
     },
     {
+      title: "Nhóm Công việc",
+      path: "/group-assignment",
+      icon: HiOutlineUserGroup,
+    },
+    {
+      title: "Quản lý nhóm",
+      path: "/worker-group-management",
+      icon: HiOutlineUserGroup,
+    },
+    {
       title: "Ca làm việc",
       path: "/shifts",
       icon: HiOutlineClock,

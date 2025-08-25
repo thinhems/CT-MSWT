@@ -169,4 +169,13 @@ export const API_URLS = {
     DELETE: (id: string) => `workerGroup/${id}`,
     GET_ALL_MEMBERS: `workGroupMember/all-members`, // GET /api/workGroupMember/all-members - Tất cả thành viên nhóm
   },
+
+  // Group Assignment management endpoints
+  GROUP_ASSIGNMENT: {
+    GET_ALL: `groupAssignment`, // GET /api/groupAssignment - Tất cả nhóm công việc
+    GET_BY_ID: (id: string) => `groupAssignment/${id}`,
+    CREATE: `groupAssignment`,
+    UPDATE: (id: string) => `groupAssignment/${id}`,
+    DELETE: (id: string) => `groupAssignment/${id}`,
+  },
 };
