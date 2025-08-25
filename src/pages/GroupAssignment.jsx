@@ -4,13 +4,13 @@ import { useNavigate } from "react-router-dom";
 import Notification from "../components/Notification";
 import Pagination from "../components/Pagination";
 import GroupAssignmentTable from "../components/GroupAssignmentTable";
-import { useGroupAssignments } from "../hooks/useGroupAssignment";
+import JobSelectionDropdown from "../components/common/JobSelectionDropdown";
 
 const GroupAssignment = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState("all"); // "all", "active", "completed"
+  const [activeTab, setActiveTab] = useState("all"); // "all", "active", "inactive"
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -19,59 +19,73 @@ const GroupAssignment = () => {
   const [newGroup, setNewGroup] = useState({
     assignmentGroupName: "",
     description: "",
-    status: "Đang thực hiện"
+    status: "Hoạt động",
+    selectedJobs: []
   });
 
-  const itemsPerPage = 5;
+  // Fake job data for demonstration
+  const fakeJobs = [
+    { id: 1, name: "Dọn dẹp nhà vệ sinh", category: "Vệ sinh" },
+    { id: 2, name: "Lau chùi sàn nhà", category: "Vệ sinh" },
+    { id: 3, name: "Đổ rác", category: "Vệ sinh" },
+    { id: 4, name: "Lau bảng", category: "Phòng học" },
+    { id: 5, name: "Sắp xếp bàn ghế", category: "Phòng học" },
+    { id: 6, name: "Lau cửa sổ", category: "Phòng học" },
+    { id: 7, name: "Dọn dẹp hành lang", category: "Khu vực chung" },
+    { id: 8, name: "Lau cầu thang", category: "Khu vực chung" },
+    { id: 9, name: "Dọn dẹp sân trường", category: "Khu vực chung" },
+    { id: 10, name: "Kiểm tra hệ thống điện", category: "Bảo trì" },
+    { id: 11, name: "Kiểm tra hệ thống nước", category: "Bảo trì" },
+    { id: 12, name: "Bảo dưỡng máy móc", category: "Bảo trì" }
+  ];
 
-  const {
-    groupAssignments,
-    isLoading,
-    error,
-    mutate
-  } = useGroupAssignments();
+  const itemsPerPage = 5;
 
   // Dữ liệu mẫu để demo
   const mockData = [
     {
-      groupAssignmentId: "1",
-      assignmentGroupName: "Dự án Vệ sinh Tòa A",
-      description: "Dự án vệ sinh toàn bộ tòa A trong tháng 1/2024",
+      assignmentGroupName: "Nhóm công việc 1",
+      description: "Công việc liên quan đến nhà vệ sinh",
       status: "Hoạt động",
-      assignedWorkers: 12
+      workCount: 15,
+      createdAt: "2024-01-15"
     },
     {
-      groupAssignmentId: "2",
-      assignmentGroupName: "Dự án Vệ sinh Tòa B",
-      description: "Dự án vệ sinh toàn bộ tòa B trong tháng 1/2024",
-      status: "Hoạt động",
-      assignedWorkers: 8
-    },
-    {
-      groupAssignmentId: "3",
-      assignmentGroupName: "Dự án Vệ sinh Khu vực chung",
-      description: "Dự án vệ sinh khu vực chung và sân vườn",
+      groupAssignmentId: "ACF66107-4971-4800-8F49-C7985BB501AD",
+      assignmentGroupName: "Nhóm công việc 2",
+      description: "Công việc liên quan đến phòng học",
       status: "Tạm ngưng",
-      assignedWorkers: 6
+      workCount: 8,
+      createdAt: "2024-01-16"
     },
     {
-      groupAssignmentId: "4",
-      assignmentGroupName: "Dự án Vệ sinh Hầm xe",
-      description: "Dự án vệ sinh hầm xe và khu vực để xe",
+      groupAssignmentId: "B8E9F2A1-3C4D-5E6F-7G8H-9I0J1K2L3M4N",
+      assignmentGroupName: "Nhóm công việc 3",
+      description: "Công việc liên quan đến khu vực chung",
       status: "Hoạt động",
-      assignedWorkers: 4
+      workCount: 22,
+      createdAt: "2024-01-17"
     },
     {
-      groupAssignmentId: "5",
-      assignmentGroupName: "Dự án Vệ sinh Khu vực hành chính",
-      description: "Dự án vệ sinh khu vực hành chính và văn phòng",
+      groupAssignmentId: "C7D6E5F4-3G2H-1I0J-9K8L-7M6N5O4P3Q2R",
+      assignmentGroupName: "Nhóm công việc 4",
+      description: "Công việc liên quan đến hầm xe",
+      status: "Hoạt động",
+      workCount: 12,
+      createdAt: "2024-01-18"
+    },
+    {
+      groupAssignmentId: "D6C5B4A3-2Z1Y-0X9W-8V7U-6T5S4R3Q2P1O",
+      assignmentGroupName: "Nhóm công việc 5",
+      description: "Công việc liên quan đến khu vực hành chính",
       status: "Tạm ngưng",
-      assignedWorkers: 10
+      workCount: 18,
+      createdAt: "2024-01-19"
     }
   ];
 
-  // Sử dụng dữ liệu mẫu nếu API chưa sẵn sàng
-  const displayData = groupAssignments && groupAssignments.length > 0 ? groupAssignments : mockData;
+  // Sử dụng dữ liệu mẫu
+  const displayData = mockData;
 
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
@@ -97,7 +111,8 @@ const GroupAssignment = () => {
     setNewGroup({
       assignmentGroupName: "",
       description: "",
-      status: "Hoạt động"
+      status: "Hoạt động",
+      selectedJobs: []
     });
   };
 
@@ -117,22 +132,22 @@ const GroupAssignment = () => {
       return;
     }
 
+    if (newGroup.selectedJobs.length === 0) {
+      showNotification("❌ Vui lòng chọn ít nhất một công việc!", "error");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      
-      // TODO: Implement create API call when available
-      // await createGroupAssignment(newGroup);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      showNotification("🎉 Đã tạo nhóm công việc thành công!");
+      const selectedJobNames = fakeJobs
+        .filter(job => newGroup.selectedJobs.includes(job.id.toString()))
+        .map(job => job.name);
+      showNotification(`🎉 Đã tạo nhóm công việc thành công với ${newGroup.selectedJobs.length} công việc: ${selectedJobNames.join(", ")}`);
       handleCloseAddModal();
-      
-      // Refresh data
-      if (mutate) {
-        mutate();
-      }
       
     } catch (error) {
       console.error('Error creating group assignment:', error);
@@ -149,9 +164,9 @@ const GroupAssignment = () => {
     if (activeTab === "all") {
       tabFilter = true;
     } else if (activeTab === "active") {
-      tabFilter = group.status === "Đang thực hiện";
-    } else if (activeTab === "completed") {
-      tabFilter = group.status === "Hoàn thành";
+      tabFilter = group.status === "Hoạt động";
+    } else if (activeTab === "inactive") {
+      tabFilter = group.status === "Tạm ngưng";
     }
     
     if (!tabFilter) return false;
@@ -268,11 +283,11 @@ const GroupAssignment = () => {
                 }
               }}
             >
-              Đang thực hiện
+                             Hoạt động
             </button>
             <button
               onClick={() => {
-                setActiveTab("completed");
+                setActiveTab("inactive");
                 setCurrentPage(1);
               }}
               style={{
@@ -282,22 +297,22 @@ const GroupAssignment = () => {
                 fontSize: "14px",
                 fontWeight: "500",
                 cursor: "pointer",
-                borderBottom: activeTab === "completed" ? "2px solid #FF5B27" : "2px solid transparent",
-                color: activeTab === "completed" ? "#FF5B27" : "#6b7280",
+                borderBottom: activeTab === "inactive" ? "2px solid #FF5B27" : "2px solid transparent",
+                color: activeTab === "inactive" ? "#FF5B27" : "#6b7280",
                 transition: "all 0.2s",
               }}
               onMouseEnter={(e) => {
-                if (activeTab !== "completed") {
+                if (activeTab !== "inactive") {
                   e.target.style.color = "#374151";
                 }
               }}
               onMouseLeave={(e) => {
-                if (activeTab !== "completed") {
+                if (activeTab !== "inactive") {
                   e.target.style.color = "#6b7280";
                 }
               }}
             >
-              Hoàn thành
+              Tạm ngưng
             </button>
           </div>
         </div>
@@ -374,23 +389,7 @@ const GroupAssignment = () => {
 
       {/* Content Area */}
       <div style={{ flex: "0 0 auto" }}>
-        {/* Demo Mode Notice */}
-        {(!groupAssignments || groupAssignments.length === 0) && (
-          <div style={{
-            backgroundColor: "#fef3c7",
-            border: "1px solid #fbbf24",
-            color: "#92400e",
-            padding: "12px 16px",
-            margin: "0 16px 16px 16px",
-            borderRadius: "6px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px"
-          }}>
-            <HiOutlineRefresh style={{ width: "16px", height: "16px" }} />
-            <span>Đang chạy với dữ liệu mẫu. API sẽ được tích hợp khi backend sẵn sàng.</span>
-          </div>
-        )}
+        
 
         {/* Groups Table */}
         <GroupAssignmentTable 
@@ -539,6 +538,21 @@ const GroupAssignment = () => {
                   }}
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                />
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <JobSelectionDropdown
+                  jobs={fakeJobs}
+                  selectedJobs={newGroup.selectedJobs}
+                  onSelectionChange={(selectedJobs) => {
+                    setNewGroup(prev => ({
+                      ...prev,
+                      selectedJobs
+                    }));
+                  }}
+                  label="Chọn công việc"
+                  placeholder="Chọn công việc cho nhóm..."
                 />
               </div>
 
@@ -849,25 +863,25 @@ const GroupAssignment = () => {
                 </div>
 
                 <div>
-                  <label
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Số nhân viên được phân công
-                  </label>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    {selectedGroup.assignedWorkers || 0} người
-                  </p>
+                                     <label
+                     style={{
+                       fontSize: "14px",
+                       fontWeight: "500",
+                       color: "#6b7280",
+                     }}
+                   >
+                     Số công việc
+                   </label>
+                   <p
+                     style={{
+                       fontSize: "16px",
+                       fontWeight: "600",
+                       color: "#111827",
+                       margin: "4px 0 0 0",
+                     }}
+                   >
+                     {selectedGroup.workCount || 0} công việc
+                   </p>
                 </div>
               </div>
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { HiOutlineEye } from "react-icons/hi";
+import { HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
 import Dropdown from './common/Dropdown';
 
 interface WorkerGroup {
@@ -208,6 +208,12 @@ const WorkerGroupTable = ({
                       label: 'Xem chi tiết',
                       icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
                       color: "#374151"
+                    },
+                    {
+                      action: 'edit',
+                      label: 'Chỉnh sửa',
+                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
+                      color: "#FF5B27"
                     }
                   ]}
                   onItemClick={(item: any, triggerData: any) => handleDropdownAction(item, triggerData)}

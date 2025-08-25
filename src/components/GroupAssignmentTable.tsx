@@ -7,7 +7,8 @@ interface GroupAssignment {
   assignmentGroupName: string;
   description?: string;
   status: string;
-  assignedWorkers: number;
+  workCount: number;
+  createdAt: string;
 }
 
 interface IProps {
@@ -82,7 +83,18 @@ const GroupAssignmentTable = ({
                 color: "#374151",
               }}
             >
-              Số công nhân
+              Số công việc
+            </th>
+            <th
+              style={{
+                padding: "12px 16px",
+                textAlign: "left",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#374151",
+              }}
+            >
+              Ngày tạo
             </th>
             <th
               style={{
@@ -145,11 +157,11 @@ const GroupAssignmentTable = ({
               >
                 <div>{group.assignmentGroupName}</div>
                 <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px" }}>
-                  ID: {group.groupAssignmentId}
+                 
                 </div>
               </td>
 
-              {/* Assigned Workers Column */}
+              {/* Work Count Column */}
               <td
                 style={{
                   padding: "12px 16px",
@@ -158,11 +170,22 @@ const GroupAssignmentTable = ({
                 }}
               >
                 <span style={{ fontWeight: "600", color: "#111827" }}>
-                  {group.assignedWorkers}
+                  {group.workCount}
                 </span>
                 <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "4px" }}>
-                  người
+                  công việc
                 </span>
+              </td>
+
+              {/* Created Date Column */}
+              <td
+                style={{
+                  padding: "12px 16px",
+                  fontSize: "13px",
+                  color: "#6b7280",
+                }}
+              >
+                {group.createdAt ? new Date(group.createdAt).toLocaleDateString('vi-VN') : "Không xác định"}
               </td>
 
               {/* Description Column */}
