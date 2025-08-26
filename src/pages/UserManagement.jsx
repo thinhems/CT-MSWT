@@ -705,53 +705,7 @@ const UserManagement = () => {
 
           {/* Action Buttons */}
           <div style={{ display: "flex", gap: "12px", marginLeft: "24px" }}>
-            {/* Group Management Button */}
-            <button
-              onClick={() => navigate('/worker-group-management')}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "#3B82F6",
-                color: "white",
-                padding: "12px 20px",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                transition: "background-color 0.2s",
-              }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#2563EB")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#3B82F6")}
-            >
-              <HiOutlineUserGroup style={{ width: "16px", height: "16px" }} />
-              Quản lý nhóm
-            </button>
 
-            {/* Group Assignment Button */}
-            <button
-              onClick={() => navigate('/group-assignment')}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "#10B981",
-                color: "white",
-                padding: "12px 20px",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                transition: "background-color 0.2s",
-              }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#059669")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#10B981")}
-            >
-              <HiOutlineClipboardList style={{ width: "16px", height: "16px" }} />
-              Nhóm Công việc
-            </button>
 
             {/* Add User Button */}
             <button

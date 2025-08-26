@@ -27,10 +27,15 @@ const JobSelectionDropdown = ({
   }, []);
 
   // Filter jobs based on search term
-  const filteredJobs = jobs.filter(job =>
-    job.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredJobs = jobs.filter(job => {
+    const jobName = job.name || job.assignmentName || '';
+    const jobCategory = job.category || '';
+    
+    return (
+      jobName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      jobCategory.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   // Group jobs by category
   const groupedJobs = filteredJobs.reduce((acc, job) => {
@@ -61,8 +66,11 @@ const JobSelectionDropdown = ({
 
   const getSelectedJobNames = () => {
     return selectedJobs.map(id => {
-      const job = jobs.find(j => j.id.toString() === id.toString());
-      return job ? job.name : '';
+      const job = jobs.find(j => 
+        (j.id && j.id.toString() === id.toString()) ||
+        (j.assignmentId && j.assignmentId.toString() === id.toString())
+      );
+      return job ? (job.name || job.assignmentName || '') : '';
     }).filter(name => name);
   };
 
@@ -135,18 +143,18 @@ const JobSelectionDropdown = ({
                   <div className={styles['category-header']}>{category}</div>
                   {categoryJobs.map(job => (
                     <div
-                      key={job.id}
-                      className={`${styles['job-item']} ${selectedJobs.includes(job.id.toString()) ? styles.selected : ''}`}
+                      key={job.id || job.assignmentId}
+                      className={`${styles['job-item']} ${selectedJobs.includes((job.id || job.assignmentId).toString()) ? styles.selected : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleJobToggle(job.id.toString());
+                        handleJobToggle((job.id || job.assignmentId).toString());
                       }}
                     >
                       <div className={styles['job-info']}>
-                        <span className={styles['job-name']}>{job.name}</span>
-                        <span className={styles['job-category']}>{job.category}</span>
+                        <span className={styles['job-name']}>{job.name || job.assignmentName || 'Không có tên'}</span>
+                        <span className={styles['job-category']}>{job.category || 'Không phân loại'}</span>
                       </div>
-                      {selectedJobs.includes(job.id.toString()) && (
+                      {selectedJobs.includes((job.id || job.assignmentId).toString()) && (
                         <HiOutlineCheck className={styles['check-icon']} />
                       )}
                     </div>

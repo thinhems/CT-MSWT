@@ -1,5 +1,5 @@
 import React from "react";
-import { HiOutlineEye } from "react-icons/hi";
+import { HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
 import Dropdown from './common/Dropdown';
 
 interface GroupAssignment {
@@ -229,16 +229,24 @@ const GroupAssignmentTable = ({
                 }}
               >
                 <Dropdown
-                  items={[
+                  items={([
                     {
+                      key: 'view',
                       action: 'view',
                       label: 'Xem chi tiết',
                       icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
                       color: "#374151"
+                    },
+                    {
+                      key: 'edit',
+                      action: 'edit',
+                      label: 'Chỉnh sửa',
+                      icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
+                      color: "#374151"
                     }
-                  ]}
+                  ] as any)}
                   onItemClick={(item: any, triggerData: any) => handleDropdownAction(item, triggerData)}
-                  triggerData={group}
+                  triggerData={group as any}
                 />
               </td>
             </tr>

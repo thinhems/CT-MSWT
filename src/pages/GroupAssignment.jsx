@@ -14,7 +14,9 @@ const GroupAssignment = () => {
   const [activeTab, setActiveTab] = useState("all"); // "all", "active", "inactive"
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [editingGroup, setEditingGroup] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newGroup, setNewGroup] = useState({
@@ -89,12 +91,26 @@ const GroupAssignment = () => {
     if (action === 'view') {
       setSelectedGroup(group);
       setShowViewModal(true);
+    } else if (action === 'edit') {
+      setEditingGroup({
+        groupAssignmentId: group.groupAssignmentId,
+        assignmentGroupName: group.assignmentGroupName,
+        description: group.description || "",
+        status: group.status,
+        selectedJobs: [] // Khởi tạo là array rỗng
+      });
+      setShowEditModal(true);
     }
   };
 
   const handleCloseViewModal = () => {
     setShowViewModal(false);
     setSelectedGroup(null);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditingGroup(null);
   };
 
   const handleCloseAddModal = () => {
@@ -134,15 +150,49 @@ const GroupAssignment = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-              const selectedJobNames = realJobs
-          .filter(job => newGroup.selectedJobs.includes(job.assignmentId?.toString() || job.id?.toString()))
-          .map(job => job.assignmentName || job.name);
+      const selectedJobNames = realJobs
+        .filter(job => newGroup.selectedJobs.includes(job.assignmentId?.toString() || job.id?.toString()))
+        .map(job => job.assignmentName || job.name);
       showNotification(`🎉 Đã tạo nhóm công việc thành công với ${newGroup.selectedJobs.length} công việc: ${selectedJobNames.join(", ")}`);
       handleCloseAddModal();
       
     } catch (error) {
       console.error('Error creating group assignment:', error);
       showNotification("❌ Có lỗi xảy ra khi tạo nhóm công việc!", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmitEditGroup = async (e) => {
+    e.preventDefault();
+    
+    if (!editingGroup.assignmentGroupName.trim()) {
+      showNotification("❌ Vui lòng nhập tên nhóm công việc!", "error");
+      return;
+    }
+
+    if (!editingGroup.selectedJobs || editingGroup.selectedJobs.length === 0) {
+      showNotification("❌ Vui lòng chọn ít nhất một công việc cho nhóm!", "error");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const selectedJobNames = realJobs
+        .filter(job => editingGroup.selectedJobs.includes(job.assignmentId?.toString() || job.id?.toString()))
+        .map(job => job.assignmentName || job.name);
+      
+      showNotification(`🎉 Đã cập nhật nhóm công việc thành công với ${editingGroup.selectedJobs.length} công việc: ${selectedJobNames.join(", ")}`);
+      handleCloseEditModal();
+      
+    } catch (error) {
+      console.error('Error updating group assignment:', error);
+      showNotification("❌ Có lỗi xảy ra khi cập nhật nhóm công việc!", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -165,9 +215,13 @@ const GroupAssignment = () => {
     // Search filtering
     if (!searchTerm) return true;
     
+    // Safe string operations with null checks
+    const groupName = group.assignmentGroupName || "";
+    const description = group.description || "";
+    
     return (
-      group.assignmentGroupName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      group.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      groupName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      description.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -532,20 +586,7 @@ const GroupAssignment = () => {
                 />
               </div>
 
-                              <div style={{ marginBottom: "16px" }}>
-                  <JobSelectionDropdown
-                    jobs={realJobs}
-                    selectedJobs={newGroup.selectedJobs}
-                    onSelectionChange={(selectedJobs) => {
-                      setNewGroup(prev => ({
-                        ...prev,
-                        selectedJobs
-                      }));
-                    }}
-                    label="Chọn công việc"
-                    placeholder="Chọn công việc cho nhóm..."
-                  />
-                </div>
+                   
 
               <div style={{ marginBottom: "24px" }}>
                 <label
@@ -828,25 +869,7 @@ const GroupAssignment = () => {
                 </div>
 
                 <div>
-                  <label
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Loại nhóm
-                  </label>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    Nhóm công việc
-                  </p>
+                  
                 </div>
               </div>
 
@@ -1008,6 +1031,304 @@ const GroupAssignment = () => {
                 Đóng
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Group Modal */}
+      {showEditModal && editingGroup && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={handleCloseEditModal}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              width: "500px",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              overflow: "auto",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "24px",
+              }}
+            >
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#111827",
+                  margin: 0,
+                }}
+              >
+                Chỉnh sửa nhóm công việc
+              </h2>
+              <button
+                onClick={handleCloseEditModal}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px",
+                  borderRadius: "4px",
+                  color: "#6b7280",
+                }}
+                onMouseEnter={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
+              >
+                <HiX style={{ width: "24px", height: "24px" }} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmitEditGroup}>
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
+                  Tên nhóm công việc *
+                </label>
+                <input
+                  type="text"
+                  name="assignmentGroupName"
+                  value={editingGroup.assignmentGroupName}
+                  onChange={(e) => setEditingGroup(prev => ({
+                    ...prev,
+                    assignmentGroupName: e.target.value
+                  }))}
+                  required
+                  placeholder="Nhập tên nhóm công việc"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                />
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "6px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                  }}
+                >
+                  Mô tả
+                </label>
+                <textarea
+                  name="description"
+                  value={editingGroup.description}
+                  onChange={(e) => setEditingGroup(prev => ({
+                    ...prev,
+                    description: e.target.value
+                  }))}
+                  rows={3}
+                  placeholder="Nhập mô tả nhóm công việc"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    transition: "border-color 0.2s",
+                    resize: "vertical",
+                  }}
+                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                />
+              </div>
+
+                             <div style={{ marginBottom: "24px" }}>
+                 <label
+                   style={{
+                     display: "block",
+                     marginBottom: "6px",
+                     fontSize: "14px",
+                     fontWeight: "500",
+                     color: "#374151",
+                   }}
+                 >
+                   Trạng thái
+                 </label>
+                 <select
+                   name="status"
+                   value={editingGroup.status}
+                   onChange={(e) => setEditingGroup(prev => ({
+                     ...prev,
+                     status: e.target.value
+                   }))}
+                   style={{
+                     width: "100%",
+                     padding: "12px",
+                     border: "1px solid #d1d5db",
+                     borderRadius: "8px",
+                     fontSize: "14px",
+                     outline: "none",
+                     transition: "border-color 0.2s",
+                     backgroundColor: "white",
+                   }}
+                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
+                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                 >
+                   <option value="Hoạt động">Hoạt động</option>
+                   <option value="Tạm ngưng">Tạm ngưng</option>
+                 </select>
+               </div>
+
+               <div style={{ marginBottom: "24px" }}>
+                 
+                 <JobSelectionDropdown
+                   jobs={realJobs}
+                   selectedJobs={editingGroup.selectedJobs || []}
+                   onSelectionChange={(selectedJobs) => {
+                     setEditingGroup(prev => ({
+                       ...prev,
+                       selectedJobs: selectedJobs || []
+                     }));
+                   }}
+                   label="Chọn công việc"
+                   placeholder="Chọn công việc cho nhóm..."
+                 />
+                 <div style={{ 
+                   marginTop: "8px", 
+                   fontSize: "12px", 
+                   color: "#6b7280" 
+                 }}>
+                   
+                   {(editingGroup.selectedJobs || []).length > 0 && (
+                     <div style={{ marginTop: "8px" }}>
+                       <strong>Danh sách công việc:</strong>
+                       <div style={{ 
+                         marginTop: "4px", 
+                         display: "flex", 
+                         flexDirection: "column", 
+                         gap: "4px" 
+                       }}>
+                         {(editingGroup.selectedJobs || []).map((jobId, index) => {
+                           const job = realJobs.find(j => j.assignmentId?.toString() === jobId.toString() || j.id?.toString() === jobId.toString());
+                           return (
+                             <div key={jobId} style={{
+                               padding: "6px 8px",
+                               backgroundColor: "#f3f4f6",
+                               borderRadius: "6px",
+                               fontSize: "11px",
+                               color: "#374151",
+                               display: "flex",
+                               alignItems: "center",
+                               gap: "8px"
+                             }}>
+                               <span style={{ fontWeight: "600", color: "#6b7280" }}>
+                                 {index + 1}.
+                               </span>
+                               <span style={{ fontWeight: "500" }}>
+                                 {job?.assignmentName || job?.name || 'Không xác định'}
+                               </span>
+                               <span style={{ color: "#6b7280" }}>
+                                 - {job?.description || 'Không có mô tả'}
+                               </span>
+                             </div>
+                           );
+                         })}
+                       </div>
+                     </div>
+                   )}
+                 </div>
+               </div>
+
+              {/* Buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "12px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleCloseEditModal}
+                  style={{
+                    padding: "12px 20px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    backgroundColor: "white",
+                    color: "#374151",
+                    cursor: "pointer",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#f9fafb")}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = "white")}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  style={{
+                    padding: "12px 20px",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    backgroundColor: isSubmitting ? "#9ca3af" : "#FF5B27",
+                    color: "white",
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                    transition: "background-color 0.2s",
+                    opacity: isSubmitting ? 0.7 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSubmitting) {
+                      e.target.style.backgroundColor = "#E04B1F";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSubmitting) {
+                      e.target.style.backgroundColor = "#FF5B27";
+                    }
+                  }}
+                >
+                  {isSubmitting ? "Đang cập nhật..." : "Cập nhật nhóm công việc"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
