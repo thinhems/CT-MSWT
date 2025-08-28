@@ -92,6 +92,7 @@ const WorkerGroupTable = ({
             >
               Mô tả
             </th>
+
             <th
               style={{
                 padding: "12px 16px",
@@ -160,6 +161,8 @@ const WorkerGroupTable = ({
               >
                 {group.description || "Không có mô tả"}
               </td>
+
+
 
               {/* Action Column */}
               <td

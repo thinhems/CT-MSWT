@@ -1,11 +1,11 @@
-import { HiOutlineX, HiOutlineClipboardList, HiOutlinePlus, HiOutlineClock, HiOutlineUser, HiOutlineMap, HiOutlineCalendar, HiOutlineSearch, HiOutlineFilter } from "react-icons/hi";
+import { HiOutlineX, HiOutlineClipboardList, HiOutlinePlus, HiOutlineClock, HiOutlineUser, HiOutlineMap, HiOutlineSearch } from "react-icons/hi";
 import { Schedule } from "@/config/models/schedule.model";
 import { useScheduleDetails } from "../hooks/useScheduleDetails";
 import { useAssignments } from "../hooks/useAssignments";
 import { useShifts } from "../hooks/useShifts";
 import { useUsers } from "../hooks/useUsers";
 import { useWorkerGroup } from "../hooks/useWorkerGroup";
-import { API_URLS, BASE_API_URL } from "../constants/api-urls";
+import { API_URLS } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 import useSWR from "swr";
 import { useMemo, useState } from "react";
@@ -91,12 +91,16 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     swrFetcher
   );
 
-  const { data: assignmentsData, error: assignmentsError, isLoading: isLoadingAssignments } = useSWR(
-    API_URLS.ASSIGNMENTS.GET_ALL,
+  // Fetch group assignments instead of assignments
+  const { data: groupAssignmentsData, error: groupAssignmentsError, isLoading: isLoadingGroupAssignments } = useSWR(
+    API_URLS.GROUP_ASSIGNMENT.GET_ALL,
     swrFetcher
   );
 
   const { groups: workerGroupsData, loading: isLoadingWorkerGroups, error: workerGroupsError } = useWorkerGroup();
+  
+  // Add useScheduleDetails hook for creating schedule details
+  const { createScheduleDetailForSchedule, mutate: mutateScheduleDetails } = useScheduleDetails();
 
   
   // State for filtering and display
@@ -125,6 +129,11 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
   console.log("- showCreateForm:", showCreateForm);
   console.log("- isSubmitting:", isSubmitting);
   console.log("- newDetail:", newDetail);
+  
+  console.log("🔍 Group Assignments Debug:");
+  console.log("- Data:", groupAssignmentsData);
+  console.log("- Error:", groupAssignmentsError);
+  console.log("- Loading:", isLoadingGroupAssignments);
 
   // Filter unassigned workers by position for staff assignment
   const workers = useMemo(() => {
@@ -165,11 +174,10 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     }
   };
 
-  // Handle form submission using the API from the image
+  // Handle form submission using the useScheduleDetails hook
   const handleSubmitDetail = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    alert("🚀 HANDLE SUBMIT DETAIL CALLED!"); // Temporary debug alert
     console.log("🚀 FORM SUBMISSION STARTED");
     console.log("- Schedule:", schedule);
     console.log("- Schedule ID:", schedule?.scheduleId);
@@ -188,77 +196,33 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
       return;
     }
     
-    console.log("✅ VALIDATION PASSED - Proceeding with API call");
+    console.log("✅ VALIDATION PASSED - Proceeding with hook function");
 
     setIsSubmitting(true);
     try {
-              // Create request body according to API format from the image (NO scheduleId in body)
-        const requestBody = {
-          description: newDetail?.description || "",
-          workerGroupId: newDetail?.workerGroupId || "",
-          startTime: newDetail?.startTime || null,
-          groupAssignmentId: newDetail?.groupAssignmentId || "",
-          areaId: newDetail?.areaId || "",
-        };
-      
-      console.log("=== DETAILED API CALL INFO ===");
-      console.log("Schedule ID:", schedule?.scheduleId);
-      console.log("Form data (newDetail):", newDetail);
-      console.log("Request body:", requestBody);
-      console.log("Request body JSON:", JSON.stringify(requestBody, null, 2));
-      
-      // Validate required fields
-      console.log("=== VALIDATION ===");
-      console.log("- description:", `"${requestBody.description}" (length: ${requestBody.description?.length || 0})`);
-      console.log("- workerGroupId:", `"${requestBody.workerGroupId}" (empty: ${!requestBody.workerGroupId})`);
-      console.log("- startTime:", `"${requestBody.startTime}"`);
-      console.log("- groupAssignmentId:", `"${requestBody.groupAssignmentId}" (empty: ${!requestBody.groupAssignmentId})`);
-      console.log("- areaId:", `"${requestBody.areaId}" (empty: ${!requestBody.areaId})`);
-      
-        // Use specific endpoint as shown in API documentation
-        const apiUrl = `/api/scheduledetails/${schedule?.scheduleId}/details`;
-        console.log("Using specific API URL:", apiUrl);
-      
-      // Get authentication token from localStorage (same key as SWR)
-      const token = localStorage.getItem('accessToken'); // Use same key as SWR
-      console.log("Auth token available:", !!token);
-      console.log("Token length:", token?.length || 0);
-      console.log("Token preview:", token ? `${token.substring(0, 20)}...` : 'null');
-      
-      // Debug localStorage content
-      console.log("localStorage keys:", Object.keys(localStorage));
-      console.log("accessToken in localStorage:", localStorage.getItem('accessToken') ? 'exists' : 'missing');
-      
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
+      // Create request body according to API format (scheduleId is in URL path)
+      const requestBody = {
+        description: newDetail?.description || "",
+        workerGroupId: newDetail?.workerGroupId || "",
+        startTime: newDetail?.startTime || null,
+        groupAssignmentId: newDetail?.groupAssignmentId || "",
+        areaId: newDetail?.areaId || "",
       };
       
-      if (token && token !== 'undefined' && token !== 'null') {
-        headers['Authorization'] = `Bearer ${token}`;
-      } else {
-        console.error("❌ No valid authentication token found!");
-        alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
-        return;
-      }
+      console.log("=== USING HOOK FUNCTION ===");
+      console.log("Schedule ID:", schedule?.scheduleId);
+      console.log("Request body:", requestBody);
       
-      console.log("Request headers:", headers);
+      // Use the hook function which has the correct endpoint configuration
+      console.log(`Using hook function createScheduleDetailForSchedule with scheduleId: ${schedule.scheduleId}`);
       
-      // Use SWR's axios instance for consistency
-      const result = await swrFetcher(apiUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(requestBody),
-      });
+      const result = await createScheduleDetailForSchedule(schedule.scheduleId, requestBody);
 
       console.log("=== RESPONSE SUCCESS ===");
       console.log("Response data:", result);
       
-      // Show success message with details from response
-      if (result && result.scheduleDetailId) {
-        alert(`✅ Tạo chi tiết lịch trình thành công!\n\nID: ${result.scheduleDetailId}\nMô tả: ${result.description}\nTrạng thái: ${result.status}`);
-      } else {
-        alert(`✅ Tạo chi tiết lịch trình thành công!`);
-      }
+      // Show success message
+      alert(`✅ Tạo chi tiết lịch trình thành công!`);
       
       // Reset form and close
       setShowCreateForm(false);
@@ -270,17 +234,36 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
         areaId: "",
       });
       
-      // Refresh the schedule details instead of full page reload
-      // This will trigger a re-fetch of the schedule details
-      if (schedule?.scheduleId) {
-        // Trigger a re-fetch by updating the SWR cache or using mutate
-        // For now, we'll use a simple approach
-        window.location.reload();
-      }
+      // Refresh the schedule details using mutate
+      await mutateScheduleDetails();
       
     } catch (error: any) {
       console.error("Error creating schedule detail:", error);
-      alert(`❌ Lỗi tạo chi tiết lịch trình: ${error.message}`);
+      
+      // Provide specific error messages based on error type
+      let errorMessage = "❌ **VẤN ĐỀ BACKEND NGHIÊM TRỌNG**\n\n";
+      
+      if (error.message?.includes('Network Error') || error.message?.includes('kết nối mạng')) {
+        errorMessage += "🔥 **CORS + Server Error Combo:**\n";
+        errorMessage += "- Backend server trả về HTTP 500 (Internal Server Error)\n";
+        errorMessage += "- CORS policy chưa được cấu hình đúng\n";
+        errorMessage += "- Endpoint có thể chưa được implement hoặc có bug\n\n";
+        errorMessage += "📞 **Cần liên hệ Backend Team để:**\n";
+        errorMessage += "1. Fix lỗi HTTP 500 trên endpoint POST /scheduledetails/{id}/details\n";
+        errorMessage += "2. Cấu hình CORS cho endpoint này\n";
+        errorMessage += "3. Kiểm tra data validation và database schema\n\n";
+        errorMessage += "⚠️ **Tạm thời không thể tạo schedule detail mới!**";
+      } else if (error.response?.status === 500) {
+        errorMessage += "Backend server gặp lỗi nội bộ (HTTP 500).";
+      } else if (error.response?.status === 404) {
+        errorMessage += "Endpoint không tồn tại (HTTP 404).";
+      } else if (error.message?.includes('CORS')) {
+        errorMessage += "CORS policy chưa được cấu hình đúng.";
+      } else {
+        errorMessage += `Lỗi không xác định: ${error.message || 'Không rõ nguyên nhân'}`;
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -1198,30 +1181,30 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                      name="groupAssignmentId"
                      value={newDetail.groupAssignmentId}
                      onChange={handleDetailInputChange}
-                     disabled={isLoadingAssignments}
+                     disabled={isLoadingGroupAssignments}
                      style={{
                        width: "100%",
                        padding: "12px",
                        border: "1px solid #d1d5db",
                        borderRadius: "8px",
                        fontSize: "14px",
-                       backgroundColor: isLoadingAssignments ? "#f3f4f6" : "white",
+                       backgroundColor: isLoadingGroupAssignments ? "#f3f4f6" : "white",
                        fontFamily: "inherit",
-                       cursor: isLoadingAssignments ? "not-allowed" : "pointer"
+                       cursor: isLoadingGroupAssignments ? "not-allowed" : "pointer"
                      }}
                    >
                      <option value="">
-                       {isLoadingAssignments ? "Đang tải..." : "-- Chọn tên phân công nhóm --"}
+                       {isLoadingGroupAssignments ? "Đang tải..." : "-- Chọn tên phân công nhóm --"}
                      </option>
-                     {!isLoadingAssignments && assignmentsData && assignmentsData.length > 0 ? (
-                       assignmentsData.map((assignment: any) => (
-                         <option key={assignment.assignmentId} value={assignment.assignmentId}>
-                           {assignment.assignmentName || assignment.assignmentId}
+                     {!isLoadingGroupAssignments && groupAssignmentsData && groupAssignmentsData.length > 0 ? (
+                       groupAssignmentsData.map((groupAssignment: any) => (
+                         <option key={groupAssignment.groupAssignmentId} value={groupAssignment.groupAssignmentId}>
+                           {groupAssignment.assignmentGroupName || groupAssignment.groupAssignmentId}
                          </option>
                        ))
                      ) : (
                        <option value="" disabled>
-                         {isLoadingAssignments ? "Đang tải..." : "Không có dữ liệu phân công nhóm"}
+                         {isLoadingGroupAssignments ? "Đang tải..." : "Không có dữ liệu phân công nhóm"}
                        </option>
                      )}
                    </select>

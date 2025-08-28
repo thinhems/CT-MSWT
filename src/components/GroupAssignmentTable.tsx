@@ -123,9 +123,6 @@ const GroupAssignmentTable = ({
                 }}
               >
                 <div>{group.assignmentGroupName}</div>
-                <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px" }}>
-                  ID: {group.groupAssignmentId}
-                </div>
               </td>
 
               {/* Created Date Column */}

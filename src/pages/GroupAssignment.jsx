@@ -426,29 +426,7 @@ const GroupAssignment = () => {
 
           {/* Action Buttons */}
           <div style={{ display: "flex", gap: "12px", marginLeft: "24px" }}>
-            {/* Refresh Button */}
-            <button
-              onClick={() => refreshGroupAssignments()}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "#6b7280",
-                color: "white",
-                padding: "12px 20px",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                transition: "background-color 0.2s",
-              }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#4b5563")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#6b7280")}
-            >
-              <HiOutlineRefresh style={{ width: "20px", height: "20px" }} />
-              Làm mới
-            </button>
+            
             
             {/* Add Group Button */}
             <button
