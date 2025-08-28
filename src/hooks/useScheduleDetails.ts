@@ -78,17 +78,17 @@ export function useScheduleDetails(scheduleId?: string) {
 
   const createScheduleDetailForSchedule = async (
     scheduleId: string, 
-    formData: FormData
+    requestData: ICreateScheduleDetailsRequest
   ) => {
     try {
-      console.log("📝 Creating schedule detail for schedule:", scheduleId, "with FormData:", formData);
+      console.log("📝 Creating schedule detail for schedule:", scheduleId, "with data:", requestData);
       
       const response = await swrFetcher(API_URLS.SCHEDULE_DETAILS.CREATE_FOR_SCHEDULE(scheduleId), {
         method: "POST",
         headers: {
-          // Remove Content-Type header to let browser set it automatically for FormData
+          "Content-Type": "application/json",
         },
-        body: formData,
+        body: JSON.stringify(requestData),
       });
       
       console.log("✅ Schedule detail created successfully:", response);

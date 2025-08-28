@@ -30,90 +30,18 @@ const WorkerGroupManagement = () => {
   const itemsPerPage = 5;
 
   const {
-    workerGroups,
-    isLoading,
+    groups: workerGroups,
+    loading: isLoading,
     error,
-    mutate
+    fetchGroups
   } = useWorkerGroup();
 
   const { users } = useUsers();
 
-  // Dữ liệu mẫu để demo
-  const mockData = [
-    {
-      groupId: "1",
-      groupName: "Nhóm Vệ sinh Tầng 1",
-      description: "Nhóm phụ trách vệ sinh tầng 1 tòa A",
-      status: "Hoạt động",
-      memberCount: 4,
-      createdAt: "2024-01-15",
-      members: [
-        { id: "1", name: "Nguyễn Văn An", position: "Nhân viên vệ sinh", phone: "0987654321", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "2", name: "Trần Thị Bình", position: "Nhân viên vệ sinh", phone: "0987654322", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "3", name: "Lê Văn Cường", position: "Giám sát viên vệ sinh", phone: "0987654323", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "4", name: "Phạm Thị Dung", position: "Nhân viên vệ sinh", phone: "0987654324", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" }
-      ]
-    },
-    {
-      groupId: "2", 
-      groupName: "Nhóm Vệ sinh Tầng 2",
-      description: "Nhóm phụ trách vệ sinh tầng 2 tòa A",
-      status: "Hoạt động",
-      memberCount: 4,
-      createdAt: "2024-01-16",
-      members: [
-        { id: "5", name: "Ngô Văn Hùng", position: "Giám sát viên vệ sinh", phone: "0987654325", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "6", name: "Lý Thị Kim", position: "Nhân viên vệ sinh", phone: "0987654326", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "7", name: "Mai Văn Lâm", position: "Nhân viên vệ sinh", phone: "0987654327", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "8", name: "Đỗ Thị Mai", position: "Nhân viên vệ sinh", phone: "0987654328", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" }
-      ]
-    },
-    {
-      groupId: "3",
-      groupName: "Nhóm Vệ sinh Tầng 3",
-      description: "Nhóm phụ trách vệ sinh tầng 3 tòa A",
-      status: "Hoạt động",
-      memberCount: 4,
-      createdAt: "2024-01-17",
-      members: [
-        { id: "9", name: "Võ Văn Phúc", position: "Giám sát viên vệ sinh", phone: "0987654329", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "10", name: "Châu Thị Quỳnh", position: "Nhân viên vệ sinh", phone: "0987654330", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "11", name: "Trịnh Văn Sơn", position: "Nhân viên vệ sinh", phone: "0987654331", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "12", name: "Huỳnh Thị Tuyết", position: "Nhân viên vệ sinh", phone: "0987654332", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" }
-      ]
-    },
-    {
-      groupId: "4",
-      groupName: "Nhóm Vệ sinh Tầng 4",
-      description: "Nhóm phụ trách vệ sinh tầng 4 tòa A",
-      status: "Tạm ngưng",
-      memberCount: 4,
-      createdAt: "2024-01-18",
-      members: [
-        { id: "13", name: "Trần Văn Yến", position: "Giám sát viên vệ sinh", phone: "0987654333", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "14", name: "Lý Văn Zương", position: "Nhân viên vệ sinh", phone: "0987654334", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "15", name: "Mai Thị Ánh", position: "Nhân viên vệ sinh", phone: "0987654335", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "16", name: "Đỗ Văn Bảo", position: "Nhân viên vệ sinh", phone: "0987654336", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" }
-      ]
-    },
-    {
-      groupId: "5",
-      groupName: "Nhóm Vệ sinh Tầng 5",
-      description: "Nhóm phụ trách vệ sinh tầng 5 tòa A",
-      status: "Hoạt động",
-      memberCount: 4,
-      createdAt: "2024-01-19",
-      members: [
-        { id: "17", name: "Hồ Văn Đức", position: "Giám sát viên vệ sinh", phone: "0987654337", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "18", name: "Võ Thị Hương", position: "Nhân viên vệ sinh", phone: "0987654338", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "19", name: "Châu Văn Khoa", position: "Nhân viên vệ sinh", phone: "0987654339", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" },
-        { id: "20", name: "Trịnh Thị Lan", position: "Nhân viên vệ sinh", phone: "0987654340", avatar: "https://i.pinimg.com/736x/65/d6/c4/65d6c4b0cc9e85a631cf2905a881b7f0.jpg" }
-      ]
-    }
-  ];
+  // Sử dụng dữ liệu từ API
+  const displayData = workerGroups || [];
+  
 
-  // Sử dụng dữ liệu mẫu nếu API chưa sẵn sàng
-  const displayData = workerGroups && workerGroups.length > 0 ? workerGroups : mockData;
 
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
@@ -128,15 +56,15 @@ const WorkerGroupManagement = () => {
       setShowViewModal(true);
     } else if (action === 'edit') {
       setEditingGroup({
-        groupId: group.groupId,
-        groupName: group.groupName,
+        groupId: group.workerGroupId,
+        groupName: group.workerGroupName,
         description: group.description || "",
-        status: group.status,
+        status: group.status || "Hoạt động",
         selectedMembers: group.members ? group.members.map(member => ({
-          value: member.id,
-          label: member.name,
-          subtitle: `${member.position} - ${member.phone}`,
-          avatar: member.avatar
+          value: member.userId,
+          label: member.userName,
+          subtitle: `${member.roleId || 'Không có vai trò'} - ${member.userEmail}`,
+          avatar: null
         })) : []
       });
       setShowEditModal(true);
@@ -219,8 +147,8 @@ const WorkerGroupManagement = () => {
       handleCloseAddModal();
       
       // Refresh data
-      if (mutate) {
-        mutate();
+      if (fetchGroups) {
+        fetchGroups();
       }
       
     } catch (error) {
@@ -257,8 +185,8 @@ const WorkerGroupManagement = () => {
       handleCloseEditModal();
       
       // Refresh data
-      if (mutate) {
-        mutate();
+      if (fetchGroups) {
+        fetchGroups();
       }
       
     } catch (error) {
@@ -271,23 +199,14 @@ const WorkerGroupManagement = () => {
 
   // Filter groups based on active tab and search term
   const filteredGroups = displayData.filter(group => {
-    // Tab filtering
-    let tabFilter;
-    if (activeTab === "all") {
-      tabFilter = true;
-    } else if (activeTab === "active") {
-      tabFilter = group.status === "Hoạt động";
-    } else if (activeTab === "inactive") {
-      tabFilter = group.status === "Tạm ngưng";
-    }
-    
-    if (!tabFilter) return false;
+    // Tab filtering - Since API doesn't have status field, show all groups
+    let tabFilter = true;
     
     // Search filtering
     if (!searchTerm) return true;
     
     return (
-      group.groupName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      group.workerGroupName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       group.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
@@ -306,6 +225,17 @@ const WorkerGroupManagement = () => {
 
   return (
     <div style={{ backgroundColor: "#ffffff", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <style>
+        {`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          .spinning {
+            animation: spin 1s linear infinite;
+          }
+        `}
+      </style>
       {/* Notification */}
       {notification.show && (
         <Notification
@@ -318,16 +248,16 @@ const WorkerGroupManagement = () => {
       <div style={{ padding: "16px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
           <nav style={{ color: "#6b7280", fontSize: "14px" }}>
-            <h1
-              style={{
-                fontSize: "22px",
-                fontWeight: "bold",
-                color: "#111827",
-                marginBottom: "16px",
-              }}
-            >
-              Quản lý nhóm làm việc
-            </h1>
+                         <h1
+               style={{
+                 fontSize: "22px",
+                 fontWeight: "bold",
+                 color: "#111827",
+                 margin: 0,
+               }}
+             >
+               Quản lý nhóm làm việc
+             </h1>
             <span>Trang chủ</span>
             <span style={{ margin: "0 8px" }}>›</span>
             <span style={{ color: "#374151", fontWeight: "500" }}>
@@ -470,6 +400,8 @@ const WorkerGroupManagement = () => {
             />
           </div>
 
+          
+
           {/* Action Buttons */}
           <div style={{ display: "flex", gap: "12px", marginLeft: "24px" }}>
             {/* Add Group Button */}
@@ -499,9 +431,61 @@ const WorkerGroupManagement = () => {
         </div>
       </div>
 
+      {/* Loading and Error States */}
+      {isLoading && (
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "20px",
+          color: "#6b7280"
+        }}>
+          <HiOutlineRefresh style={{ 
+            width: "24px", 
+            height: "24px", 
+            marginRight: "8px",
+            animation: "spin 1s linear infinite"
+          }} />
+          Đang tải dữ liệu từ API...
+        </div>
+      )}
+
+      {error && (
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "20px",
+          color: "#dc2626",
+          backgroundColor: "#fef2f2",
+          border: "1px solid #fecaca",
+          borderRadius: "8px",
+          margin: "0 16px 16px 16px"
+        }}>
+          ❌ Lỗi khi tải dữ liệu: {error}
+          <button
+            onClick={fetchGroups}
+            style={{
+              marginLeft: "12px",
+              padding: "4px 8px",
+              backgroundColor: "#dc2626",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              fontSize: "12px",
+              cursor: "pointer"
+            }}
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+
       {/* Content Area */}
       <div style={{ flex: "0 0 auto" }}>
       
+
+        
 
         {/* Groups Table */}
         <WorkerGroupTable 
@@ -669,21 +653,20 @@ const WorkerGroupManagement = () => {
                               <span style={{ fontWeight: "600", color: "#6b7280" }}>
                                 {index + 1}.
                               </span>
-                              {user?.avatar && (
-                                <img 
-                                  src={user.avatar} 
-                                  alt={member.label}
-                                  style={{ 
-                                    width: "20px", 
-                                    height: "20px", 
-                                    borderRadius: "50%",
-                                    objectFit: "cover"
-                                  }}
-                                  onError={(e) => {
-                                    e.target.style.display = 'none';
-                                  }}
-                                />
-                              )}
+                              <div style={{
+                                width: "20px",
+                                height: "20px",
+                                borderRadius: "50%",
+                                backgroundColor: "#e5e7eb",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "10px",
+                                fontWeight: "600",
+                                color: "#6b7280"
+                              }}>
+                                {member.label?.charAt(0)?.toUpperCase() || "?"}
+                              </div>
                               <span style={{ fontWeight: "500" }}>
                                 {member.label}
                               </span>
@@ -915,10 +898,10 @@ const WorkerGroupManagement = () => {
                   <h4
                     style={{ margin: 0, fontSize: "18px", fontWeight: "600" }}
                   >
-                    {selectedGroup.groupName}
+                    {selectedGroup.workerGroupName}
                   </h4>
                   <p style={{ margin: 0, fontSize: "14px", color: "#6b7280" }}>
-                    ID: {selectedGroup.groupId}
+                    ID: {selectedGroup.workerGroupId}
                   </p>
                 </div>
               </div>
@@ -939,45 +922,6 @@ const WorkerGroupManagement = () => {
                       color: "#6b7280",
                     }}
                   >
-                    Trạng thái
-                  </label>
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      margin: "4px 0 0 0",
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        padding: "4px 12px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        borderRadius: "9999px",
-                        backgroundColor:
-                          selectedGroup.status === "Hoạt động"
-                            ? "#dcfce7"
-                            : "#fee2e2",
-                        color:
-                          selectedGroup.status === "Hoạt động"
-                            ? "#15803d"
-                            : "#dc2626",
-                      }}
-                    >
-                      {selectedGroup.status}
-                    </span>
-                  </p>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#6b7280",
-                    }}
-                  >
                     Số thành viên
                   </label>
                   <p
@@ -988,7 +932,7 @@ const WorkerGroupManagement = () => {
                       margin: "4px 0 0 0",
                     }}
                   >
-                    {selectedGroup.memberCount} người
+                    {selectedGroup.members?.length || 0} người
                   </p>
                 </div>
 
@@ -1060,7 +1004,7 @@ const WorkerGroupManagement = () => {
                       overflowY: "auto"
                     }}>
                       {selectedGroup.members.map((member, index) => (
-                        <div key={member.id} style={{
+                        <div key={member.workGroupMemberId} style={{
                           padding: "12px",
                           backgroundColor: "#f8fafc",
                           borderRadius: "8px",
@@ -1075,20 +1019,19 @@ const WorkerGroupManagement = () => {
                             height: "40px",
                             borderRadius: "50%",
                             overflow: "hidden",
-                            flexShrink: 0
+                            flexShrink: 0,
+                            backgroundColor: "#e5e7eb",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
                           }}>
-                            <img 
-                              src={member.avatar} 
-                              alt={member.name}
-                              style={{ 
-                                width: "100%", 
-                                height: "100%", 
-                                objectFit: "cover" 
-                              }}
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
+                            <span style={{
+                              fontSize: "16px",
+                              fontWeight: "600",
+                              color: "#6b7280"
+                            }}>
+                              {member.userName?.charAt(0)?.toUpperCase() || "?"}
+                            </span>
                           </div>
                           
                           {/* Member Info */}
@@ -1099,20 +1042,20 @@ const WorkerGroupManagement = () => {
                               color: "#111827",
                               marginBottom: "2px"
                             }}>
-                              {member.name}
+                              {member.userName}
                             </div>
                             <div style={{
                               fontSize: "12px",
                               color: "#6b7280",
                               marginBottom: "2px"
                             }}>
-                              {member.position}
+                              {member.roleId || "Không có vai trò"}
                             </div>
                             <div style={{
                               fontSize: "12px",
                               color: "#6b7280"
                             }}>
-                              {member.phone}
+                              {member.userEmail}
                             </div>
                           </div>
                           
@@ -1403,21 +1346,20 @@ const WorkerGroupManagement = () => {
                                <span style={{ fontWeight: "600", color: "#6b7280" }}>
                                  {index + 1}.
                                </span>
-                               {user?.avatar && (
-                                 <img 
-                                   src={user.avatar} 
-                                   alt={member.label}
-                                   style={{ 
-                                     width: "20px", 
-                                     height: "20px", 
-                                     borderRadius: "50%",
-                                     objectFit: "cover"
-                                   }}
-                                   onError={(e) => {
-                                     e.target.style.display = 'none';
-                                   }}
-                                 />
-                               )}
+                               <div style={{
+                                 width: "20px",
+                                 height: "20px",
+                                 borderRadius: "50%",
+                                 backgroundColor: "#e5e7eb",
+                                 display: "flex",
+                                 alignItems: "center",
+                                 justifyContent: "center",
+                                 fontSize: "10px",
+                                 fontWeight: "600",
+                                 color: "#6b7280"
+                               }}>
+                                 {member.label?.charAt(0)?.toUpperCase() || "?"}
+                               </div>
                                <span style={{ fontWeight: "500" }}>
                                  {member.label}
                                </span>

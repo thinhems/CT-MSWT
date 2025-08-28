@@ -45,7 +45,10 @@ export const useWorkerGroup = (): UseWorkerGroupReturn => {
       setLoading(true);
       setError(null);
       
+      console.log('Fetching worker groups from:', API_URLS.WORKER_GROUP.GET_ALL);
       const response = await api.get(API_URLS.WORKER_GROUP.GET_ALL);
+      
+      console.log('API Response:', response);
       
       if (response.data && response.data.success) {
         setGroups(response.data.data || []);
@@ -54,6 +57,12 @@ export const useWorkerGroup = (): UseWorkerGroupReturn => {
       }
     } catch (err: any) {
       console.error('Error fetching worker groups:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        url: err.config?.url
+      });
       setError(err.response?.data?.message || err.message || 'Failed to fetch worker groups');
       setGroups([]);
     } finally {
@@ -95,11 +104,11 @@ export const useWorkerGroup = (): UseWorkerGroupReturn => {
       
       if (response.data && response.data.success) {
         const updatedGroup = response.data.data;
-        setGroups(prev => prev.map(group => group.id === id ? updatedGroup : group));
+        setGroups(prev => prev.map(group => group.workerGroupId === id ? updatedGroup : group));
         return updatedGroup;
       } else {
         const updatedGroup = response.data;
-        setGroups(prev => prev.map(group => group.id === id ? updatedGroup : group));
+        setGroups(prev => prev.map(group => group.workerGroupId === id ? updatedGroup : group));
         return updatedGroup;
       }
     } catch (err: any) {
@@ -118,7 +127,7 @@ export const useWorkerGroup = (): UseWorkerGroupReturn => {
       
       await api.delete(API_URLS.WORKER_GROUP.DELETE(id));
       
-      setGroups(prev => prev.filter(group => group.id !== id));
+      setGroups(prev => prev.filter(group => group.workerGroupId !== id));
       return true;
     } catch (err: any) {
       console.error('Error deleting worker group:', err);

@@ -6,14 +6,13 @@ interface GroupAssignment {
   groupAssignmentId: string;
   assignmentGroupName: string;
   description?: string;
-  status: string;
-  workCount: number;
-  createdAt: string;
+  createdAt?: string;
 }
 
 interface IProps {
   groups: GroupAssignment[];
   onActionClick: (action: IAction) => void;
+  isLoadingView?: boolean;
 }
 
 interface IAction {
@@ -24,22 +23,12 @@ interface IAction {
 const GroupAssignmentTable = ({
   groups,
   onActionClick,
+  isLoadingView = false,
 }: IProps) => {
   console.log("groupAssignments", groups);
   
   const handleDropdownAction = (item: any, group: GroupAssignment) => {
     onActionClick({ action: item.action, group });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Hoạt động":
-        return { backgroundColor: "#dcfce7", color: "#15803d" };
-      case "Tạm ngưng":
-        return { backgroundColor: "#fee2e2", color: "#dc2626" };
-      default:
-        return { backgroundColor: "#f3f4f6", color: "#374151" };
-    }
   };
 
   return (
@@ -83,17 +72,6 @@ const GroupAssignmentTable = ({
                 color: "#374151",
               }}
             >
-              Số công việc
-            </th>
-            <th
-              style={{
-                padding: "12px 16px",
-                textAlign: "left",
-                fontSize: "12px",
-                fontWeight: "600",
-                color: "#374151",
-              }}
-            >
               Ngày tạo
             </th>
             <th
@@ -106,17 +84,6 @@ const GroupAssignmentTable = ({
               }}
             >
               Mô tả
-            </th>
-            <th
-              style={{
-                padding: "12px 16px",
-                textAlign: "left",
-                fontSize: "12px",
-                fontWeight: "600",
-                color: "#374151",
-              }}
-            >
-              Trạng thái
             </th>
             <th
               style={{
@@ -157,24 +124,8 @@ const GroupAssignmentTable = ({
               >
                 <div>{group.assignmentGroupName}</div>
                 <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px" }}>
-                 
+                  ID: {group.groupAssignmentId}
                 </div>
-              </td>
-
-              {/* Work Count Column */}
-              <td
-                style={{
-                  padding: "12px 16px",
-                  fontSize: "13px",
-                  color: "#6b7280",
-                }}
-              >
-                <span style={{ fontWeight: "600", color: "#111827" }}>
-                  {group.workCount}
-                </span>
-                <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "4px" }}>
-                  công việc
-                </span>
               </td>
 
               {/* Created Date Column */}
@@ -194,30 +145,13 @@ const GroupAssignmentTable = ({
                   padding: "12px 16px",
                   fontSize: "13px",
                   color: "#6b7280",
-                  maxWidth: "180px",
+                  maxWidth: "300px",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                 }}
               >
                 {group.description || "Không có mô tả"}
-              </td>
-
-              {/* Status Column */}
-              <td style={{ padding: "12px 16px" }}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    padding: "3px 10px",
-                    fontSize: "11px",
-                    fontWeight: "600",
-                    borderRadius: "9999px",
-                    backgroundColor: getStatusColor(group.status).backgroundColor,
-                    color: getStatusColor(group.status).color,
-                  }}
-                >
-                  {group.status}
-                </span>
               </td>
 
               {/* Action Column */}
@@ -233,9 +167,21 @@ const GroupAssignmentTable = ({
                     {
                       key: 'view',
                       action: 'view',
-                      label: 'Xem chi tiết',
-                      icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
-                      color: "#374151"
+                      label: isLoadingView ? 'Đang tải...' : 'Xem chi tiết',
+                      icon: isLoadingView ? (
+                        <div style={{ 
+                          width: "14px", 
+                          height: "14px", 
+                          border: "2px solid #9ca3af", 
+                          borderTop: "2px solid #FF5B27", 
+                          borderRadius: "50%", 
+                          animation: "spin 1s linear infinite" 
+                        }}></div>
+                      ) : (
+                        <HiOutlineEye style={{ width: "14px", height: "14px" }} />
+                      ),
+                      color: isLoadingView ? "#9ca3af" : "#374151",
+                      disabled: isLoadingView
                     },
                     {
                       key: 'edit',
@@ -245,7 +191,11 @@ const GroupAssignmentTable = ({
                       color: "#374151"
                     }
                   ] as any)}
-                  onItemClick={(item: any, triggerData: any) => handleDropdownAction(item, triggerData)}
+                  onItemClick={(item: any, triggerData: any) => {
+                    if (!item.disabled) {
+                      handleDropdownAction(item, triggerData);
+                    }
+                  }}
                   triggerData={group as any}
                 />
               </td>

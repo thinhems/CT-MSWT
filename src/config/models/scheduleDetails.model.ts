@@ -41,19 +41,11 @@ export interface ScheduleDetails {
 }
 
 export interface ICreateScheduleDetailsRequest {
-  scheduleId: string;
-  assignmentId: string; // Add assignmentId to create request
   description: string;
-  date: string;
-  status: string;
-  supervisorId?: string; // Make optional for direct creation
-  rating?: string; // Make optional for direct creation
-  workerId?: string; // Make optional for direct creation
-  evidenceImage?: string;
-  startTime?: string;
-  endTime?: string;
-  isBackup?: boolean;
-  backupForUserId?: string;
+  workerGroupId: string;
+  startTime: string | null;
+  groupAssignmentId: string;
+  areaId: string;
 }
 
 export interface IUpdateScheduleDetailsRequest {

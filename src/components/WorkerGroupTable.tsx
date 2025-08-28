@@ -3,12 +3,21 @@ import { HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
 import Dropdown from './common/Dropdown';
 
 interface WorkerGroup {
-  groupId: string;
-  groupName: string;
+  workerGroupId: string;
+  workerGroupName: string;
   description?: string;
-  status: string;
-  memberCount: number;
+  members?: Array<{
+    workGroupMemberId: string;
+    workGroupId: string;
+    userId: string;
+    roleId?: string;
+    joinedAt: string;
+    leftAt?: string;
+    userName: string;
+    userEmail: string;
+  }>;
   createdAt: string;
+  status?: string;
 }
 
 interface IProps {
@@ -25,21 +34,8 @@ const WorkerGroupTable = ({
   groups,
   onActionClick,
 }: IProps) => {
-  console.log("workerGroups", groups);
-  
   const handleDropdownAction = (item: any, group: WorkerGroup) => {
     onActionClick({ action: item.action, group });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Hoạt động":
-        return { backgroundColor: "#dcfce7", color: "#15803d" };
-      case "Tạm ngưng":
-        return { backgroundColor: "#fee2e2", color: "#dc2626" };
-      default:
-        return { backgroundColor: "#f3f4f6", color: "#374151" };
-    }
   };
 
   return (
@@ -99,17 +95,6 @@ const WorkerGroupTable = ({
             <th
               style={{
                 padding: "12px 16px",
-                textAlign: "left",
-                fontSize: "12px",
-                fontWeight: "600",
-                color: "#374151",
-              }}
-            >
-              Trạng thái
-            </th>
-            <th
-              style={{
-                padding: "12px 16px",
                 textAlign: "center",
                 fontSize: "12px",
                 fontWeight: "600",
@@ -123,7 +108,7 @@ const WorkerGroupTable = ({
         <tbody style={{ borderTop: "2px solid transparent" }}>
           {groups.map((group, index) => (
             <tr
-              key={group.groupId}
+              key={group.workerGroupId}
               style={{
                 borderTop: index > 0 ? "1px solid #f0f0f0" : "none",
                 transition: "background-color 0.2s",
@@ -144,9 +129,9 @@ const WorkerGroupTable = ({
                   color: "#111827",
                 }}
               >
-                <div>{group.groupName}</div>
+                <div>{group.workerGroupName}</div>
                 <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px" }}>
-                  ID: {group.groupId}
+                  ID: {group.workerGroupId}
                 </div>
               </td>
 
@@ -176,23 +161,6 @@ const WorkerGroupTable = ({
                 {group.description || "Không có mô tả"}
               </td>
 
-              {/* Status Column */}
-              <td style={{ padding: "12px 16px" }}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    padding: "3px 10px",
-                    fontSize: "11px",
-                    fontWeight: "600",
-                    borderRadius: "9999px",
-                    backgroundColor: getStatusColor(group.status).backgroundColor,
-                    color: getStatusColor(group.status).color,
-                  }}
-                >
-                  {group.status}
-                </span>
-              </td>
-
               {/* Action Column */}
               <td
                 style={{
@@ -204,20 +172,22 @@ const WorkerGroupTable = ({
                 <Dropdown
                   items={[
                     {
+                      key: 'view',
                       action: 'view',
                       label: 'Xem chi tiết',
                       icon: <HiOutlineEye style={{ width: "14px", height: "14px" }} />,
                       color: "#374151"
                     },
                     {
+                      key: 'edit',
                       action: 'edit',
                       label: 'Chỉnh sửa',
                       icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
                       color: "#FF5B27"
                     }
-                  ]}
+                  ] as any}
                   onItemClick={(item: any, triggerData: any) => handleDropdownAction(item, triggerData)}
-                  triggerData={group}
+                  triggerData={group as any}
                 />
               </td>
             </tr>

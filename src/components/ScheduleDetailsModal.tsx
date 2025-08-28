@@ -4,6 +4,7 @@ import { useScheduleDetails } from "../hooks/useScheduleDetails";
 import { useAssignments } from "../hooks/useAssignments";
 import { useShifts } from "../hooks/useShifts";
 import { useUsers } from "../hooks/useUsers";
+import { useWorkerGroup } from "../hooks/useWorkerGroup";
 import { API_URLS, BASE_API_URL } from "../constants/api-urls";
 import { swrFetcher } from "../utils/swr-fetcher";
 import useSWR from "swr";
@@ -75,7 +76,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
 
   const { assignments } = useAssignments();
   const { shifts } = useShifts(); // Keep for shift name lookup
-  const { createScheduleDetailForSchedule } = useScheduleDetails(schedule?.scheduleId);
+
   const { users } = useUsers();
   
   // Fetch unassigned workers using API
@@ -84,46 +85,47 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     swrFetcher
   );
 
-  // Fetch schedule details data for dropdowns
-  const { data: scheduleDetailsData, error: scheduleDetailsDataError, isLoading: isLoadingScheduleDetailsData } = useSWR(
-    API_URLS.SCHEDULE_DETAILS.GET_ALL,
-    swrFetcher
-  );
-
-  // Fetch areas data for area dropdown
+  // Fetch data for create form dropdowns
   const { data: areasData, error: areasError, isLoading: isLoadingAreas } = useSWR(
     API_URLS.AREA.GET_ALL,
     swrFetcher
   );
 
-  // Fetch assignments data for group assignment dropdown
   const { data: assignmentsData, error: assignmentsError, isLoading: isLoadingAssignments } = useSWR(
     API_URLS.ASSIGNMENTS.GET_ALL,
     swrFetcher
   );
 
-  // Fetch worker groups data for worker group dropdown
-  const { data: workerGroupsData, error: workerGroupsError, isLoading: isLoadingWorkerGroups } = useSWR(
-    API_URLS.WORKER_GROUP.GET_ALL,
-    swrFetcher
-  );
+  const { groups: workerGroupsData, loading: isLoadingWorkerGroups, error: workerGroupsError } = useWorkerGroup();
+
+  
+  // State for filtering and display
+  const [detailSearchTerm, setDetailSearchTerm] = useState("");
+  const [activeWorkerGroupTab, setActiveWorkerGroupTab] = useState("Tất cả");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   
   // State for creating new schedule detail
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [detailSearchTerm, setDetailSearchTerm] = useState("");
-  const [activeWorkerGroupTab, setActiveWorkerGroupTab] = useState("Tất cả");
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [newDetail, setNewDetail] = useState({
     description: "",
-    date: "",
-    status: "",
     workerGroupId: "",
     startTime: "",
     groupAssignmentId: "",
     areaId: "",
   });
   
+  // Debug logs (after all state is declared)
+  console.log("🔍 Worker Groups Debug:");
+  console.log("- Data:", workerGroupsData);
+  console.log("- Error:", workerGroupsError);
+  console.log("- Loading:", isLoadingWorkerGroups);
+  
+  console.log("📝 Form State Debug:");
+  console.log("- showCreateForm:", showCreateForm);
+  console.log("- isSubmitting:", isSubmitting);
+  console.log("- newDetail:", newDetail);
+
   // Filter unassigned workers by position for staff assignment
   const workers = useMemo(() => {
     if (!unassignedWorkers) return [];
@@ -139,6 +141,9 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
     return shift?.shiftName || `Ca ${scheduleDetail.shiftId}`;
   }, [shifts, scheduleDetail?.shiftId]);
 
+
+
+
   console.log("🔍 Schedule Detail Debug Info:");
   console.log("- Schedule ID:", schedule?.scheduleId);
   console.log("- API URL:", schedule?.scheduleId ? API_URLS.SCHEDULE.GET_BY_ID(schedule.scheduleId) : "No URL");
@@ -151,87 +156,138 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
 
   // Handle form input changes
   const handleDetailInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setNewDetail(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value } = e?.target || {};
+    if (name) {
+      setNewDetail(prev => ({
+        ...prev,
+        [name]: value || ""
+      }));
+    }
   };
 
-  // Handle form submission
+  // Handle form submission using the API from the image
   const handleSubmitDetail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!schedule?.scheduleId || !newDetail.description.trim()) {
+    
+    alert("🚀 HANDLE SUBMIT DETAIL CALLED!"); // Temporary debug alert
+    console.log("🚀 FORM SUBMISSION STARTED");
+    console.log("- Schedule:", schedule);
+    console.log("- Schedule ID:", schedule?.scheduleId);
+    console.log("- newDetail:", newDetail);
+    console.log("- Description:", `"${newDetail?.description}" (trimmed: "${newDetail?.description?.trim()}")`);
+    
+    if (!schedule?.scheduleId) {
+      console.log("❌ VALIDATION FAILED: No schedule ID");
+      alert("Không tìm thấy thông tin lịch trình!");
+      return;
+    }
+    
+    if (!newDetail?.description?.trim()) {
+      console.log("❌ VALIDATION FAILED: Empty description");
       alert("Vui lòng nhập đầy đủ thông tin mô tả công việc!");
       return;
     }
+    
+    console.log("✅ VALIDATION PASSED - Proceeding with API call");
 
     setIsSubmitting(true);
     try {
-      // Create JSON object according to API format - wrap in detailDto and fix startTime
-      const requestBody = {
-        detailDto: {
-          description: newDetail.description,
-          date: newDetail.date || new Date().toISOString(),
-          status: newDetail.status || "Chưa bắt đầu", // Use selected status or default
-          workerGroupId: newDetail.workerGroupId || "",
-          startTime: newDetail.startTime || null, // Send null for TimeOnly compatibility
-          groupAssignmentId: newDetail.groupAssignmentId || "",
-          areaId: newDetail.areaId || ""
-        }
-      };
+              // Create request body according to API format from the image (NO scheduleId in body)
+        const requestBody = {
+          description: newDetail?.description || "",
+          workerGroupId: newDetail?.workerGroupId || "",
+          startTime: newDetail?.startTime || null,
+          groupAssignmentId: newDetail?.groupAssignmentId || "",
+          areaId: newDetail?.areaId || "",
+        };
       
-      console.log("Sending request body:", requestBody);
+      console.log("=== DETAILED API CALL INFO ===");
+      console.log("Schedule ID:", schedule?.scheduleId);
+      console.log("Form data (newDetail):", newDetail);
+      console.log("Request body:", requestBody);
       console.log("Request body JSON:", JSON.stringify(requestBody, null, 2));
       
-      // Call API using swrFetcher for proper CORS handling and authentication
-      try {
-        const response = await swrFetcher(API_URLS.SCHEDULE_DETAILS.CREATE_FOR_SCHEDULE(schedule.scheduleId), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody)
-        });
-        
-        alert(`✅ Tạo chi tiết lịch trình thành công!`);
-      } catch (error: any) {
-        console.error("SWR Fetcher Error:", error);
-        
-        // Try to get detailed error information
-        if (error.serverData) {
-          console.error("Server Error Data:", error.serverData);
-          
-          if (error.serverData.errors) {
-            alert(`❌ Lỗi validation: ${JSON.stringify(error.serverData.errors)}`);
-          } else if (error.serverData.message) {
-            alert(`❌ Lỗi server: ${error.serverData.message}`);
-          } else {
-            alert(`❌ Lỗi tạo chi tiết lịch trình: ${JSON.stringify(error.serverData)}`);
-          }
-        } else {
-          alert(`❌ Lỗi tạo chi tiết lịch trình: ${error.message}`);
-        }
-        
-        throw error;
+      // Validate required fields
+      console.log("=== VALIDATION ===");
+      console.log("- description:", `"${requestBody.description}" (length: ${requestBody.description?.length || 0})`);
+      console.log("- workerGroupId:", `"${requestBody.workerGroupId}" (empty: ${!requestBody.workerGroupId})`);
+      console.log("- startTime:", `"${requestBody.startTime}"`);
+      console.log("- groupAssignmentId:", `"${requestBody.groupAssignmentId}" (empty: ${!requestBody.groupAssignmentId})`);
+      console.log("- areaId:", `"${requestBody.areaId}" (empty: ${!requestBody.areaId})`);
+      
+        // Use specific endpoint as shown in API documentation
+        const apiUrl = `/api/scheduledetails/${schedule?.scheduleId}/details`;
+        console.log("Using specific API URL:", apiUrl);
+      
+      // Get authentication token from localStorage (same key as SWR)
+      const token = localStorage.getItem('accessToken'); // Use same key as SWR
+      console.log("Auth token available:", !!token);
+      console.log("Token length:", token?.length || 0);
+      console.log("Token preview:", token ? `${token.substring(0, 20)}...` : 'null');
+      
+      // Debug localStorage content
+      console.log("localStorage keys:", Object.keys(localStorage));
+      console.log("accessToken in localStorage:", localStorage.getItem('accessToken') ? 'exists' : 'missing');
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token && token !== 'undefined' && token !== 'null') {
+        headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        console.error("❌ No valid authentication token found!");
+        alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+        return;
       }
+      
+      console.log("Request headers:", headers);
+      
+      // Use SWR's axios instance for consistency
+      const result = await swrFetcher(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("=== RESPONSE SUCCESS ===");
+      console.log("Response data:", result);
+      
+      // Show success message with details from response
+      if (result && result.scheduleDetailId) {
+        alert(`✅ Tạo chi tiết lịch trình thành công!\n\nID: ${result.scheduleDetailId}\nMô tả: ${result.description}\nTrạng thái: ${result.status}`);
+      } else {
+        alert(`✅ Tạo chi tiết lịch trình thành công!`);
+      }
+      
+      // Reset form and close
       setShowCreateForm(false);
       setNewDetail({
         description: "",
-        date: "",
-        status: "",
         workerGroupId: "",
         startTime: "",
         groupAssignmentId: "",
         areaId: "",
       });
-    } catch (error) {
+      
+      // Refresh the schedule details instead of full page reload
+      // This will trigger a re-fetch of the schedule details
+      if (schedule?.scheduleId) {
+        // Trigger a re-fetch by updating the SWR cache or using mutate
+        // For now, we'll use a simple approach
+        window.location.reload();
+      }
+      
+    } catch (error: any) {
       console.error("Error creating schedule detail:", error);
-      alert("❌ Có lỗi xảy ra khi tạo chi tiết lịch trình!");
+      alert(`❌ Lỗi tạo chi tiết lịch trình: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+
+
 
       // Get user name by ID - check both unassignedWorkers and users
     const getUserName = (userId: string) => {
@@ -750,6 +806,49 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
               }}>
                 Chi tiết công việc
               </h3>
+              
+              {/* Add Detail Button */}
+              <button
+                onClick={() => {
+                  console.log("🔘 Add Detail Button Clicked");
+                  console.log("- Current showCreateForm:", showCreateForm);
+                  setShowCreateForm(!showCreateForm);
+                  if (!showCreateForm) {
+                    console.log("- Opening form, resetting newDetail");
+                    // Reset form when opening
+                    setNewDetail({
+                      description: "",
+                      workerGroupId: "",
+                      startTime: "",
+                      groupAssignmentId: "",
+                      areaId: "",
+                    });
+                  } else {
+                    console.log("- Closing form");
+                  }
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  backgroundColor: "#FF5B27",
+                  color: "white",
+                  padding: "12px 20px",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "background-color 0.2s",
+                  height: "40px",
+                  alignSelf: "flex-start"
+                }}
+                onMouseEnter={(e: any) => (e.target.style.backgroundColor = "#E04B1F")}
+                onMouseLeave={(e: any) => (e.target.style.backgroundColor = "#FF5B27")}
+              >
+                <HiOutlinePlus style={{ width: "14px", height: "14px" }} />
+                Thêm chi tiết
+              </button>
               {/* Search and Filter inputs */}
               <div style={{ 
                 flex: 1, 
@@ -950,397 +1049,303 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
 
 
               </div>
-              <button
-                onClick={() => {
-                  setShowCreateForm(!showCreateForm);
-                  if (!showCreateForm) {
-                    // Reset form when opening
-                    setNewDetail({
-                      description: "",
-                      date: "",
-                      status: "",
-                      workerGroupId: "",
-                      startTime: "",
-                      groupAssignmentId: "",
-                      areaId: "",
-                    });
-                  }
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  backgroundColor: "#FF5B27",
-                  color: "white",
-                  padding: "12px 20px",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                  transition: "background-color 0.2s",
-                  height: "40px",
-                  alignSelf: "flex-start"
-                }}
-                onMouseEnter={(e: any) => (e.target.style.backgroundColor = "#E04B1F")}
-                onMouseLeave={(e: any) => (e.target.style.backgroundColor = "#FF5B27")}
-              >
-                <HiOutlinePlus style={{ width: "14px", height: "14px" }} />
-                Thêm chi tiết
-              </button>
+
             </div>
 
             {/* Worker name tabs only */}
 
-            {/* Worker group tabs */}
-            <div style={{ marginBottom: "12px", borderBottom: "1px solid #e5e7eb", display: "flex", gap: "12px", overflowX: "auto" }}>
-              {workerGroupTabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveWorkerGroupTab(tab)}
-                  style={{
-                    padding: "8px 12px",
-                    border: "none",
-                    backgroundColor: "transparent",
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    borderBottom: activeWorkerGroupTab === tab ? "2px solid #FF5B27" : "2px solid transparent",
-                    color: activeWorkerGroupTab === tab ? "#FF5B27" : "#6b7280",
-                  }}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+                         {/* Worker group tabs */}
+             <div style={{ marginBottom: "12px", borderBottom: "1px solid #e5e7eb", display: "flex", gap: "12px", overflowX: "auto" }}>
+               {workerGroupTabs.map((tab) => (
+                 <button
+                   key={tab}
+                   onClick={() => setActiveWorkerGroupTab(tab)}
+                   style={{
+                     padding: "8px 12px",
+                     border: "none",
+                     backgroundColor: "transparent",
+                     fontSize: "13px",
+                     fontWeight: 500,
+                     cursor: "pointer",
+                     whiteSpace: "nowrap",
+                     borderBottom: activeWorkerGroupTab === tab ? "2px solid #FF5B27" : "2px solid transparent",
+                     color: activeWorkerGroupTab === tab ? "#FF5B27" : "#6b7280",
+                   }}
+                 >
+                   {tab}
+                 </button>
+               ))}
+             </div>
 
-            {/* Create Form */}
-            {showCreateForm && (
-              <form onSubmit={handleSubmitDetail} style={{
-                backgroundColor: "#f0f9ff",
-                borderRadius: "8px",
-                padding: "20px",
-                marginBottom: "16px",
-                border: "1px solid #e0f2fe"
-              }}>
-                <h4 style={{ 
-                  fontSize: "16px", 
-                  fontWeight: "600", 
-                  color: "#374151",
-                  marginBottom: "16px",
-                  marginTop: "0"
-                }}>
-                  Chi tiết lịch trình
-                </h4>
-                
-                {/* Date Selection */}
-                <div style={{ marginBottom: "20px" }}>
-                  <div style={{ 
-                    marginBottom: "8px"
-                  }}>
-                    <label style={{ 
-                      fontSize: "14px", 
-                      fontWeight: "500",
-                      color: "#374151"
-                    }}>
-                      Ngày thực hiện
-                    </label>
-                  </div>
-                  <input
-                    type="date"
-                    name="date"
-                    value={newDetail.date}
-                    onChange={handleDetailInputChange}
-                    style={{
-                      width: "100%",
-                      padding: "12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      backgroundColor: "white",
-                      fontFamily: "inherit"
-                    }}
-                  />
-                </div>
+             {/* Create Form */}
+             {showCreateForm && (
+               <form onSubmit={handleSubmitDetail} style={{
+                 backgroundColor: "#f0f9ff",
+                 borderRadius: "8px",
+                 padding: "20px",
+                 marginBottom: "16px",
+                 border: "1px solid #e0f2fe"
+               }}>
+                 <h4 style={{ 
+                   fontSize: "16px", 
+                   fontWeight: "600", 
+                   color: "#374151",
+                   marginBottom: "16px",
+                   marginTop: "0"
+                 }}>
+                   Chi tiết lịch trình
+                 </h4>
+                 
+                 {/* Worker Group Selection */}
+                 <div style={{ marginBottom: "20px" }}>
+                   <div style={{ 
+                     marginBottom: "8px"
+                   }}>
+                     <label style={{ 
+                       fontSize: "14px", 
+                       fontWeight: "500",
+                       color: "#374151"
+                     }}>
+                       Chọn nhóm công nhân
+                     </label>
+                   </div>
+                   <select
+                     name="workerGroupId"
+                     value={newDetail.workerGroupId}
+                     onChange={handleDetailInputChange}
+                     disabled={isLoadingWorkerGroups}
+                     style={{
+                       width: "100%",
+                       padding: "12px",
+                       border: "1px solid #d1d5db",
+                       borderRadius: "8px",
+                       fontSize: "14px",
+                       backgroundColor: isLoadingWorkerGroups ? "#f3f4f6" : "white",
+                       fontFamily: "inherit",
+                       cursor: isLoadingWorkerGroups ? "not-allowed" : "pointer"
+                     }}
+                   >
+                     <option value="">
+                       {isLoadingWorkerGroups ? "Đang tải..." : "-- Chọn tên nhóm công nhân --"}
+                     </option>
+                     {!isLoadingWorkerGroups && workerGroupsData && workerGroupsData.length > 0 ? (
+                       workerGroupsData.map((group: any) => (
+                         <option key={group.workerGroupId} value={group.workerGroupId}>
+                           {group.workerGroupName || group.workerGroupId}
+                         </option>
+                       ))
+                     ) : (
+                       <option value="" disabled>
+                         {isLoadingWorkerGroups ? "Đang tải..." : "Không có dữ liệu nhóm công nhân"}
+                       </option>
+                     )}
+                   </select>
+                 </div>
 
-                {/* Status Selection */}
-                <div style={{ marginBottom: "20px" }}>
-                  <div style={{ 
-                    marginBottom: "8px"
-                  }}>
-                    <label style={{ 
-                      fontSize: "14px", 
-                      fontWeight: "500",
-                      color: "#374151"
-                    }}>
-                      Trạng thái
-                    </label>
-                  </div>
-                  <select
-                    name="status"
-                    value={newDetail.status}
-                    onChange={handleDetailInputChange}
-                    style={{
-                      width: "100%",
-                      padding: "12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      backgroundColor: "white",
-                      fontFamily: "inherit"
-                    }}
-                  >
-                    <option value="">-- Chọn trạng thái --</option>
-                    <option value="Chưa bắt đầu">Chưa bắt đầu</option>
-                    <option value="Đang thực hiện">Đang thực hiện</option>
-                    <option value="Hoàn thành">Hoàn thành</option>
-                    <option value="Tạm dừng">Tạm dừng</option>
-                  </select>
-                </div>
+                 {/* Start Time Selection */}
+                 <div style={{ marginBottom: "20px" }}>
+                   <div style={{ 
+                     marginBottom: "8px"
+                   }}>
+                     <label style={{ 
+                       fontSize: "14px", 
+                       fontWeight: "500",
+                       color: "#374151"
+                     }}>
+                       Thời gian bắt đầu (24h)
+                     </label>
+                   </div>
+                   <input
+                     type="text"
+                     name="startTime"
+                     value={newDetail.startTime}
+                     onChange={handleDetailInputChange}
+                     placeholder="HH:MM:SS (ví dụ: 05:00:00, 14:30:00)"
+                     style={{
+                       width: "100%",
+                       padding: "12px",
+                       border: "1px solid #d1d5db",
+                       borderRadius: "8px",
+                       fontSize: "14px",
+                       backgroundColor: "white",
+                       fontFamily: "inherit"
+                     }}
+                   />
+                   <div style={{ 
+                     fontSize: "12px", 
+                     color: "#6b7280", 
+                     marginTop: "4px",
+                     fontStyle: "italic"
+                   }}>
+                     Định dạng: HH:MM:SS (ví dụ: 05:00:00, 14:30:00)
+                   </div>
+                 </div>
 
+                 {/* Group Assignment Selection */}
+                 <div style={{ marginBottom: "20px" }}>
+                   <div style={{ 
+                     marginBottom: "8px"
+                   }}>
+                     <label style={{ 
+                       fontSize: "14px", 
+                       fontWeight: "500",
+                       color: "#374151"
+                     }}>
+                       Chọn phân công nhóm
+                     </label>
+                   </div>
+                   <select
+                     name="groupAssignmentId"
+                     value={newDetail.groupAssignmentId}
+                     onChange={handleDetailInputChange}
+                     disabled={isLoadingAssignments}
+                     style={{
+                       width: "100%",
+                       padding: "12px",
+                       border: "1px solid #d1d5db",
+                       borderRadius: "8px",
+                       fontSize: "14px",
+                       backgroundColor: isLoadingAssignments ? "#f3f4f6" : "white",
+                       fontFamily: "inherit",
+                       cursor: isLoadingAssignments ? "not-allowed" : "pointer"
+                     }}
+                   >
+                     <option value="">
+                       {isLoadingAssignments ? "Đang tải..." : "-- Chọn tên phân công nhóm --"}
+                     </option>
+                     {!isLoadingAssignments && assignmentsData && assignmentsData.length > 0 ? (
+                       assignmentsData.map((assignment: any) => (
+                         <option key={assignment.assignmentId} value={assignment.assignmentId}>
+                           {assignment.assignmentName || assignment.assignmentId}
+                         </option>
+                       ))
+                     ) : (
+                       <option value="" disabled>
+                         {isLoadingAssignments ? "Đang tải..." : "Không có dữ liệu phân công nhóm"}
+                       </option>
+                     )}
+                   </select>
+                 </div>
 
-                
-                {/* Worker Group Selection */}
-                <div style={{ marginBottom: "20px" }}>
-                  <div style={{ 
-                    marginBottom: "8px"
-                  }}>
-                    <label style={{ 
-                      fontSize: "14px", 
-                      fontWeight: "500",
-                      color: "#374151"
-                    }}>
-                      Chọn nhóm công nhân
-                    </label>
-                  </div>
-                  <select
-                    name="workerGroupId"
-                    value={newDetail.workerGroupId}
-                    onChange={handleDetailInputChange}
-                    disabled={isLoadingWorkerGroups}
-                    style={{
-                      width: "100%",
-                      padding: "12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      backgroundColor: isLoadingWorkerGroups ? "#f3f4f6" : "white",
-                      fontFamily: "inherit",
-                      cursor: isLoadingWorkerGroups ? "not-allowed" : "pointer"
-                    }}
-                  >
-                    <option value="">
-                      {isLoadingWorkerGroups ? "Đang tải..." : "-- Chọn tên nhóm công nhân --"}
-                    </option>
-                    {!isLoadingWorkerGroups && workerGroupsData && workerGroupsData.length > 0 ? (
-                      workerGroupsData.map((group: any) => (
-                        <option key={group.workerGroupId} value={group.workerGroupId}>
-                          {group.workerGroupName || group.workerGroupId}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="" disabled>
-                        {isLoadingWorkerGroups ? "Đang tải..." : "Không có dữ liệu nhóm công nhân"}
-                      </option>
-                    )}
-                  </select>
-                </div>
+                 {/* Area Selection */}
+                 <div style={{ marginBottom: "20px" }}>
+                   <div style={{ 
+                     marginBottom: "8px"
+                   }}>
+                     <label style={{ 
+                       fontSize: "14px", 
+                       fontWeight: "500",
+                       color: "#374151"
+                     }}>
+                       Khu vực
+                     </label>
+                   </div>
+                   <select
+                     name="areaId"
+                     value={newDetail.areaId}
+                     onChange={handleDetailInputChange}
+                     disabled={isLoadingAreas}
+                     style={{
+                       width: "100%",
+                       padding: "12px",
+                       border: "1px solid #d1d5db",
+                       borderRadius: "8px",
+                       fontSize: "14px",
+                       backgroundColor: isLoadingAreas ? "#f3f4f6" : "white",
+                       fontFamily: "inherit",
+                       cursor: isLoadingAreas ? "not-allowed" : "pointer"
+                     }}
+                   >
+                     <option value="">
+                       {isLoadingAreas ? "Đang tải..." : "-- Chọn khu vực --"}
+                     </option>
+                     {!isLoadingAreas && areasData && areasData.length > 0 ? (
+                       areasData.map((area: any) => (
+                         <option key={area.areaId} value={area.areaId}>
+                           {area.areaName || area.areaId}
+                         </option>
+                       ))
+                     ) : (
+                       <option value="" disabled>
+                         {isLoadingAreas ? "Đang tải..." : "Không có dữ liệu khu vực"}
+                       </option>
+                     )}
+                   </select>
+                 </div>
+                 
+                 {/* Description */}
+                 <div style={{ marginBottom: "20px" }}>
+                   <div style={{ 
+                     marginBottom: "8px"
+                   }}>
+                     <label style={{ 
+                       fontSize: "14px", 
+                       fontWeight: "500",
+                       color: "#374151"
+                     }}>
+                       Mô tả công việc
+                     </label>
+                   </div>
+                   <textarea
+                     name="description"
+                     value={newDetail.description}
+                     onChange={handleDetailInputChange}
+                     placeholder=""
+                     required
+                     rows={4}
+                     style={{
+                       width: "100%",
+                       padding: "12px",
+                       border: "1px solid #d1d5db",
+                       borderRadius: "8px",
+                       fontSize: "14px",
+                       resize: "vertical",
+                       fontFamily: "inherit",
+                       backgroundColor: "white"
+                     }}
+                   />
+                 </div>
 
-                {/* Start Time Selection */}
-                <div style={{ marginBottom: "20px" }}>
-                <div style={{ 
-                    marginBottom: "8px"
-                  }}>
-                    <label style={{ 
-                    fontSize: "14px", 
-                      fontWeight: "500",
-                      color: "#374151"
-                    }}>
-                      Thời gian bắt đầu
-                    </label>
-                  </div>
-                  <input
-                    type="time"
-                    name="startTime"
-                    value={newDetail.startTime}
-                    onChange={handleDetailInputChange}
-                    style={{
-                      width: "100%",
-                      padding: "12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      backgroundColor: "white",
-                      fontFamily: "inherit"
-                    }}
-                  />
-                </div>
-
-                {/* Group Assignment Selection */}
-                <div style={{ marginBottom: "20px" }}>
-                    <div style={{ 
-                      marginBottom: "8px"
-                    }}>
-                      <label style={{ 
-                      fontSize: "14px", 
-                        fontWeight: "500",
-                        color: "#374151"
-                      }}>
-                      Chọn phân công nhóm
-                      </label>
-                    </div>
-                                      <select
-                    name="groupAssignmentId"
-                    value={newDetail.groupAssignmentId}
-                    onChange={handleDetailInputChange}
-                    disabled={isLoadingAssignments}
-                    style={{
-                      width: "100%",
-                      padding: "12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      backgroundColor: isLoadingAssignments ? "#f3f4f6" : "white",
-                      fontFamily: "inherit",
-                      cursor: isLoadingAssignments ? "not-allowed" : "pointer"
-                    }}
-                  >
-                    <option value="">
-                      {isLoadingAssignments ? "Đang tải..." : "-- Chọn tên phân công nhóm --"}
-                    </option>
-                    {!isLoadingAssignments && assignmentsData && assignmentsData.length > 0 ? (
-                      assignmentsData.map((assignment: any) => (
-                        <option key={assignment.assignmentId} value={assignment.assignmentId}>
-                          {assignment.assignmentName || assignment.assignmentId}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="" disabled>
-                        {isLoadingAssignments ? "Đang tải..." : "Không có dữ liệu phân công nhóm"}
-                      </option>
-                    )}
-                  </select>
-                </div>
-
-
-                {/* Area Selection */}
-                <div style={{ marginBottom: "20px" }}>
-                  <div style={{ 
-                    marginBottom: "8px"
-                  }}>
-                    <label style={{ 
-                      fontSize: "14px", 
-                      fontWeight: "500",
-                      color: "#374151"
-                    }}>
-                      Khu vực
-                    </label>
-                  </div>
-                  <select
-                    name="areaId"
-                    value={newDetail.areaId}
-                    onChange={handleDetailInputChange}
-                    disabled={isLoadingAreas}
-                    style={{
-                      width: "100%",
-                      padding: "12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      backgroundColor: isLoadingAreas ? "#f3f4f6" : "white",
-                      fontFamily: "inherit",
-                      cursor: isLoadingAreas ? "not-allowed" : "pointer"
-                    }}
-                  >
-                    <option value="">
-                      {isLoadingAreas ? "Đang tải..." : "-- Chọn khu vực --"}
-                        </option>
-                    {!isLoadingAreas && areasData && areasData.length > 0 ? (
-                      areasData.map((area: any) => (
-                        <option key={area.areaId} value={area.areaId}>
-                          {area.areaName || area.areaId}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="" disabled>
-                        {isLoadingAreas ? "Đang tải..." : "Không có dữ liệu khu vực"}
-                      </option>
-                    )}
-                    </select>
-                  </div>
-                
-                {/* Description */}
-                <div style={{ marginBottom: "20px" }}>
-                  <div style={{ 
-                    marginBottom: "8px"
-                  }}>
-                    <label style={{ 
-                      fontSize: "14px", 
-                      fontWeight: "500",
-                      color: "#374151"
-                    }}>
-                      Mô tả công việc
-                    </label>
-                  </div>
-                  <textarea
-                    name="description"
-                    value={newDetail.description}
-                    onChange={handleDetailInputChange}
-                    placeholder=""
-                    required
-                    rows={4}
-                    style={{
-                      width: "100%",
-                      padding: "12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      resize: "vertical",
-                      fontFamily: "inherit",
-                      backgroundColor: "white"
-                    }}
-                  />
-                </div>
-
-                
-
-                {/* Action Buttons */}
-                <div style={{ 
-                  display: "flex", 
-                  gap: "12px", 
-                  justifyContent: "flex-end"
-                }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowCreateForm(false);
-                      setNewDetail({
-                        description: "",
-                        date: "",
-                        status: "",
-                        workerGroupId: "",
-                        startTime: "",
-                        groupAssignmentId: "",
-                        areaId: "",
-                      });
-                    }}
-                    style={{
-                      padding: "10px 20px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "6px",
-                      backgroundColor: "white",
-                      color: "#374151",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Hủy
-                  </button>
-                  <button
+                 {/* Action Buttons */}
+                 <div style={{ 
+                   display: "flex", 
+                   gap: "12px", 
+                   justifyContent: "flex-end"
+                 }}>
+                   <button
+                     type="button"
+                     onClick={() => {
+                       setShowCreateForm(false);
+                       setNewDetail({
+                         description: "",
+                         workerGroupId: "",
+                         startTime: "",
+                         groupAssignmentId: "",
+                         areaId: "",
+                       });
+                     }}
+                     style={{
+                       padding: "10px 20px",
+                       border: "1px solid #d1d5db",
+                       borderRadius: "6px",
+                       backgroundColor: "white",
+                       color: "#374151",
+                       fontSize: "14px",
+                       fontWeight: "500",
+                       cursor: "pointer",
+                     }}
+                   >
+                     Hủy
+                   </button>
+                                     <button
                     type="submit"
                     disabled={isSubmitting}
+                    onClick={(e) => {
+                      console.log("🔘 Submit Button Clicked");
+                      console.log("- isSubmitting:", isSubmitting);
+                      console.log("- Event:", e);
+                      // Don't prevent default, let form submission handle it
+                    }}
                     style={{
                       padding: "10px 20px",
                       border: "none",
@@ -1352,11 +1357,16 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                       cursor: isSubmitting ? "not-allowed" : "pointer",
                     }}
                   >
-                    {isSubmitting ? "Đang tạo..." : "Tạo chi tiết"}
-                  </button>
-                </div>
-              </form>
-            )}
+                     {isSubmitting ? "Đang tạo..." : "Tạo chi tiết"}
+                   </button>
+                 </div>
+               </form>
+             )}
+
+
+
+
+
 
                         {/* Schedule Details List */}
             <div style={{ marginBottom: "16px" }}>

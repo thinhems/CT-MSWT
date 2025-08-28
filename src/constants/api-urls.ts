@@ -1,5 +1,6 @@
 // Base API URL for the backend
-// Use direct URL for both development and production
+// In development, this will be proxied through Vite
+// In production, this will be the direct backend URL
 export const BASE_API_URL = "https://capstoneproject-mswt-su25.onrender.com/api";
 
 export const API_URLS = {
@@ -162,18 +163,19 @@ export const API_URLS = {
 
   // Worker Group management endpoints
   WORKER_GROUP: {
-    GET_ALL: `workerGroup`, // GET /api/workerGroup - Tất cả nhóm làm việc
-    GET_BY_ID: (id: string) => `workerGroup/${id}`,
+    GET_ALL: `workerGroup/get-all`, // GET /api/workerGroup/get-all - Tất cả nhóm làm việc
+    GET_BY_ID: (id: string) => `workerGroup/${id}`, // GET /api/workerGroup/{id}
     CREATE: `workerGroup`,
-    UPDATE: (id: string) => `workerGroup/${id}`,
+    UPDATE: (id: string) => `workerGroup/${id}`, // PUT /api/workerGroup/{id}
     DELETE: (id: string) => `workerGroup/${id}`,
     GET_ALL_MEMBERS: `workGroupMember/all-members`, // GET /api/workGroupMember/all-members - Tất cả thành viên nhóm
+    GET_AVAILABLE_USERS: `workerGroup/available-users`, // GET /api/workerGroup/available-users - Lấy danh sách user có thể thêm vào nhóm
+    UPDATE_MEMBERS: (groupId: string) => `workerGroup/${groupId}/members`, // POST /api/workerGroup/{groupId}/members
   },
 
   // Group Assignment management endpoints
   GROUP_ASSIGNMENT: {
-    GET_ALL: `groupAssignment`, // GET /api/groupAssignment - Tất cả nhóm công việc
-    GET_BY_ID: (id: string) => `groupAssignment/${id}`,
+    GET_ALL: `groupAssignment/get-all`, // GET /api/groupAssignment/get-all - Tất cả nhóm công việc
     CREATE: `groupAssignment`,
     UPDATE: (id: string) => `groupAssignment/${id}`,
     DELETE: (id: string) => `groupAssignment/${id}`,

@@ -28,10 +28,15 @@ const MultiSelectDropdown = ({
     };
   }, []);
 
-  const filteredOptions = options.filter(option =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    option.value.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOptions = (options || []).filter(option => {
+    if (!option || !option.label || !option.value) return false;
+    
+    const searchValue = (searchTerm || "").toLowerCase();
+    const label = (option.label || "").toLowerCase();
+    const value = (option.value || "").toLowerCase();
+    
+    return label.includes(searchValue) || value.includes(searchValue);
+  });
 
   const handleToggle = () => {
     if (!disabled) {
@@ -43,19 +48,22 @@ const MultiSelectDropdown = ({
   };
 
   const handleSelect = (option) => {
-    const isSelected = value.some(item => item.value === option.value);
+    if (!option || !option.value) return;
+    
+    const isSelected = (value || []).some(item => item && item.value === option.value);
     
     if (isSelected) {
       // Remove if already selected
-      onChange(value.filter(item => item.value !== option.value));
+      onChange((value || []).filter(item => item && item.value !== option.value));
     } else {
       // Add if not selected
-      onChange([...value, option]);
+      onChange([...(value || []), option]);
     }
   };
 
   const handleRemove = (optionToRemove) => {
-    onChange(value.filter(item => item.value !== optionToRemove.value));
+    if (!optionToRemove || !optionToRemove.value) return;
+    onChange((value || []).filter(item => item && item.value !== optionToRemove.value));
   };
 
   const handleRemoveAll = () => {
@@ -63,7 +71,8 @@ const MultiSelectDropdown = ({
   };
 
   const isSelected = (option) => {
-    return value.some(item => item.value === option.value);
+    if (!option || !option.value) return false;
+    return (value || []).some(item => item && item.value === option.value);
   };
 
   return (
@@ -96,13 +105,13 @@ const MultiSelectDropdown = ({
           }
         }}
       >
-        {value.length === 0 ? (
+        {(value || []).length === 0 ? (
           <span style={{ color: '#9ca3af', fontSize: '14px' }}>
             {placeholder}
           </span>
         ) : (
           <>
-            {value.map((item) => (
+            {(value || []).filter(item => item && item.value && item.label).map((item) => (
               <span
                 key={item.value}
                 style={{
@@ -231,7 +240,10 @@ const MultiSelectDropdown = ({
                 Không tìm thấy nhân viên nào
               </div>
             ) : (
-              filteredOptions.map((option) => (
+              filteredOptions.map((option) => {
+                if (!option || !option.value || !option.label) return null;
+                
+                return (
                 <div
                   key={option.value}
                   onClick={() => handleSelect(option)}
@@ -300,7 +312,8 @@ const MultiSelectDropdown = ({
                     )}
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

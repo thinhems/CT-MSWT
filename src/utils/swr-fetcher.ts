@@ -153,6 +153,19 @@ export const swrFetcher = async (url: string, options?: RequestInit, retryCount 
   } catch (error: any) {
     console.error(`SWR Fetcher Error for ${url} (Attempt ${retryCount + 1}):`, error);
     
+    // Enhanced error logging for debugging
+    if (url.includes('scheduledetails') && url.includes('details')) {
+      console.error("=== ENHANCED AXIOS ERROR DEBUG ===");
+      console.error("Error object:", error);
+      console.error("Error response:", error.response);
+      console.error("Error response status:", error.response?.status);
+      console.error("Error response data:", error.response?.data);
+      console.error("Error response headers:", error.response?.headers);
+      console.error("Error request:", error.request);
+      console.error("Error config:", error.config);
+      console.error("=== END ENHANCED DEBUG ===");
+    }
+    
     // Retry on network errors or timeouts
     if (retryCount < maxRetries && (!error.response || error.code === 'ECONNABORTED')) {
       console.log(`Retrying request to ${url} in ${(retryCount + 1) * 1000}ms...`);

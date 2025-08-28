@@ -1,17 +1,27 @@
 import axios from 'axios';
 import { BASE_API_URL } from '../constants/api-urls';
 
-// Use the centralized BASE_API_URL
-const BASE_URL   = import.meta.env.VITE_API_URL || BASE_API_URL;
+// Use proxy in development, direct URL in production
+const isDevelopment = import.meta.env.DEV;
+const BASE_URL = isDevelopment 
+  ? '/api'  // Use Vite proxy in development
+  : (import.meta.env.VITE_API_URL || BASE_API_URL);
 const TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT) || 10000;
 
 // Debug log
+console.log('🔗 Environment:', isDevelopment ? 'Development' : 'Production');
 console.log('🔗 API Base URL:', BASE_URL);
+console.log('🔗 Original BASE_API_URL:', BASE_API_URL);
 
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: TIMEOUT_MS,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  },
 });
 
 // Thêm interceptor request (nếu cần token)

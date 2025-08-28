@@ -65,17 +65,17 @@ const Sidebar = () => {
     
     
     {
-      title: "Tòa",
+      title: "Quản lý tòa",
       path: "/buildings",
       icon: HiOutlineOfficeBuilding,
     },
     {
-      title: "Khu vực",
+      title: "Quản lý khu vực",
       path: "/areas",
       icon: HiOutlineOfficeBuilding,
     },
     {
-      title: "Phòng",
+      title: "Quản lý phòng",
       path: "/rooms",
       icon: HiOutlineHome,
     },
@@ -85,7 +85,7 @@ const Sidebar = () => {
       icon: HiOutlineTrash,
     },
     {
-      title: "Lịch trình",
+      title: "Lịch làm việc",
       path: "/schedules",
       icon: HiOutlineCalendar,
     },
@@ -100,7 +100,7 @@ const Sidebar = () => {
       icon: HiOutlineUserGroup,
     },
     {
-      title: "Quản lý nhóm",
+      title: "Nhóm nhân viên",
       path: "/worker-group-management",
       icon: HiOutlineUserGroup,
     },
