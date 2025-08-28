@@ -191,16 +191,29 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ searchTerm = '' }) => {
       >
         <div style={{ overflow: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ backgroundColor: "#FEF6F4" }}>
-                <th style={{
-                  padding: "16px 24px",
-                  textAlign: "left",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  color: "#374151",
-                  borderBottom: "1px solid #e5e7eb"
-                }}>
+            <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
+              <tr style={{ backgroundColor: "#FEF6F4", borderBottom: "2px solid #e5e7eb" }}>
+                <th
+                  style={{
+                    padding: "16px 24px",
+                    textAlign: "center",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    color: "#374151",
+                    width: "60px",
+                  }}
+                >
+                  STT
+                </th>
+                <th
+                  style={{
+                    padding: "16px 24px",
+                    textAlign: "left",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    color: "#374151",
+                  }}
+                >
                   Mã đơn
                 </th>
                 <th style={{
@@ -266,8 +279,19 @@ const LeaveTable: React.FC<LeaveTableProps> = ({ searchTerm = '' }) => {
               </tr>
             </thead>
             <tbody>
-              {currentLeaves.map((leave) => (
-                <tr key={leave.leaveId} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                              {currentLeaves.map((leave, index) => (
+                  <tr key={leave.leaveId} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                    {/* STT Column */}
+                    <td style={{
+                      padding: "16px 24px",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#111827",
+                      textAlign: "center",
+                      width: "60px"
+                    }}>
+                      {startIndex + index + 1}
+                    </td>
                   <td style={{
                     padding: "16px 24px",
                     fontSize: "14px",

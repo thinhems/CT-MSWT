@@ -46,6 +46,18 @@ const UserTable = ({ users, onActionClick }) => {
             <th
               style={{
                 padding: "16px 24px",
+                textAlign: "center",
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#374151",
+                width: "60px",
+              }}
+            >
+              STT
+            </th>
+            <th
+              style={{
+                padding: "16px 24px",
                 textAlign: "left",
                 fontSize: "13px",
                 fontWeight: "600",
@@ -128,6 +140,19 @@ const UserTable = ({ users, onActionClick }) => {
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
+              {/* STT Column */}
+              <td
+                style={{
+                  padding: "16px 24px",
+                  textAlign: "center",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  color: "#374151",
+                  width: "60px",
+                }}
+              >
+                {index + 1}
+              </td>
               {/* Avatar Column */}
               <td
                 style={{

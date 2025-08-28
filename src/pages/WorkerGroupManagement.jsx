@@ -11,7 +11,7 @@ const WorkerGroupManagement = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState("all"); // "all", "active", "inactive"
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -186,18 +186,18 @@ const WorkerGroupManagement = () => {
       
              // Prepare request data for the API
        const requestData = {
-         workerGroupName: newGroup.groupName,
+         name: newGroup.groupName,
          description: newGroup.description,
-         memberUserIds: newGroup.selectedMembers.map(member => member.value)
+         userIds: newGroup.selectedMembers.map(member => member.value)
        };
        
                console.log('📤 Creating worker group with data:', requestData);
         console.log('📊 Request data type:', typeof requestData);
         console.log('📊 Request data stringified:', JSON.stringify(requestData, null, 2));
-        console.log('📊 API expects: { workerGroupName, description, memberUserIds }');
+        console.log('📊 API expects: { name, description, userIds }');
       
-      // Make API call to create worker group
-      const response = await fetch('/api/workerGroup', {
+      // Make API call to create worker group using workGroupMember/create endpoint
+      const response = await fetch('/api/workGroupMember/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -306,11 +306,8 @@ const WorkerGroupManagement = () => {
     }
   };
 
-  // Filter groups based on active tab and search term
+  // Filter groups based on search term
   const filteredGroups = displayData.filter(group => {
-    // Tab filtering - Since API doesn't have status field, show all groups
-    let tabFilter = true;
-    
     // Search filtering
     if (!searchTerm) return true;
     
@@ -365,7 +362,7 @@ const WorkerGroupManagement = () => {
                  margin: 0,
                }}
              >
-               Quản lý nhóm làm việc
+               Quản lý nhóm nhân viên
              </h1>
             <span>Trang chủ</span>
             <span style={{ margin: "0 8px" }}>›</span>
@@ -375,140 +372,9 @@ const WorkerGroupManagement = () => {
           </nav>
         </div>
 
-        {/* Tabs */}
-        <div style={{ marginBottom: "20px" }}>
-          <div style={{ display: "flex", borderBottom: "1px solid #e5e7eb" }}>
-            <button
-              onClick={() => {
-                setActiveTab("all");
-                setCurrentPage(1);
-              }}
-              style={{
-                padding: "12px 24px",
-                border: "none",
-                backgroundColor: "transparent",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                borderBottom: activeTab === "all" ? "2px solid #FF5B27" : "2px solid transparent",
-                color: activeTab === "all" ? "#FF5B27" : "#6b7280",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== "all") {
-                  e.target.style.color = "#374151";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== "all") {
-                  e.target.style.color = "#6b7280";
-                }
-              }}
-            >
-              Tất cả
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("active");
-                setCurrentPage(1);
-              }}
-              style={{
-                padding: "12px 24px",
-                border: "none",
-                backgroundColor: "transparent",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                borderBottom: activeTab === "active" ? "2px solid #FF5B27" : "2px solid transparent",
-                color: activeTab === "active" ? "#FF5B27" : "#6b7280",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== "active") {
-                  e.target.style.color = "#374151";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== "active") {
-                  e.target.style.color = "#6b7280";
-                }
-              }}
-            >
-              Hoạt động
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("inactive");
-                setCurrentPage(1);
-              }}
-              style={{
-                padding: "12px 24px",
-                border: "none",
-                backgroundColor: "transparent",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                borderBottom: activeTab === "inactive" ? "2px solid #FF5B27" : "2px solid transparent",
-                color: activeTab === "inactive" ? "#FF5B27" : "#6b7280",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                if (activeTab !== "inactive") {
-                  e.target.style.color = "#374151";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== "inactive") {
-                  e.target.style.color = "#6b7280";
-                }
-              }}
-            >
-              Tạm ngưng
-            </button>
-          </div>
-        </div>
 
-        {/* Summary */}
-        <div style={{ marginBottom: "20px" }}>
-          <div style={{ 
-            padding: "16px", 
-            backgroundColor: "#f8fafc", 
-            borderRadius: "8px", 
-            border: "1px solid #e2e8f0" 
-          }}>
-            <div style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              gap: "12px" 
-            }}>
-              <div style={{
-                width: "40px",
-                height: "40px",
-                backgroundColor: "#FF5B27",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                fontSize: "18px",
-                fontWeight: "600"
-              }}>
-                {displayData.length}
-              </div>
-              <div>
-                <div style={{ fontSize: "16px", fontWeight: "600", color: "#111827" }}>
-                  Tổng số nhóm làm việc
-                </div>
-                <div style={{ fontSize: "14px", color: "#6b7280" }}>
-                  {displayData.length === 0 ? "Chưa có nhóm nào" : 
-                   displayData.length === 1 ? "1 nhóm làm việc" : 
-                   `${displayData.length} nhóm làm việc`}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
+        
         {/* Search and Add Button */}
         <div
           style={{
@@ -554,93 +420,9 @@ const WorkerGroupManagement = () => {
 
           {/* Action Buttons */}
           <div style={{ display: "flex", gap: "12px", marginLeft: "24px" }}>
-            {/* Refresh Groups Button */}
-            <button
-              onClick={() => {
-                if (fetchGroups) {
-                  fetchGroups();
-                  showNotification("🔄 Đang làm mới danh sách nhóm...", "success");
-                }
-              }}
-              disabled={isLoading}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "white",
-                color: "#6b7280",
-                padding: "12px 20px",
-                border: "1px solid #d1d5db",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: isLoading ? "not-allowed" : "pointer",
-                transition: "all 0.2s",
-                opacity: isLoading ? 0.6 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!isLoading) {
-                  e.target.style.backgroundColor = "#f9fafb";
-                  e.target.style.borderColor = "#9ca3af";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isLoading) {
-                  e.target.style.backgroundColor = "white";
-                  e.target.style.borderColor = "#d1d5db";
-                }
-              }}
-            >
-              <HiOutlineRefresh style={{ 
-                width: "20px", 
-                height: "20px",
-                animation: isLoading ? "spin 1s linear infinite" : "none"
-              }} />
-              {isLoading ? "Đang tải..." : "Làm mới nhóm"}
-            </button>
             
-            {/* Refresh Users Button */}
-            <button
-              onClick={() => {
-                fetchAvailableUsers();
-                showNotification("🔄 Đang làm mới danh sách nhân viên...", "success");
-              }}
-              disabled={isLoadingUsers}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "white",
-                color: "#6b7280",
-                padding: "12px 20px",
-                border: "1px solid #d1d5db",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: isLoadingUsers ? "not-allowed" : "pointer",
-                transition: "all 0.2s",
-                opacity: isLoadingUsers ? 0.6 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!isLoadingUsers) {
-                  e.target.style.backgroundColor = "#f9fafb";
-                  e.target.style.borderColor = "#9ca3af";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isLoadingUsers) {
-                  e.target.style.backgroundColor = "white";
-                  e.target.style.borderColor = "#d1d5db";
-                }
-              }}
-            >
-              <HiOutlineRefresh style={{ 
-                width: "20px", 
-                height: "20px",
-                animation: isLoadingUsers ? "spin 1s linear infinite" : "none"
-              }} />
-              {isLoadingUsers ? "Đang tải..." : "Làm mới nhân viên"}
-            </button>
+            
+           
             
             {/* Add Group Button */}
             <button
@@ -1363,7 +1145,7 @@ const WorkerGroupManagement = () => {
                                fontWeight: "600",
                                color: "#6b7280"
                              }}>
-                               {member.userName?.charAt(0)?.toUpperCase() || "?"}
+                               {member.fullName?.charAt(0)?.toUpperCase() || "?"}
                              </span>
                            </div>
                            
@@ -1375,38 +1157,7 @@ const WorkerGroupManagement = () => {
                                color: "#111827",
                                marginBottom: "4px"
                              }}>
-                               {member.userName}
-                             </div>
-                             <div style={{
-                               fontSize: "13px",
-                               color: "#6b7280",
-                               marginBottom: "2px",
-                               display: "flex",
-                               alignItems: "center",
-                               gap: "6px"
-                             }}>
-                               <span style={{
-                                 width: "6px",
-                                 height: "6px",
-                                 borderRadius: "50%",
-                                 backgroundColor: "#10b981"
-                               }}></span>
-                               {member.roleId || "Không có vai trò"}
-                             </div>
-                             <div style={{
-                               fontSize: "13px",
-                               color: "#6b7280",
-                               display: "flex",
-                               alignItems: "center",
-                               gap: "6px"
-                             }}>
-                               <span style={{
-                                 width: "6px",
-                                 height: "6px",
-                                 borderRadius: "50%",
-                                 backgroundColor: "#3b82f6"
-                               }}></span>
-                               {member.userEmail}
+                               {member.fullName}
                              </div>
                            </div>
                            

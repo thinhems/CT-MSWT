@@ -1335,12 +1335,17 @@ const TrashBinList = () => {
                   <option value="">
                     {!rooms ? "Đang tải phòng..." : "Không liên kết với phòng"}
                   </option>
-                  {rooms?.map((room) => (
-                    <option key={room.roomId} value={room.roomId}>
-                      {room.roomNumber} - {room.roomType}
-                      {room.areaId && ` (Khu vực: ${room.areaId})`}
-                    </option>
-                  ))}
+                                     {rooms
+                     ?.filter(room => room.roomType === "Nhà vệ sinh")
+                     ?.map((room) => {
+                       const area = areas?.find(a => a.areaId === room.areaId);
+                       return (
+                         <option key={room.roomId} value={room.roomId}>
+                           {room.roomNumber} - {room.roomType}
+                           {area && ` (Khu vực: ${area.areaName})`}
+                         </option>
+                       );
+                     })}
                 </select>
               </div>
 

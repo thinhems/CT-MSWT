@@ -106,6 +106,18 @@ const RequestTable = ({ requests, onActionClick }) => {
               <th
                 style={{
                   padding: "12px 16px",
+                  textAlign: "center",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  color: "#374151",
+                  width: "60px",
+                }}
+              >
+                STT
+              </th>
+              <th
+                style={{
+                  padding: "12px 16px",
                   textAlign: "left",
                   fontSize: "12px",
                   fontWeight: "600",
@@ -195,7 +207,7 @@ const RequestTable = ({ requests, onActionClick }) => {
           </thead>
           <tbody style={{ borderTop: "2px solid transparent" }}>
             <tr>
-              <td colSpan="8" style={{ padding: "24px", textAlign: "center", color: "#6b7280" }}>
+              <td colSpan="9" style={{ padding: "24px", textAlign: "center", color: "#6b7280" }}>
                 Không có dữ liệu yêu cầu
               </td>
             </tr>
@@ -226,6 +238,18 @@ const RequestTable = ({ requests, onActionClick }) => {
               borderBottom: "2px solid #e5e7eb",
             }}
           >
+            <th
+              style={{
+                padding: "12px 16px",
+                textAlign: "center",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#374151",
+                width: "60px",
+              }}
+            >
+              STT
+            </th>
             <th
               style={{
                 padding: "12px 16px",
@@ -331,6 +355,20 @@ const RequestTable = ({ requests, onActionClick }) => {
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
+              {/* STT Column */}
+              <td
+                style={{
+                  padding: "12px 16px",
+                  textAlign: "center",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  color: "#111827",
+                  width: "60px",
+                }}
+              >
+                {index + 1}
+              </td>
+
               {/* Description Column */}
               <td
                 style={{

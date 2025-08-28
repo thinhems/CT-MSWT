@@ -1,53 +1,93 @@
 @import "tailwindcss/preflight";
 @import "tailwindcss/utilities";
 
-:root {
-  /* Typography baseline aligned with Areas page */
-  --mswt-font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  --mswt-font-size-base: 14px; /* Most texts, inputs, tables */
-  --mswt-font-size-h1: 30px;   /* Page titles */
+/* Font chữ thống nhất cho toàn bộ ứng dụng */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-  font-family: var(--mswt-font-family);
-  line-height: 1.6;
-  font-weight: 400;
-  color: #1a1a1a;
-  background-color: #ffffff;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: #ffffff;
-  font-size: var(--mswt-font-size-base);
-  font-family: var(--mswt-font-family);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #111827;
+}
+
+/* Font chữ thống nhất cho các bảng */
+.table-header {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.table-cell {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.table-cell-secondary {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+/* Font chữ cho tiêu đề trang */
+.page-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.page-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+/* Font chữ cho các nút và tab */
+.button-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.tab-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.tab-text-active {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #FF5B27;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 }
 
 #root {
   width: 100%;
   height: 100vh;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-/* Reset default margins and paddings that might interfere */
-html,
-body,
-div,
-h1,
-h2,
-h3,
-p,
-ul,
-li {
-  margin: 0;
-  padding: 0;
 }
 
 a {

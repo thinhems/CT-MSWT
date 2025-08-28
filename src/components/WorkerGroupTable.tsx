@@ -13,7 +13,7 @@ interface WorkerGroup {
     roleId?: string;
     joinedAt: string;
     leftAt?: string;
-    userName: string;
+    fullName: string;
     userEmail: string;
   }>;
   createdAt: string;
@@ -59,6 +59,18 @@ const WorkerGroupTable = ({
               borderBottom: "2px solid #e5e7eb",
             }}
           >
+            <th
+              style={{
+                padding: "12px 16px",
+                textAlign: "center",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#374151",
+                width: "60px",
+              }}
+            >
+              STT
+            </th>
             <th
               style={{
                 padding: "12px 16px",
@@ -121,6 +133,19 @@ const WorkerGroupTable = ({
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
+              {/* STT Column */}
+              <td
+                style={{
+                  padding: "12px 16px",
+                  textAlign: "center",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  color: "#111827",
+                  width: "60px",
+                }}
+              >
+                {index + 1}
+              </td>
               {/* Group Name Column */}
               <td
                 style={{
@@ -131,9 +156,6 @@ const WorkerGroupTable = ({
                 }}
               >
                 <div>{group.workerGroupName}</div>
-                <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px" }}>
-                  ID: {group.workerGroupId}
-                </div>
               </td>
 
               {/* Created Date Column */}

@@ -342,47 +342,7 @@ const GroupAssignment = () => {
           </nav>
         </div>
 
-        {/* Summary */}
-        <div style={{ marginBottom: "20px" }}>
-          <div style={{ 
-            padding: "16px", 
-            backgroundColor: "#f8fafc", 
-            borderRadius: "8px", 
-            border: "1px solid #e2e8f0" 
-          }}>
-            <div style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              gap: "12px" 
-            }}>
-              <div style={{
-                width: "40px",
-                height: "40px",
-                backgroundColor: "#FF5B27",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                fontSize: "18px",
-                fontWeight: "600"
-              }}>
-                {realGroupAssignments.length}
-              </div>
-              <div>
-                <div style={{ fontSize: "16px", fontWeight: "600", color: "#111827" }}>
-                  Tổng số nhóm công việc
-                </div>
-                <div style={{ fontSize: "14px", color: "#6b7280" }}>
-                  {realGroupAssignments.length === 0 ? "Chưa có nhóm nào" : 
-                   realGroupAssignments.length === 1 ? "1 nhóm công việc" : 
-                   `${realGroupAssignments.length} nhóm công việc`}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
+        
         {/* Search and Add Button */}
         <div
           style={{

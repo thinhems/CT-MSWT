@@ -103,19 +103,19 @@ const TrashBinTable = ({ trashBins, onActionClick }) => {
       }}
     >
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ backgroundColor: "#FEF6F4" }}>
+        <thead style={{ position: "sticky", top: 0, zIndex: 10 }}>
+          <tr style={{ backgroundColor: "#FEF6F4", borderBottom: "2px solid #e5e7eb" }}>
             <th
               style={{
                 padding: "16px 24px",
-                textAlign: "left",
+                textAlign: "center",
                 fontSize: "12px",
                 fontWeight: "600",
                 color: "#374151",
-                position: "relative",
+                width: "60px",
               }}
             >
-              Thùng rác
+              STT
             </th>
             <th
               style={{
@@ -126,7 +126,18 @@ const TrashBinTable = ({ trashBins, onActionClick }) => {
                 color: "#374151",
               }}
             >
-              Vị trí & Khu vực
+              Vị trí
+            </th>
+            <th
+              style={{
+                padding: "16px 24px",
+                textAlign: "left",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#374151",
+              }}
+            >
+              Khu vực
             </th>
             <th
               style={{
@@ -167,6 +178,19 @@ const TrashBinTable = ({ trashBins, onActionClick }) => {
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
+              {/* STT Column */}
+              <td
+                style={{
+                  padding: "16px 24px",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  color: "#111827",
+                }}
+              >
+                {index + 1}
+              </td>
+
               {/* Thùng rác Column */}
               <td
                 style={{

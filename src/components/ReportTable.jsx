@@ -123,6 +123,18 @@ const ReportTable = ({ reports, onActionClick }) => {
             <th
               style={{
                 padding: "16px 24px",
+                textAlign: "center",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#374151",
+                width: "60px",
+              }}
+            >
+              STT
+            </th>
+            <th
+              style={{
+                padding: "16px 24px",
                 textAlign: "left",
                 fontSize: "12px",
                 fontWeight: "600",
@@ -214,6 +226,19 @@ const ReportTable = ({ reports, onActionClick }) => {
                 }
               }}
             >
+              {/* STT Column */}
+              <td
+                style={{
+                  padding: "16px 24px",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  color: "#111827",
+                  width: "60px",
+                }}
+              >
+                {index + 1}
+              </td>
                              {/* Report Type Column */}
                <td
                  style={{

@@ -106,7 +106,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
   // State for filtering and display
   const [detailSearchTerm, setDetailSearchTerm] = useState("");
   const [activeWorkerGroupTab, setActiveWorkerGroupTab] = useState("Tất cả");
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()); // Default to today
   
   // State for creating new schedule detail
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -326,7 +326,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
         activeWorkerGroupTab === "Tất cả" ||
         (detail.workerGroupName && detail.workerGroupName === activeWorkerGroupTab);
       
-      // Filter by date
+      // Filter by date - if selectedDate is null (Tất cả), show all; otherwise filter by specific date
       const matchesDate = !selectedDate || (detail.date && selectedDate && 
         detail.date.startsWith(selectedDate.toISOString().split('T')[0])
       );
@@ -790,48 +790,6 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                 Chi tiết công việc
               </h3>
               
-              {/* Add Detail Button */}
-              <button
-                onClick={() => {
-                  console.log("🔘 Add Detail Button Clicked");
-                  console.log("- Current showCreateForm:", showCreateForm);
-                  setShowCreateForm(!showCreateForm);
-                  if (!showCreateForm) {
-                    console.log("- Opening form, resetting newDetail");
-                    // Reset form when opening
-                    setNewDetail({
-                      description: "",
-                      workerGroupId: "",
-                      startTime: "",
-                      groupAssignmentId: "",
-                      areaId: "",
-                    });
-                  } else {
-                    console.log("- Closing form");
-                  }
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  backgroundColor: "#FF5B27",
-                  color: "white",
-                  padding: "12px 20px",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                  transition: "background-color 0.2s",
-                  height: "40px",
-                  alignSelf: "flex-start"
-                }}
-                onMouseEnter={(e: any) => (e.target.style.backgroundColor = "#E04B1F")}
-                onMouseLeave={(e: any) => (e.target.style.backgroundColor = "#FF5B27")}
-              >
-                <HiOutlinePlus style={{ width: "14px", height: "14px" }} />
-                Thêm chi tiết
-              </button>
               {/* Search and Filter inputs */}
               <div style={{ 
                 flex: 1, 
@@ -882,36 +840,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                     flexWrap: "wrap",
                     justifyContent: "center"
                   }}>
-                    <button
-                      onClick={() => {
-                        const yesterday = new Date();
-                        yesterday.setDate(yesterday.getDate() - 1);
-                        setSelectedDate(yesterday);
-                      }}
-                      style={{
-                        padding: "4px 8px",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "6px",
-                        backgroundColor: selectedDate && selectedDate.toDateString() === (() => {
-                          const yesterday = new Date();
-                          yesterday.setDate(yesterday.getDate() - 1);
-                          return yesterday.toDateString();
-                        })() ? "#FF5B27" : "white",
-                        color: selectedDate && selectedDate.toDateString() === (() => {
-                          const yesterday = new Date();
-                          yesterday.setDate(yesterday.getDate() - 1);
-                          return yesterday.toDateString();
-                        })() ? "white" : "#6b7280",
-                        fontSize: "11px",
-                        fontWeight: "500",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        minWidth: "60px"
-                      }}
-                      title="Hôm qua"
-                    >
-                      Hôm qua
-                    </button>
+
                     <button
                       onClick={() => setSelectedDate(new Date())}
                       style={{
@@ -930,36 +859,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                     >
                       Hôm nay
                     </button>
-                    <button
-                      onClick={() => {
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        setSelectedDate(tomorrow);
-                      }}
-                      style={{
-                        padding: "4px 8px",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "6px",
-                        backgroundColor: selectedDate && selectedDate.toDateString() === (() => {
-                          const tomorrow = new Date();
-                          tomorrow.setDate(tomorrow.getDate() + 1);
-                          return tomorrow.toDateString();
-                        })() ? "#FF5B27" : "white",
-                        color: selectedDate && selectedDate.toDateString() === (() => {
-                          const tomorrow = new Date();
-                          tomorrow.setDate(tomorrow.getDate() + 1);
-                          return tomorrow.toDateString();
-                        })() ? "white" : "#6b7280",
-                        fontSize: "11px",
-                        fontWeight: "500",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        minWidth: "60px"
-                      }}
-                      title="Ngày mai"
-                    >
-                      Ngày mai
-                    </button>
+
                     <button
                       onClick={() => setSelectedDate(null)}
                       style={{
@@ -1028,6 +928,57 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                       }}
                     />
                   </div>
+                </div>
+
+                {/* Add Detail Button */}
+                <div style={{ 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  alignItems: "flex-start",
+                  gap: "6px",
+                  minWidth: "auto"
+                }}>
+                  <button
+                    onClick={() => {
+                      console.log("🔘 Add Detail Button Clicked");
+                      console.log("- Current showCreateForm:", showCreateForm);
+                      setShowCreateForm(!showCreateForm);
+                      if (!showCreateForm) {
+                        console.log("- Opening form, resetting newDetail");
+                        // Reset form when opening
+                        setNewDetail({
+                          description: "",
+                          workerGroupId: "",
+                          startTime: "",
+                          groupAssignmentId: "",
+                          areaId: "",
+                        });
+                      } else {
+                        console.log("- Closing form");
+                      }
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      backgroundColor: "#FF5B27",
+                      color: "white",
+                      padding: "12px 20px",
+                      border: "none",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s",
+                      height: "40px",
+                      whiteSpace: "nowrap"
+                    }}
+                    onMouseEnter={(e: any) => (e.target.style.backgroundColor = "#E04B1F")}
+                    onMouseLeave={(e: any) => (e.target.style.backgroundColor = "#FF5B27")}
+                  >
+                    <HiOutlinePlus style={{ width: "14px", height: "14px" }} />
+                    Thêm chi tiết
+                  </button>
                 </div>
 
 
@@ -1638,7 +1589,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                 }}>
                   Không có chi tiết công việc nào được tạo
                 </div>
-              ) : (
+              ) : filteredScheduleDetails.length === 0 ? (
                 <div style={{ 
                   textAlign: "center", 
                   color: "#6b7280", 
@@ -1647,9 +1598,9 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                   backgroundColor: "#f9fafb",
                   borderRadius: "8px"
                 }}>
-                  Không tìm thấy chi tiết công việc phù hợp
+                  {selectedDate ? `Không có chi tiết công việc nào cho ngày ${selectedDate.toLocaleDateString("vi-VN")}` : "Không tìm thấy chi tiết công việc phù hợp"}
                 </div>
-              )}
+              ) : null}
             </div>
 
 

@@ -85,6 +85,18 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
             <th
               style={{
                 padding: "12px 16px",
+                textAlign: "center",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: "#374151",
+                width: "60px",
+              }}
+            >
+              STT
+            </th>
+            <th
+              style={{
+                padding: "12px 16px",
                 textAlign: "left",
                 fontSize: "12px",
                 fontWeight: "600",
@@ -167,6 +179,19 @@ const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
                 (e.currentTarget.style.backgroundColor = "transparent")
               }
             >
+              {/* STT Column */}
+              <td
+                style={{
+                  padding: "12px 16px",
+                  textAlign: "center",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  color: "#111827",
+                  width: "60px",
+                }}
+              >
+                {index + 1}
+              </td>
               {/* Schedule Name Column */}
               <td
                 style={{
