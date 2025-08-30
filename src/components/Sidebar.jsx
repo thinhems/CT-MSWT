@@ -61,7 +61,21 @@ const Sidebar = () => {
   };
 
   const toggleDropdown = (menuKey) => {
-    if (isCollapsed) return;
+    // Nếu sidebar đang collapsed, mở rộng sidebar và mở dropdown tương ứng
+    if (isCollapsed) {
+      console.log('Menu item clicked while collapsed, expanding sidebar and opening dropdown');
+      toggleSidebar();
+      
+      // Delay một chút để sidebar mở rộng xong rồi mới mở dropdown
+      setTimeout(() => {
+        setExpandedMenus(prev => ({
+          ...prev,
+          [menuKey]: true
+        }));
+      }, 100);
+      return;
+    }
+    
     setExpandedMenus(prev => ({
       ...prev,
       [menuKey]: !prev[menuKey]
@@ -228,7 +242,12 @@ const Sidebar = () => {
       }}>
         {/* Toggle Button */}
         <button
-          onClick={toggleSidebar}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Sidebar toggle button clicked', { isCollapsed, isMobile });
+            toggleSidebar();
+          }}
           style={{
             background: "transparent",
             border: "none",
@@ -241,16 +260,21 @@ const Sidebar = () => {
             alignItems: "center",
             justifyContent: "center",
             marginRight: isCollapsed ? 0 : "12px",
-            order: isCollapsed ? 0 : -1
+            order: isCollapsed ? 0 : -1,
+            position: "relative",
+            zIndex: 10
           }}
           onMouseEnter={(e) => {
             e.target.style.backgroundColor = "#f3f4f6";
             e.target.style.color = "#FF5B27";
+            e.target.style.transform = "scale(1.1)";
           }}
           onMouseLeave={(e) => {
             e.target.style.backgroundColor = "transparent";
             e.target.style.color = "#6b7280";
+            e.target.style.transform = "scale(1)";
           }}
+          title={isCollapsed ? "Mở rộng sidebar" : "Thu nhỏ sidebar"}
         >
           <HiOutlineMenu style={{ width: "20px", height: "20px" }} />
         </button>
@@ -391,17 +415,18 @@ const Sidebar = () => {
                     borderRadius: "6px",
                     textDecoration: "none",
                     transition: "all 0.2s ease",
-                    backgroundColor: hasActiveChild ? "#ff5b27" : (isHovered ? "#f8fafc" : "transparent"),
+                    backgroundColor: hasActiveChild ? "#ff5b27" : (isHovered ? (isCollapsed ? "#fff3f0" : "#f8fafc") : "transparent"),
                     color: hasActiveChild ? "white" : "#374151",
                     marginBottom: "1px",
                     cursor: "pointer",
                     position: "relative",
-                    border: isHovered && !hasActiveChild ? "1px solid #e5e7eb" : "1px solid transparent",
-                    boxShadow: hasActiveChild ? "0 1px 3px rgba(255, 91, 39, 0.2)" : "none",
+                    border: isHovered && !hasActiveChild ? (isCollapsed ? "1px solid #ff5b27" : "1px solid #e5e7eb") : "1px solid transparent",
+                    boxShadow: hasActiveChild ? "0 1px 3px rgba(255, 91, 39, 0.2)" : (isHovered && isCollapsed ? "0 2px 8px rgba(255, 91, 39, 0.15)" : "none"),
+                    transform: isHovered && isCollapsed ? "scale(1.05)" : "scale(1)",
                   }}
                   onMouseEnter={() => setHoveredItem(`main-${index}`)}
                   onMouseLeave={() => setHoveredItem(null)}
-                  title={isCollapsed ? item.title : ""}
+                  title={isCollapsed ? `${item.title} - Click để mở rộng` : item.title}
                 >
                   <div style={{ display: "flex", alignItems: "center" }}>
                     <Icon

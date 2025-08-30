@@ -1553,8 +1553,8 @@ const ScheduleDetailsPage = () => {
                         backgroundColor: "white",
                 borderRadius: "12px",
                 padding: "24px",
-                width: "800px",
-                maxWidth: "90vw",
+                width: "1150px",
+                maxWidth: "95vw",
                 maxHeight: "90vh",
                 overflow: "auto",
                 boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
@@ -1630,109 +1630,8 @@ const ScheduleDetailsPage = () => {
                       {selectedDetail.supervisorName || "Không có"}
                     </div>
                   </div>
-                  <div>
-                    <label style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", letterSpacing: "0.1px" }}>Ngày thực hiện</label>
-                    <div style={{ fontSize: "14px", color: "#374151", marginTop: "4px", letterSpacing: "0.1px" }}>
-                      {selectedDetail.date ? new Date(selectedDetail.date).toLocaleDateString("vi-VN") : "N/A"}
-                    </div>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", letterSpacing: "0.1px" }}>
-                      Khung thời gian ({selectedDetail.timeSlots?.length || 1})
-                    </label>
-                    <div style={{ marginTop: "4px" }}>
-                      {selectedDetail.timeSlots ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                          {selectedDetail.timeSlots.map((slot, index) => (
-                            <div key={slot.scheduleDetailId} style={{
-                              padding: "12px",
-                              backgroundColor: "#f8fafc",
-                        borderRadius: "8px",
-                              border: "1px solid #e2e8f0"
-                            }}>
-                              <div style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginBottom: "8px"
-                              }}>
-                                <div style={{
-                                  fontSize: "14px",
-                                  fontWeight: "600",
-                                  color: "#374151"
-                                }}>
-                                  Khung {index + 1}: {slot.startTime?.substring(0, 5)} - {slot.endTime?.substring(0, 5)}
-                                </div>
-                                <div style={{
-                                  padding: "4px 8px",
-                                  borderRadius: "12px",
-                                  fontSize: "11px",
-                                  fontWeight: "500",
-                                  backgroundColor: slot.status === "Sắp tới" ? "#fef3c7" : 
-                                                 slot.status === "Đang thực hiện" ? "#dcfce7" :
-                                                 slot.status === "Hoàn thành" ? "#dbeafe" : "#fee2e2",
-                                  color: slot.status === "Sắp tới" ? "#d97706" : 
-                                        slot.status === "Đang thực hiện" ? "#166534" :
-                                        slot.status === "Hoàn thành" ? "#1d4ed8" : "#dc2626"
-                                }}>
-                                  {slot.status || "Sắp tới"}
-                                </div>
-                              </div>
-                              
-                                                              {slot.description && (
-                                  <div style={{
-                                   fontSize: "12px",
-                                   color: "#6b7280",
-                                   marginBottom: "8px",
-                                   fontStyle: "italic"
-                                 }}>
-                                   {slot.description}
-                       </div>
-                     )}
 
 
- 
-                                <div style={{
-                           display: "flex",
-                           alignItems: "center",
-                           justifyContent: "space-between"
-                         }}>
-                                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                   <span style={{ fontSize: "12px", color: "#6b7280" }}>Đánh giá:</span>
-                                   {slot.rating ? (
-                                     <div style={{ 
-                                       display: "flex",
-                                       alignItems: "center",
-                                       gap: "4px"
-                                     }}>
-                                       <span style={{ fontSize: "14px", fontWeight: "500", color: "#374151" }}>
-                                         {slot.rating}/5
-                                       </span>
-                                       <span style={{ color: "#fbbf24" }}>⭐</span>
-                                     </div>
-                                   ) : (
-                                     <span style={{ fontSize: "12px", color: "#9ca3af" }}>Chưa đánh giá</span>
-                                   )}
-                                 </div>
-                                 
-                                 {/* Ghi chú bên phải đánh giá */}
-                                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                   <span style={{ fontSize: "12px", color: "#6b7280" }}>Ghi chú:</span>
-                                   <span style={{ fontSize: "12px", color: "#374151", fontStyle: "italic" }}>
-                                     {slot.comment || "Không có"}
-                                   </span>
-                                 </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: "16px", color: "#374151" }}>
-                          {selectedDetail.startTime?.substring(0, 5)} - {selectedDetail.endTime?.substring(0, 5)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
 
                   <div style={{ gridColumn: "span 2" }}>
                     <label style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", letterSpacing: "0.1px" }}>Đánh giá trung bình</label>
@@ -1751,6 +1650,279 @@ const ScheduleDetailsPage = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Time Slots Section */}
+              {selectedDetail.timeSlots && selectedDetail.timeSlots.length > 0 ? (
+                <div style={{ marginBottom: "24px" }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "16px", letterSpacing: "0.25px" }}>
+                    Khung thời gian ({selectedDetail.timeSlots.length})
+                  </h3>
+                  <div style={{ 
+                    display: "flex", 
+                    flexDirection: "row", 
+                    gap: "16px",
+                    width: "100%",
+                    overflowX: "auto"
+                  }}>
+                    {selectedDetail.timeSlots.map((slot, index) => (
+                      <div key={slot.scheduleDetailId} style={{
+                        padding: "20px",
+                        backgroundColor: "#f8fafc",
+                        borderRadius: "12px",
+                        border: "1px solid #e2e8f0",
+                        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                        minWidth: "350px",
+                        flexShrink: 0
+                      }}>
+                        {/* Header với thời gian và trạng thái */}
+                        <div style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "16px",
+                          paddingBottom: "12px",
+                          borderBottom: "1px solid #e2e8f0"
+                        }}>
+                          <div style={{
+                            fontSize: "16px",
+                            fontWeight: "600",
+                            color: "#111827"
+                          }}>
+                            Khung {index + 1}: {slot.startTime?.substring(0, 5)} - {slot.endTime?.substring(0, 5)}
+                          </div>
+                          <div style={{
+                            padding: "6px 12px",
+                            borderRadius: "16px",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            backgroundColor: slot.status === "Sắp tới" ? "#fef3c7" : 
+                                           slot.status === "Đang thực hiện" ? "#dcfce7" :
+                                           slot.status === "Hoàn thành" ? "#dbeafe" : "#fee2e2",
+                            color: slot.status === "Sắp tới" ? "#d97706" : 
+                                  slot.status === "Đang thực hiện" ? "#166534" :
+                                  slot.status === "Hoàn thành" ? "#1d4ed8" : "#dc2626"
+                          }}>
+                            {slot.status || "Sắp tới"}
+                          </div>
+                        </div>
+                        
+                        {/* Content area - chỉ có đánh giá và ghi chú */}
+                        <div style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "12px"
+                        }}>
+                            {/* Đánh giá */}
+                            <div>
+                              <label style={{ 
+                                fontSize: "12px", 
+                                fontWeight: "600", 
+                                color: "#6b7280",
+                                letterSpacing: "0.1px",
+                                display: "block",
+                                marginBottom: "6px"
+                              }}>
+                                Đánh giá
+                              </label>
+                              <div style={{
+                                padding: "10px",
+                                backgroundColor: "white",
+                                borderRadius: "6px",
+                                border: "1px solid #e5e7eb",
+                                minHeight: "40px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                              }}>
+                                {slot.rating ? (
+                                  <div style={{ 
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px"
+                                  }}>
+                                    <span style={{ 
+                                      fontSize: "16px", 
+                                      fontWeight: "600", 
+                                      color: "#374151" 
+                                    }}>
+                                      {slot.rating}/5
+                                    </span>
+                                    <span style={{ fontSize: "16px", color: "#fbbf24" }}>⭐</span>
+                                  </div>
+                                ) : (
+                                  <span style={{ 
+                                    fontSize: "12px", 
+                                    color: "#9ca3af",
+                                    fontStyle: "italic"
+                                  }}>
+                                    Chưa có
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Ghi chú */}
+                            <div>
+                              <label style={{ 
+                                fontSize: "12px", 
+                                fontWeight: "600", 
+                                color: "#6b7280",
+                                letterSpacing: "0.1px",
+                                display: "block",
+                                marginBottom: "6px"
+                              }}>
+                                Ghi chú
+                              </label>
+                              <div style={{
+                                fontSize: "12px",
+                                color: "#374151",
+                                lineHeight: "1.4",
+                                padding: "10px",
+                                backgroundColor: "white",
+                                borderRadius: "6px",
+                                border: "1px solid #e5e7eb",
+                                minHeight: "40px",
+                                fontStyle: slot.comment ? "normal" : "italic"
+                              }}>
+                                {slot.comment || "Không có"}
+                              </div>
+                            </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Fallback for single time slot */
+                <div style={{ marginBottom: "24px" }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "16px", letterSpacing: "0.25px" }}>
+                    Khung thời gian (1)
+                  </h3>
+                  <div style={{
+                    padding: "20px",
+                    backgroundColor: "#f8fafc",
+                    borderRadius: "12px",
+                    border: "1px solid #e2e8f0",
+                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                    maxWidth: "400px"
+                  }}>
+                    {/* Header với thời gian và trạng thái */}
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "16px",
+                      paddingBottom: "12px",
+                      borderBottom: "1px solid #e2e8f0"
+                    }}>
+                      <div style={{
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        color: "#111827"
+                      }}>
+                        Khung 1: {selectedDetail.startTime?.substring(0, 5)} - {selectedDetail.endTime?.substring(0, 5)}
+                      </div>
+                      <div style={{
+                        padding: "6px 12px",
+                        borderRadius: "16px",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        backgroundColor: selectedDetail.status === "Sắp tới" ? "#fef3c7" : 
+                                       selectedDetail.status === "Đang thực hiện" ? "#dcfce7" :
+                                       selectedDetail.status === "Hoàn thành" ? "#dbeafe" : "#fee2e2",
+                        color: selectedDetail.status === "Sắp tới" ? "#d97706" : 
+                              selectedDetail.status === "Đang thực hiện" ? "#166534" :
+                              selectedDetail.status === "Hoàn thành" ? "#1d4ed8" : "#dc2626"
+                      }}>
+                        {selectedDetail.status || "Sắp tới"}
+                      </div>
+                    </div>
+                    
+                    {/* Content area - chỉ có đánh giá và ghi chú */}
+                    <div style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "12px"
+                    }}>
+                        {/* Đánh giá */}
+                        <div>
+                          <label style={{ 
+                            fontSize: "12px", 
+                            fontWeight: "600", 
+                            color: "#6b7280",
+                            letterSpacing: "0.1px",
+                            display: "block",
+                            marginBottom: "6px"
+                          }}>
+                            Đánh giá
+                          </label>
+                          <div style={{
+                            padding: "10px",
+                            backgroundColor: "white",
+                            borderRadius: "6px",
+                            border: "1px solid #e5e7eb",
+                            minHeight: "40px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                          }}>
+                            {selectedDetail.rating ? (
+                              <div style={{ 
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px"
+                              }}>
+                                <span style={{ 
+                                  fontSize: "16px", 
+                                  fontWeight: "600", 
+                                  color: "#374151" 
+                                }}>
+                                  {selectedDetail.rating}/5
+                                </span>
+                                <span style={{ fontSize: "16px", color: "#fbbf24" }}>⭐</span>
+                              </div>
+                            ) : (
+                              <span style={{ 
+                                fontSize: "12px", 
+                                color: "#9ca3af",
+                                fontStyle: "italic"
+                              }}>
+                                Chưa có
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Ghi chú */}
+                        <div>
+                          <label style={{ 
+                            fontSize: "12px", 
+                            fontWeight: "600", 
+                            color: "#6b7280",
+                            letterSpacing: "0.1px",
+                            display: "block",
+                            marginBottom: "6px"
+                          }}>
+                            Ghi chú
+                          </label>
+                          <div style={{
+                            fontSize: "12px",
+                            color: "#374151",
+                            lineHeight: "1.4",
+                            padding: "10px",
+                            backgroundColor: "white",
+                            borderRadius: "6px",
+                            border: "1px solid #e5e7eb",
+                            minHeight: "40px",
+                            fontStyle: selectedDetail.comment ? "normal" : "italic"
+                          }}>
+                            {selectedDetail.comment || "Không có"}
+                          </div>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Description */}
               {selectedDetail.description && (

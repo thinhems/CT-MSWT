@@ -30,10 +30,20 @@ export const SidebarProvider = ({ children }) => {
   }, []);
 
   const toggleSidebar = () => {
+    console.log('toggleSidebar called', { isMobile, isCollapsed, isMobileOpen }); // Debug log
+    
     if (isMobile) {
-      setIsMobileOpen(!isMobileOpen);
+      setIsMobileOpen(prev => {
+        const newValue = !prev;
+        console.log('Mobile toggle:', prev, '=>', newValue); // Debug log
+        return newValue;
+      });
     } else {
-      setIsCollapsed(!isCollapsed);
+      setIsCollapsed(prev => {
+        const newValue = !prev;
+        console.log('Desktop toggle:', prev, '=>', newValue); // Debug log
+        return newValue;
+      });
     }
   };
 

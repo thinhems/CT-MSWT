@@ -4,6 +4,23 @@
 /* Font chữ thống nhất cho toàn bộ ứng dụng */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+/* Time slots horizontal layout - FORCE OVERRIDE */
+.time-slots-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  width: 100% !important;
+  align-items: flex-start !important;
+}
+
+/* Individual time slot styling */
+.time-slots-grid > div {
+  flex: 1 1 300px !important;
+  min-width: 250px !important;
+  max-width: calc(33.333% - 8px) !important;
+}
+
 * {
   margin: 0;
   padding: 0;
