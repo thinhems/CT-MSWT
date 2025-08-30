@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Pagination Schedule Details</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #FF5B27, #E04516);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .control-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .control-group label {
+            font-weight: 600;
+            color: #374151;
+        }
+        .control-group input, .control-group select {
+            padding: 8px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #FF5B27;
+        }
+        .api-info {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .status-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .status-loading {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+        }
+        .status-error {
+            background: #fef2f2;
+            border: 1px solid #f87171;
+            color: #dc2626;
+        }
+        .status-success {
+            background: #f0fdf4;
+            border: 1px solid #4ade80;
+            color: #166534;
+        }
+        .schedule-grid {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .schedule-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #FF5B27;
+            transition: transform 0.2s;
+        }
+        .schedule-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .schedule-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin: 0;
+        }
+        .schedule-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #e0f2fe;
+            color: #0277bd;
+        }
+        .schedule-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .info-label {
+            font-weight: 500;
+            color: #374151;
+            min-width: 80px;
+        }
+        .workers-list, .assignments-list {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+        .list-title {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .list-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .list-item {
+            background: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin: 20px 0;
+        }
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pagination button:hover:not(:disabled) {
+            background: #f3f4f6;
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination .active {
+            background: #FF5B27;
+            color: white;
+            border-color: #FF5B27;
+        }
+        .raw-response {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 Test API Pagination - Schedule Details</h1>
+        <p>Test API endpoint: <code>/api/scheduledetails/by-date-paginated</code></p>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="dateInput">📅 Ngày:</label>
+            <input type="date" id="dateInput" value="2025-09-05">
+            
+            <label for="pageSizeSelect">📊 Kích thước trang:</label>
+            <select id="pageSizeSelect">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+            </select>
+            
+            <button onclick="testAPI()" style="background: #FF5B27; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                🚀 Test API
+            </button>
+        </div>
+    </div>
+
+    <div id="apiInfo" class="api-info"></div>
+    <div id="statusBox" class="status-box status-loading" style="display: none;">⏳ Đang test API...</div>
+    <div id="results"></div>
+    <div id="pagination"></div>
+    <div id="rawResponse"></div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 0;
+        let currentResponse = null;
+
+        function updateAPIInfo() {
+            const date = document.getElementById('dateInput').value;
+            const pageSize = document.getElementById('pageSizeSelect').value;
+            const apiUrl = `https://capstoneproject-mswt-su25.onrender.com/api/scheduledetails/by-date-paginated?date=${date}&pageNumber=${currentPage}&pageSize=${pageSize}`;
+            
+            document.getElementById('apiInfo').innerHTML = `
+                <strong>🔗 API URL:</strong><br>
+                <code>${apiUrl}</code><br><br>
+                <strong>📋 Parameters:</strong><br>
+                • date: ${date}<br>
+                • pageNumber: ${currentPage}<br>
+                • pageSize: ${pageSize}
+            `;
+        }
+
+        function showStatus(type, message) {
+            const statusBox = document.getElementById('statusBox');
+            statusBox.className = `status-box status-${type}`;
+            statusBox.innerHTML = message;
+            statusBox.style.display = 'block';
+        }
+
+        function hideStatus() {
+            document.getElementById('statusBox').style.display = 'none';
+        }
+
+        async function testAPI() {
+            const date = document.getElementById('dateInput').value;
+            const pageSize = document.getElementById('pageSizeSelect').value;
+            
+            updateAPIInfo();
+            showStatus('loading', '⏳ Đang gọi API...');
+
+            try {
+                const apiUrl = `https://capstoneproject-mswt-su25.onrender.com/api/scheduledetails/by-date-paginated?date=${date}&pageNumber=${currentPage}&pageSize=${pageSize}`;
+                
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                currentResponse = data;
+                
+                // Calculate total pages
+                totalPages = Math.ceil(data.totalCount / parseInt(pageSize));
+                
+                showStatus('success', `✅ API call thành công! Tìm thấy ${data.totalCount} kết quả (Trang ${currentPage}/${totalPages})`);
+                
+                displayResults(data);
+                displayPagination();
+                displayRawResponse(data);
+
+                setTimeout(hideStatus, 3000);
+
+            } catch (error) {
+                showStatus('error', `❌ Lỗi: ${error.message}`);
+                document.getElementById('results').innerHTML = '';
+                document.getElementById('pagination').innerHTML = '';
+                document.getElementById('rawResponse').innerHTML = '';
+            }
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (!data.items || data.items.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #6b7280; background: white; border-radius: 12px;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
+                        <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">Không có lịch công việc</div>
+                        <div style="font-size: 14px;">Không tìm thấy chi tiết công việc cho ngày đã chọn</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const scheduleCards = data.items.map((detail, index) => `
+                <div class="schedule-card">
+                    <div class="schedule-header">
+                        <h3 class="schedule-title">${detail.workerGroupName || 'Không có tên nhóm'}</h3>
+                        <span class="schedule-status">${detail.status}</span>
+                    </div>
+                    
+                    <div class="schedule-info">
+                        <div class="info-item">
+                            <span class="info-label">⏰ Thời gian:</span>
+                            <span>${detail.startTime} - ${detail.endTime}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">🏢 Khu vực:</span>
+                            <span>${detail.areaName || 'Không xác định'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">👷 Giám sát:</span>
+                            <span>${detail.supervisorName || 'Không có'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">📋 Nhóm CV:</span>
+                            <span>${detail.groupAssignmentName || 'Không có'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">📝 Mô tả:</span>
+                            <span>${detail.description || 'Không có mô tả'}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">⭐ Đánh giá:</span>
+                            <span>${detail.rating ? detail.rating + '/5' : 'Chưa đánh giá'}</span>
+                        </div>
+                    </div>
+
+                    ${detail.workers && detail.workers.length > 0 ? `
+                        <div class="workers-list">
+                            <div class="list-title">👥 Nhân viên (${detail.workers.length})</div>
+                            <div class="list-items">
+                                ${detail.workers.map(worker => `
+                                    <span class="list-item">${worker.fullName}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${detail.assignments && detail.assignments.length > 0 ? `
+                        <div class="assignments-list">
+                            <div class="list-title">📋 Công việc (${detail.assignments.length})</div>
+                            <div class="list-items">
+                                ${detail.assignments.map(assignment => `
+                                    <span class="list-item">${assignment.assigmentName} - ${assignment.description}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            resultsDiv.innerHTML = `
+                <div class="schedule-grid">
+                    ${scheduleCards}
+                </div>
+            `;
+        }
+
+        function displayPagination() {
+            const paginationDiv = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+
+            let buttons = [];
+            
+            // Previous button
+            buttons.push(`
+                <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    ← Trước
+                </button>
+            `);
+
+            // Page numbers
+            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                buttons.push(`
+                    <button onclick="goToPage(${i})" class="${i === currentPage ? 'active' : ''}">
+                        ${i}
+                    </button>
+                `);
+            }
+
+            if (totalPages > 5) {
+                buttons.push('<span>...</span>');
+                buttons.push(`
+                    <button onclick="goToPage(${totalPages})" class="${totalPages === currentPage ? 'active' : ''}">
+                        ${totalPages}
+                    </button>
+                `);
+            }
+
+            // Next button
+            buttons.push(`
+                <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    Sau →
+                </button>
+            `);
+
+            paginationDiv.innerHTML = `
+                <div class="pagination">
+                    ${buttons.join('')}
+                </div>
+            `;
+        }
+
+        function goToPage(page) {
+            if (page < 1 || page > totalPages || page === currentPage) return;
+            currentPage = page;
+            testAPI();
+        }
+
+        function displayRawResponse(data) {
+            const rawDiv = document.getElementById('rawResponse');
+            rawDiv.innerHTML = `
+                <details>
+                    <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">
+                        🔍 Raw API Response (Click để xem chi tiết)
+                    </summary>
+                    <pre class="raw-response">${JSON.stringify(data, null, 2)}</pre>
+                </details>
+            `;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAPIInfo();
+            
+            // Auto test on page load
+            testAPI();
+            
+            // Update API info when inputs change
+            document.getElementById('dateInput').addEventListener('change', updateAPIInfo);
+            document.getElementById('pageSizeSelect').addEventListener('change', function() {
+                currentPage = 1; // Reset to first page
+                updateAPIInfo();
+            });
+        });
+    </script>
+</body>
+</html>

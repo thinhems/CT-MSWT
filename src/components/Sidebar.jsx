@@ -19,6 +19,10 @@ import {
   HiOutlineX,
   HiOutlineDocumentText,
   HiOutlineUserGroup,
+  HiChevronDown,
+  HiChevronRight,
+  HiOutlineEmojiHappy,
+  HiOutlineFolder,
 } from "react-icons/hi";
 
 const Sidebar = () => {
@@ -27,6 +31,7 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const { isCollapsed, isMobile, isMobileOpen, toggleSidebar, closeMobileSidebar, sidebarWidth } = useSidebar();
   const [hoveredItem, setHoveredItem] = useState(null);
+  const [expandedMenus, setExpandedMenus] = useState({});
   
   // Fetch requests for notification badge
   const { requests } = useRequests();
@@ -40,87 +45,156 @@ const Sidebar = () => {
     setHoveredItem(null);
   }, [location.pathname]);
 
+
+
+  // Collapse all menus when sidebar is collapsed
+  useEffect(() => {
+    if (isCollapsed) {
+      setExpandedMenus({});
+    }
+  }, [isCollapsed]);
+
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
       logout();
     }
   };
 
+  const toggleDropdown = (menuKey) => {
+    if (isCollapsed) return;
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuKey]: !prev[menuKey]
+    }));
+  };
+
   const menuItems = [
     {
-      title: "Yêu cầu",
-      path: "/request-management",
-      icon: HiOutlineClipboardList,
-    },
-    {
-      title: "Danh sách báo cáo",
-      path: "/report-management",
-      icon: HiOutlineChartBar,
-    },
-    {
-      title: "Danh sách nhân viên",
-      path: "/user-management",
+      key: "personnel",
+      title: "Quản lý nhân sự",
       icon: HiOutlineUsers,
+      isDropdown: true,
+      children: [
+        {
+          title: "Danh sách nhân viên",
+          path: "/user-management",
+          icon: HiOutlineUsers,
+        },
+        {
+          title: "Nhóm nhân viên",
+          path: "/worker-group-management",
+          icon: HiOutlineUserGroup,
+        },
+        {
+          title: "Điểm danh",
+          path: "/attendance",
+          icon: HiOutlineUserGroup,
+        },
+        {
+          title: "Nghỉ phép",
+          path: "/leaves",
+          icon: HiOutlineDocumentText,
+        },
+      ]
     },
-    
-    
     {
-      title: "Quản lý tòa",
-      path: "/buildings",
+      key: "facility",
+      title: "Quản lý cơ sở",
       icon: HiOutlineOfficeBuilding,
+      isDropdown: true,
+      children: [
+        {
+          title: "Quản lý tòa",
+          path: "/buildings",
+          icon: HiOutlineOfficeBuilding,
+        },
+        {
+          title: "Quản lý phòng",
+          path: "/rooms",
+          icon: HiOutlineHome,
+        },
+        {
+          title: "Quản lý khu vực",
+          path: "/areas",
+          icon: HiOutlineFolder,
+        },
+        {
+          title: "Danh sách thùng rác",
+          path: "/trash",
+          icon: HiOutlineTrash,
+        },
+      ]
     },
     {
-      title: "Quản lý khu vực",
-      path: "/areas",
-      icon: HiOutlineOfficeBuilding,
-    },
-    {
-      title: "Quản lý phòng",
-      path: "/rooms",
-      icon: HiOutlineHome,
-    },
-    {
-      title: "Danh sách thùng rác",
-      path: "/trash",
-      icon: HiOutlineTrash,
-    },
-    {
-      title: "Lịch làm việc",
-      path: "/schedules",
+      key: "schedule",
+      title: "Quản lý lịch",
       icon: HiOutlineCalendar,
+      isDropdown: true,
+      children: [
+        {
+          title: "Lịch làm việc",
+          path: "/schedules",
+          icon: HiOutlineCalendar,
+        },
+        {
+          title: "Quản lý công việc",
+          path: "/assignments",
+          icon: HiOutlineClipboardList,
+        },
+        {
+          title: "Nhóm công việc",
+          path: "/group-assignment",
+          icon: HiOutlineUserGroup,
+        },
+        {
+          title: "Ca làm việc",
+          path: "/shifts",
+          icon: HiOutlineClock,
+        },
+        {
+          title: "Đánh giá công việc",
+          path: "/assignments",
+          icon: HiOutlineEmojiHappy,
+        },
+      ]
     },
     {
-      title: "Quản lý công việc",
-      path: "/assignments",
-      icon: HiOutlineClipboardList,
+      key: "others",
+      title: "Khác",
+      icon: HiOutlineCog,
+      isDropdown: true,
+      children: [
+        {
+          title: "Yêu cầu",
+          path: "/request-management",
+          icon: HiOutlineClipboardList,
+          hasNotification: true,
+        },
+        {
+          title: "Báo cáo",
+          path: "/report-management",
+          icon: HiOutlineChartBar,
+        },
+      ]
     },
-    {
-      title: "Nhóm Công việc",
-      path: "/group-assignment",
-      icon: HiOutlineUserGroup,
-    },
-    {
-      title: "Nhóm nhân viên",
-      path: "/worker-group-management",
-      icon: HiOutlineUserGroup,
-    },
-    {
-      title: "Ca làm việc",
-      path: "/shifts",
-      icon: HiOutlineClock,
-    },
-    {
-      title: "Đơn nghỉ phép",
-      path: "/leaves",
-      icon: HiOutlineDocumentText,
-    },
-    {
-      title: "Điểm danh",
-      path: "/attendance",
-      icon: HiOutlineUserGroup,
-    },
-    
   ];
+
+  // Auto-expand menu if it contains active page
+  useEffect(() => {
+    const newExpandedMenus = {};
+    menuItems.forEach(item => {
+      if (item.children?.some(child => location.pathname === child.path)) {
+        newExpandedMenus[item.key] = true;
+      }
+    });
+    
+    if (Object.keys(newExpandedMenus).length > 0) {
+      setExpandedMenus(prev => ({
+        ...prev,
+        ...newExpandedMenus
+      }));
+    }
+  }, [location.pathname]);
 
   return (
     <div
@@ -144,12 +218,13 @@ const Sidebar = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: isCollapsed ? "center" : "space-between",
-        padding: isCollapsed ? "18px 8px" : "18px 16px",
-        borderBottom: "2px solid #f1f5f9",
-        backgroundColor: "white",
+        padding: isCollapsed ? "12px 5px" : "12px 10px",
+        borderBottom: "1px solid #e5e7eb",
+        backgroundColor: "#ffffff",
         transition: "all 0.3s ease",
         flexWrap: "nowrap",
-        minHeight: "70px"
+        minHeight: "56px",
+        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
       }}>
         {/* Toggle Button */}
         <button
@@ -185,11 +260,11 @@ const Sidebar = () => {
           <div 
             onClick={() => navigate('/dashboard')}
             style={{
-              fontSize: "24px",
-              fontWeight: "800",
+              fontSize: "18px",
+              fontWeight: "700",
               color: "#FF5B27",
               cursor: "pointer",
-              letterSpacing: "1px",
+              letterSpacing: "0.5px",
               textShadow: "0 2px 4px rgba(255, 91, 39, 0.2)",
               transition: "all 0.3s ease",
               opacity: isCollapsed ? 0 : 1,
@@ -269,28 +344,33 @@ const Sidebar = () => {
       {/* Navigation */}
       <nav style={{ 
         flex: 1, 
-        padding: isCollapsed ? "0 8px" : "0 16px", 
-        marginTop: "10px",
-        transition: "padding 0.3s ease"
+        padding: isCollapsed ? "0 5px" : "0 10px", 
+        marginTop: "8px",
+        transition: "padding 0.3s ease",
+        overflowY: "auto",
+        overflowX: "hidden"
       }}>
         <ul
           style={{
             listStyle: "none",
             margin: 0,
-            padding: 0,
-            gap: "4px",
+            padding: "4px 0",
+            gap: "2px",
             display: "flex",
             flexDirection: "column",
           }}
         >
           {menuItems.map((item, index) => {
-            const isActive = location.pathname === item.path;
-            const isHovered = hoveredItem === index && !isActive;
+            const isExpanded = expandedMenus[item.key];
             const Icon = item.icon;
+            const isHovered = hoveredItem === `main-${index}`;
+            
+            // Check if any child is active
+            const hasActiveChild = item.children?.some(child => location.pathname === child.path);
 
             return (
               <li
-                key={index}
+                key={item.key}
                 style={{
                   listStyle: "none",
                   margin: 0,
@@ -298,74 +378,165 @@ const Sidebar = () => {
                   position: "relative",
                 }}
               >
-                <Link
-                  to={item.path}
-                  onClick={isMobile ? closeMobileSidebar : undefined}
+                {/* Parent Menu Item */}
+                <div
+                  onClick={() => toggleDropdown(item.key)}
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: isCollapsed ? "center" : "flex-start",
-                    padding: isCollapsed ? "10px 8px" : "10px 14px",
+                    justifyContent: isCollapsed ? "center" : "space-between",
+                    padding: isCollapsed ? "8px 5px" : "8px 10px",
                     fontSize: "12px",
-                    fontWeight: "500",
+                    fontWeight: "600",
                     borderRadius: "6px",
                     textDecoration: "none",
-                    transition: "all 0.2s",
-                    backgroundColor: isActive ? "#d1d5db" : (isHovered ? "#f3f4f6" : "transparent"),
-                    color: "#000000",
+                    transition: "all 0.2s ease",
+                    backgroundColor: hasActiveChild ? "#ff5b27" : (isHovered ? "#f8fafc" : "transparent"),
+                    color: hasActiveChild ? "white" : "#374151",
                     marginBottom: "1px",
+                    cursor: "pointer",
                     position: "relative",
-                    overflow: "hidden",
+                    border: isHovered && !hasActiveChild ? "1px solid #e5e7eb" : "1px solid transparent",
+                    boxShadow: hasActiveChild ? "0 1px 3px rgba(255, 91, 39, 0.2)" : "none",
                   }}
-                  onMouseEnter={() => setHoveredItem(index)}
+                  onMouseEnter={() => setHoveredItem(`main-${index}`)}
                   onMouseLeave={() => setHoveredItem(null)}
                   title={isCollapsed ? item.title : ""}
                 >
-                  <Icon
-                    style={{
-                      width: "18px",
-                      height: "16px",
-                      marginRight: isCollapsed ? 0 : "10px",
-                      color: "#000000",
-                      flexShrink: 0,
-                      transition: "margin-right 0.3s ease"
-                    }}
-                  />
-                  {!isCollapsed && (
-                    <span style={{
-                      opacity: isCollapsed ? 0 : 1,
-                      transform: isCollapsed ? "translateX(-10px)" : "translateX(0)",
-                      transition: "all 0.3s ease",
-                      whiteSpace: "nowrap"
-                    }}>
-                      {item.title}
-                    </span>
-                  )}
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <Icon
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        marginRight: isCollapsed ? 0 : "8px",
+                        color: hasActiveChild ? "white" : "#6b7280",
+                        flexShrink: 0,
+                        transition: "all 0.3s ease"
+                      }}
+                    />
+                    {!isCollapsed && (
+                      <span style={{
+                        opacity: isCollapsed ? 0 : 1,
+                        transform: isCollapsed ? "translateX(-10px)" : "translateX(0)",
+                        transition: "all 0.3s ease",
+                        whiteSpace: "nowrap",
+                        fontWeight: "600",
+                        letterSpacing: "0.25px"
+                      }}>
+                        {item.title}
+                      </span>
+                    )}
+                  </div>
                   
-                  {/* Notification badge for "Yêu cầu" */}
-                  {item.title === "Yêu cầu" && pendingRequestsCount > 0 && (
+                  {/* Dropdown Arrow */}
+                  {!isCollapsed && (
                     <div style={{
-                      position: "absolute",
-                      top: "8px",
-                      right: "8px",
-                      minWidth: "18px",
-                      height: "18px",
-                      backgroundColor: "#ef4444",
-                      borderRadius: "9px",
-                      border: "2px solid white",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "10px",
-                      fontWeight: "600",
-                      color: "white",
-                      padding: "0 4px",
-                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
+                      transition: "transform 0.3s ease",
+                      transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                      padding: "2px",
                     }}>
-                      {pendingRequestsCount > 99 ? "99+" : pendingRequestsCount}
+                      <HiChevronRight style={{ 
+                        width: "14px", 
+                        height: "14px", 
+                        color: hasActiveChild ? "white" : "#9ca3af",
+                        transition: "color 0.3s ease"
+                      }} />
                     </div>
                   )}
-                </Link>
+                </div>
+
+                {/* Dropdown Children */}
+                {!isCollapsed && isExpanded && (
+                  <ul style={{
+                    listStyle: "none",
+                    margin: 0,
+                    padding: "2px 0",
+                    paddingLeft: "10px",
+                    backgroundColor: "#ffffff",
+                    borderRadius: "0 0 6px 6px",
+                    overflow: "hidden",
+                    animation: "slideDown 0.3s ease",
+                    maxHeight: "250px",
+                    border: "1px solid #f1f5f9",
+                    borderTop: "none",
+                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+                  }}>
+                    {item.children.map((child, childIndex) => {
+                      const isActive = location.pathname === child.path;
+                      const isChildHovered = hoveredItem === `child-${index}-${childIndex}`;
+                      const ChildIcon = child.icon;
+
+                      return (
+                        <li key={childIndex} style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                          <Link
+                            to={child.path}
+                            onClick={isMobile ? closeMobileSidebar : undefined}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "6px 10px",
+                              fontSize: "11px",
+                              fontWeight: "500",
+                              borderRadius: "4px",
+                              textDecoration: "none",
+                              transition: "all 0.2s ease",
+                              backgroundColor: isActive ? "#ff5b27" : (isChildHovered ? "#f8fafc" : "transparent"),
+                              color: isActive ? "white" : "#64748b",
+                              margin: "1px 6px 1px 14px",
+                              position: "relative",
+                              border: isActive ? "none" : (isChildHovered ? "1px solid #e2e8f0" : "1px solid transparent"),
+                              boxShadow: isActive ? "0 1px 3px rgba(255, 91, 39, 0.2)" : "none",
+                            }}
+                            onMouseEnter={() => setHoveredItem(`child-${index}-${childIndex}`)}
+                            onMouseLeave={() => setHoveredItem(null)}
+                          >
+                            <ChildIcon
+                              style={{
+                                width: "14px",
+                                height: "14px",
+                                marginRight: "8px",
+                                color: isActive ? "white" : "#9ca3af",
+                                flexShrink: 0,
+                                transition: "color 0.2s ease",
+                              }}
+                            />
+                            <span style={{ 
+                              whiteSpace: "nowrap",
+                              fontWeight: isActive ? "600" : "500",
+                              letterSpacing: "0.1px"
+                            }}>
+                              {child.title}
+                            </span>
+                            
+                            {/* Notification badge for "Yêu cầu" */}
+                            {child.hasNotification && pendingRequestsCount > 0 && (
+                              <div style={{
+                                position: "absolute",
+                                top: "4px",
+                                right: "4px",
+                                minWidth: "16px",
+                                height: "16px",
+                                backgroundColor: "#ef4444",
+                                borderRadius: "8px",
+                                border: "1px solid white",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "9px",
+                                fontWeight: "600",
+                                color: "white",
+                                padding: "0 3px",
+                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
+                              }}>
+                                {pendingRequestsCount > 99 ? "99+" : pendingRequestsCount}
+                              </div>
+                            )}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </li>
             );
           })}
@@ -375,23 +546,25 @@ const Sidebar = () => {
       {/* User Info & Logout */}
       <div
         style={{
-          padding: isCollapsed ? "18px 8px" : "18px 16px",
+          padding: isCollapsed ? "12px 5px" : "12px 10px",
           borderTop: "1px solid #e5e7eb",
           marginTop: "auto",
-          transition: "padding 0.3s ease"
+          transition: "padding 0.3s ease",
+          backgroundColor: "#fafafa",
+          boxShadow: "0 -1px 3px rgba(0, 0, 0, 0.05)"
         }}
       >
         <div style={{ 
           display: "flex", 
           alignItems: "center", 
           justifyContent: isCollapsed ? "center" : "flex-start",
-          marginBottom: isCollapsed ? "8px" : "12px",
+          marginBottom: isCollapsed ? "6px" : "8px",
           transition: "all 0.3s ease"
         }}>
           <div
             style={{
-              width: "36px",
-              height: "36px",
+              width: "32px",
+              height: "32px",
               backgroundColor: "#3b82f6",
               borderRadius: "50%",
               display: "flex",
@@ -404,7 +577,7 @@ const Sidebar = () => {
               style={{
                 color: "white",
                 fontWeight: "500",
-                fontSize: "14px",
+                fontSize: "12px",
               }}
             >
               {user?.username?.charAt(0).toUpperCase() || user?.fullName?.charAt(0).toUpperCase() || 'U'}
@@ -412,7 +585,7 @@ const Sidebar = () => {
           </div>
           {!isCollapsed && (
             <div style={{ 
-              marginLeft: "10px",
+              marginLeft: "8px",
               opacity: isCollapsed ? 0 : 1,
               transform: isCollapsed ? "translateX(-10px)" : "translateX(0)",
               transition: "all 0.3s ease",
@@ -420,11 +593,11 @@ const Sidebar = () => {
             }}>
               <p
                 style={{
-                  fontSize: "13px",
+                  fontSize: "11px",
                   fontWeight: "500",
                   color: "#000000",
                   margin: 0,
-                  marginBottom: "2px",
+                  marginBottom: "1px",
                   whiteSpace: "nowrap"
                 }}
               >
@@ -432,27 +605,14 @@ const Sidebar = () => {
               </p>
               <p
                 style={{
-                  fontSize: "11px",
+                  fontSize: "9px",
                   color: "#6b7280",
                   margin: 0,
-                  marginBottom: "1px",
                   whiteSpace: "nowrap"
                 }}
               >
                 {user?.position || user?.role || 'User'}
               </p>
-              {user?.email && (
-                <p
-                  style={{
-                    fontSize: "9px",
-                    color: "#9ca3af",
-                    margin: 0,
-                    whiteSpace: "nowrap"
-                  }}
-                >
-                  {user.email}
-                </p>
-              )}
             </div>
           )}
         </div>
@@ -465,10 +625,10 @@ const Sidebar = () => {
             alignItems: "center",
             justifyContent: isCollapsed ? "center" : "flex-start",
             width: "100%",
-            padding: isCollapsed ? "10px 8px" : "10px 12px",
-            fontSize: "13px",
+            padding: isCollapsed ? "6px 5px" : "6px 7px",
+            fontSize: "11px",
             fontWeight: "500",
-            borderRadius: "6px",
+            borderRadius: "4px",
             border: "none",
             backgroundColor: "transparent",
             color: "#dc2626",
@@ -485,9 +645,9 @@ const Sidebar = () => {
         >
           <HiOutlineLogout
             style={{
-              width: "18px",
-              height: "18px",
-              marginRight: isCollapsed ? 0 : "10px",
+              width: "14px",
+              height: "14px",
+              marginRight: isCollapsed ? 0 : "6px",
               flexShrink: 0,
               transition: "margin-right 0.3s ease"
             }}

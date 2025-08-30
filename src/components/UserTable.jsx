@@ -126,7 +126,7 @@ const UserTable = ({ users, onActionClick }) => {
           </tr>
         </thead>
         <tbody>
-          {users.map((user, index) => (
+          {(Array.isArray(users) ? users : []).map((user, index) => (
             <tr
               key={user.id}
               style={{

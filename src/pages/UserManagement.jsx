@@ -454,7 +454,7 @@ const UserManagement = () => {
           alignItems: "center",
           justifyContent: "space-between"
         }}>
-          <span>⚠️ {error}</span>
+          <span>⚠️ {typeof error === 'object' ? error.message || 'An error occurred' : error}</span>
           <button 
             onClick={() => fetchUsers()}
             style={{

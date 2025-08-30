@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { HiOutlinePlus, HiOutlineSearch } from "react-icons/hi";
 import ScheduleTable from "../components/ScheduleTable";
-import ScheduleDetailsModal from "../components/ScheduleDetailsModal";
+
 
 import StaffAssignmentModal from "../components/StaffAssignmentModal";
 import Pagination from "../components/Pagination";
@@ -22,7 +22,6 @@ const Schedules = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
-  const [showViewModal, setShowViewModal] = useState(false);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -79,11 +78,7 @@ const Schedules = () => {
     action: string;
     schedule: Schedule;
   }) => {
-    if (action === "view") {
-      setSelectedSchedule(schedule);
-      setShowViewModal(true);
-
-    } else if (action === "edit") {
+    if (action === "edit") {
       setSelectedSchedule(schedule);
       // Populate form with current schedule data
       setUpdateScheduleData({
@@ -532,12 +527,7 @@ const Schedules = () => {
         />
       </div>
 
-      {/* Schedule Details Modal */}
-      <ScheduleDetailsModal
-        schedule={selectedSchedule}
-        isVisible={showViewModal}
-        onClose={() => setShowViewModal(false)}
-      />
+
 
 
 

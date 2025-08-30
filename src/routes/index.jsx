@@ -22,6 +22,8 @@ import RequestManagement from "../pages/RequestManagement";
 import GroupManagement from "../pages/GroupManagement";
 import GroupAssignment from "../pages/GroupAssignment";
 import WorkerGroupManagement from "../pages/WorkerGroupManagement";
+import ScheduleDetailsPage from "../pages/ScheduleDetailsPage";
+import TestPaginationPage from "../pages/TestPaginationPage";
 
 export const router = createBrowserRouter([
   {
@@ -85,6 +87,10 @@ export const router = createBrowserRouter([
         element: <Schedules />,
       },
       {
+        path: "schedules/:scheduleId",
+        element: <ScheduleDetailsPage />,
+      },
+      {
         path: "assignments",
         element: <AssignmentManagement />,
       },
@@ -111,6 +117,10 @@ export const router = createBrowserRouter([
       {
         path: "worker-group-management",
         element: <WorkerGroupManagement />,
+      },
+      {
+        path: "test-pagination",
+        element: <TestPaginationPage />,
       },
       {
         path: "*",

@@ -140,7 +140,7 @@ export const useUsers = () => {
   return {
     users: users || [],
     loading: isLoading || loading,
-    error: swrError || error,
+    error: swrError?.message || swrError || error,
     pagination,
     fetchUsers,
     createUser,

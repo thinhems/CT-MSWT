@@ -70,6 +70,9 @@ export const API_URLS = {
     GET_ALL: `scheduledetails`,
     GET_BY_ID: (id: string) => `scheduledetails/${id}`,
     GET_BY_SCHEDULE_ID: (scheduleId: string) => `scheduledetails/schedule/${scheduleId}`,
+    GET_BY_USER_DATE: (userId: string, date: string) => `scheduledetails/by-user-date?userId=${userId}&date=${date}`,
+    GET_BY_DATE_PAGINATED: (date: string, pageNumber: number = 1, pageSize: number = 20) => 
+      `scheduledetails/by-date-paginated?date=${date}&pageNumber=${pageNumber}&pageSize=${pageSize}`,
     CREATE: `scheduledetails`,
     CREATE_FOR_SCHEDULE: (scheduleId: string) => `scheduledetails/${scheduleId}/details`,
     UPDATE: (id: string) => `scheduledetails/${id}`,

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
 import { Schedule } from "@/config/models/schedule.model";
 import Dropdown from './common/Dropdown';
@@ -14,8 +15,16 @@ interface IAction {
 }
 
 const ScheduleTable = ({ schedules, onActionClick }: IProps) => {
+  const navigate = useNavigate();
+
   const handleDropdownAction = (item: any, schedule: Schedule) => {
-    onActionClick({ action: item.action, schedule });
+    if (item.action === 'view') {
+      // Navigate to schedule details page instead of opening modal
+      navigate(`/schedules/${schedule.scheduleId}`);
+    } else {
+      // For other actions (edit, delete), use the callback
+      onActionClick({ action: item.action, schedule });
+    }
   };
 
   const formatDate = (dateString: string) => {
