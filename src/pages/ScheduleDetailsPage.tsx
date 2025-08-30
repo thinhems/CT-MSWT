@@ -1605,9 +1605,9 @@ const ScheduleDetailsPage = () => {
                 <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "16px", letterSpacing: "0.25px" }}>
                   Thông tin cơ bản
                 </h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
                   <div>
-                    <label style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", letterSpacing: "0.1px" }}>Nhóm làm việc</label>
+                    <label style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", letterSpacing: "0.1px" }}>Nhóm công nhân</label>
                     <div style={{ fontSize: "14px", color: "#374151", marginTop: "4px", letterSpacing: "0.1px" }}>
                       {selectedDetail.workerGroupName || "Không có"}
                     </div>
@@ -1624,16 +1624,11 @@ const ScheduleDetailsPage = () => {
                       {selectedDetail.areaName || "Không xác định"}
                     </div>
                   </div>
-                  <div>
-                    <label style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", letterSpacing: "0.1px" }}>Giám sát viên</label>
-                    <div style={{ fontSize: "14px", color: "#374151", marginTop: "4px", letterSpacing: "0.1px" }}>
-                      {selectedDetail.supervisorName || "Không có"}
-                    </div>
-                  </div>
 
 
 
-                  <div style={{ gridColumn: "span 2" }}>
+
+                  <div style={{ gridColumn: "span 3" }}>
                     <label style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", letterSpacing: "0.1px" }}>Đánh giá trung bình</label>
                     <div style={{ fontSize: "14px", color: "#374151", marginTop: "4px", letterSpacing: "0.1px" }}>
                       {selectedDetail.timeSlots ? (
@@ -1924,25 +1919,7 @@ const ScheduleDetailsPage = () => {
                 </div>
               )}
 
-              {/* Description */}
-              {selectedDetail.description && (
-                <div style={{ marginBottom: "24px" }}>
-                  <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#374151", marginBottom: "8px" }}>
-                    Mô tả
-                  </h3>
-                        <div style={{ 
-                    padding: "12px",
-                    backgroundColor: "#f9fafb",
-                    borderRadius: "8px",
-                    border: "1px solid #e5e7eb",
-                    fontSize: "14px",
-                    color: "#6b7280",
-                    fontStyle: "italic"
-                  }}>
-                    {selectedDetail.description}
-                  </div>
-                </div>
-              )}
+
 
               {/* Workers */}
               {selectedDetail.workers && selectedDetail.workers.length > 0 && (
@@ -2029,6 +2006,27 @@ const ScheduleDetailsPage = () => {
                     )}
 
               
+
+              {/* Description */}
+              {selectedDetail.description && (
+                <div style={{ marginBottom: "24px" }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "12px", letterSpacing: "0.25px" }}>
+                    Mô tả
+                  </h3>
+                  <div style={{ 
+                    padding: "16px",
+                    backgroundColor: "#f9fafb",
+                    borderRadius: "8px",
+                    border: "1px solid #e5e7eb",
+                    fontSize: "14px",
+                    color: "#6b7280",
+                    fontStyle: "italic",
+                    lineHeight: "1.5"
+                  }}>
+                    {selectedDetail.description}
+                  </div>
+                </div>
+              )}
 
               {/* Close Button */}
               <div style={{ textAlign: "right", marginTop: "24px" }}>
