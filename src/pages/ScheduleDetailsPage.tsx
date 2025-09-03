@@ -14,6 +14,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Notification from "../components/Notification";
 import Pagination from "../components/Pagination";
+import { authService } from "../services/authService";
 
 
 interface ScheduleDetailResponse {
@@ -1956,11 +1957,9 @@ const ScheduleDetailsPage = () => {
                                 <div style={{ fontWeight: "600", color: "#111827", marginBottom: "4px" }}>
                                   {worker.fullName}
                                 </div>
+                               
                                 <div style={{ color: "#6b7280", fontSize: "12px" }}>
-                                  ID: {worker.userId}
-                                </div>
-                                <div style={{ color: "#6b7280", fontSize: "12px" }}>
-                                  Vai trò: {worker.roleId}
+                                  Vai trò: {authService.mapRoleIdToRoleName(worker.roleId)}
                                 </div>
                               </div>
                             </div>

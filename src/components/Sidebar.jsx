@@ -165,11 +165,7 @@ const Sidebar = () => {
           path: "/shifts",
           icon: HiOutlineClock,
         },
-        {
-          title: "Đánh giá công việc",
-          path: "/assignments",
-          icon: HiOutlineEmojiHappy,
-        },
+        
       ]
     },
     {

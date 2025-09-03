@@ -6,6 +6,7 @@ import Pagination from "../components/Pagination";
 import WorkerGroupTable from "../components/WorkerGroupTable";
 import { useWorkerGroup } from "../hooks/useWorkerGroup";
 import MultiSelectDropdown from "../components/common/MultiSelectDropdown";
+import { authService } from "../services/authService";
 
 const WorkerGroupManagement = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const WorkerGroupManagement = () => {
 
   const {
     groups: workerGroups,
-    loading: isLoading,
+    loading,
     error,
     fetchGroups
   } = useWorkerGroup();
@@ -487,53 +488,12 @@ const WorkerGroupManagement = () => {
       {/* Content Area */}
       <div style={{ flex: "0 0 auto" }}>
         {/* Groups Table */}
-        {displayData.length === 0 ? (
-          <div style={{
-            marginLeft: "32px",
-            marginRight: "32px",
-            marginTop: "0px",
-            backgroundColor: "white",
-            borderRadius: "12px",
-            border: "1px solid #f0f0f0",
-            padding: "48px",
-            textAlign: "center",
-            boxShadow: "0 2px 8px 0 rgba(0, 0, 0, 0.06)"
-          }}>
-            <div style={{ fontSize: "18px", color: "#6b7280", marginBottom: "16px" }}>
-              Chưa có nhóm làm việc nào
-            </div>
-            <div style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "24px" }}>
-              Hãy tạo nhóm làm việc đầu tiên để bắt đầu
-            </div>
-            <button
-              onClick={() => setShowAddModal(true)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "#FF5B27",
-                color: "white",
-                padding: "12px 20px",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                transition: "background-color 0.2s",
-              }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = "#e04516")}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
-            >
-              <HiOutlinePlus style={{ width: "20px", height: "20px" }} />
-              Tạo nhóm làm việc đầu tiên
-            </button>
-          </div>
-                  ) : (
-            <WorkerGroupTable 
-              groups={currentGroups} 
-              onActionClick={handleActionClick} 
-            />
-          )}
+        {displayData.length > 0 && (
+          <WorkerGroupTable 
+            groups={currentGroups} 
+            onActionClick={handleActionClick} 
+          />
+        )}
       </div>
 
       {/* Pagination */}
@@ -1161,7 +1121,7 @@ const WorkerGroupManagement = () => {
                              </div>
                            </div>
                            
-                           {/* Status Indicator */}
+                           {/* Role Indicator */}
                            <div style={{
                              padding: "6px 12px",
                              backgroundColor: "#dcfce7",
@@ -1171,7 +1131,25 @@ const WorkerGroupManagement = () => {
                              fontWeight: "500",
                              border: "1px solid #bbf7d0"
                            }}>
-                             Thành viên
+                             {(() => {
+                               // If API returns roleName directly, use it
+                               if (member.roleName) {
+                                 // Map English role names to Vietnamese
+                                 const roleMap = {
+                                   'Leader': 'Quản trị hệ thống',
+                                   'Manager': 'Quản lý cấp cao',
+                                   'Supervisor': 'Giám sát viên',
+                                   'Worker': 'Nhân viên vệ sinh'
+                                 };
+                                 return roleMap[member.roleName] || member.roleName;
+                               }
+                               // Otherwise use roleId with mapping
+                               if (member.roleId) {
+                                 return authService.mapRoleIdToRoleName(member.roleId);
+                               }
+                               // Fallback
+                               return "Nhân viên vệ sinh";
+                             })()}
                            </div>
                          </div>
                        ))}
@@ -1572,6 +1550,46 @@ const WorkerGroupManagement = () => {
            </div>
          </div>
        )}
+
+      {/* Loading Indicator - similar to UserManagement */}
+      {(loading || isSubmitting) && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.1)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            padding: "20px",
+            borderRadius: "8px",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+          }}>
+            <div style={{
+              width: "40px",
+              height: "40px",
+              border: "4px solid #f3f3f3",
+              borderTop: "4px solid #FF5B27",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 12px auto"
+            }}></div>
+            <div style={{ 
+              textAlign: "center", 
+              fontSize: "14px", 
+              color: "#374151" 
+            }}>
+              {isSubmitting ? "Đang xử lý..." : "Đang tải dữ liệu..."}
+            </div>
+          </div>
+        </div>
+      )}
      </div>
    );
  };

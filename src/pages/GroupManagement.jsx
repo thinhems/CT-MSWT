@@ -5,6 +5,8 @@ import GroupTable from "../components/GroupTable";
 import Pagination from "../components/Pagination";
 import Notification from "../components/Notification";
 import { useWorkerGroup } from "../hooks/useWorkerGroup";
+import { authService } from "../services/authService";
+import { useUsers } from "../hooks/useUsers";
 
 const GroupManagement = () => {
   const navigate = useNavigate();
@@ -13,6 +15,8 @@ const GroupManagement = () => {
   const [showAddGroupPopup, setShowAddGroupPopup] = useState(false);
   const [showViewGroupModal, setShowViewGroupModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [groupMembers, setGroupMembers] = useState([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
 
   const itemsPerPage = 5; // Số nhóm hiển thị mỗi trang
@@ -23,8 +27,13 @@ const GroupManagement = () => {
     loading, 
     error, 
     fetchGroups, 
-    deleteGroup 
+    deleteGroup,
+    fetchAllMembers,
+    getGroupById
   } = useWorkerGroup();
+
+  // Sử dụng hook để lấy thông tin users (có roleId)
+  const { users } = useUsers();
 
   // Show notification helper
   const showNotification = (message, type = "success") => {
@@ -38,6 +47,29 @@ const GroupManagement = () => {
     if (action === 'view') {
       setSelectedGroup(group);
       setShowViewGroupModal(true);
+      
+      setLoadingMembers(true);
+      try {
+        // First check if the group already has members data from the get-all API
+        if (group.members && group.members.length > 0) {
+          setGroupMembers(group.members);
+        } else {
+          // Try to get detailed group info 
+          const detailedGroup = await getGroupById(group.workerGroupId);
+          
+          if (detailedGroup && detailedGroup.members) {
+            setGroupMembers(detailedGroup.members);
+          } else {
+            // No members found
+            setGroupMembers([]);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching group members:', err);
+        setGroupMembers([]);
+      } finally {
+        setLoadingMembers(false);
+      }
     } else if (action === 'edit') {
       showNotification("🔧 Tính năng chỉnh sửa nhóm đang được phát triển!", "info");
     } else if (action === 'delete') {
@@ -55,6 +87,8 @@ const GroupManagement = () => {
   const handleCloseViewModal = () => {
     setShowViewGroupModal(false);
     setSelectedGroup(null);
+    setGroupMembers([]);
+    setLoadingMembers(false);
   };
 
   const handleAddGroup = () => {
@@ -630,27 +664,143 @@ const GroupManagement = () => {
                 </div>
               </div>
 
-              {/* Additional Info */}
+              {/* Group Members */}
               <div>
                 <label style={{ fontSize: "14px", fontWeight: "500", color: "#6b7280" }}>
-                  Thông tin bổ sung
+                  Danh sách thành viên ({groupMembers.length})
                 </label>
-                <div style={{ 
-                  marginTop: "8px",
-                  padding: "16px",
-                  backgroundColor: "#f8fafc",
-                  borderRadius: "8px",
-                  border: "1px solid #e2e8f0"
-                }}>
-                  <p style={{ 
-                    fontSize: "14px", 
-                    color: "#6b7280",
-                    margin: 0,
-                    fontStyle: "italic"
+                {loadingMembers ? (
+                  <div style={{ 
+                    marginTop: "8px",
+                    padding: "32px",
+                    backgroundColor: "#f8fafc",
+                    borderRadius: "8px",
+                    border: "1px solid #e2e8f0",
+                    textAlign: "center"
                   }}>
-                    Để xem thông tin chi tiết về thành viên nhóm, vui lòng sử dụng API thành viên riêng biệt.
-                  </p>
-                </div>
+                    <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                      Đang tải danh sách thành viên...
+                    </div>
+                  </div>
+                ) : groupMembers.length > 0 ? (
+                  <div style={{ 
+                    marginTop: "8px",
+                    backgroundColor: "#f8fafc",
+                    borderRadius: "8px",
+                    border: "1px solid #e2e8f0",
+                    overflow: "hidden"
+                  }}>
+                    {groupMembers.map((member, index) => (
+                      <div key={member.workGroupMemberId || index} style={{
+                        padding: "16px",
+                        borderBottom: index < groupMembers.length - 1 ? "1px solid #e2e8f0" : "none",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        backgroundColor: "white"
+                      }}>
+                        {/* Avatar */}
+                        <div style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "50%",
+                          backgroundColor: "#FF5B27",
+                          color: "white",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "16px",
+                          fontWeight: "600",
+                          flexShrink: 0
+                        }}>
+                          {member.fullName ? member.fullName.charAt(0).toUpperCase() : member.name ? member.name.charAt(0).toUpperCase() : "?"}
+                        </div>
+                        
+                        {/* Member Info */}
+                        <div style={{ flex: 1 }}>
+                          <div style={{ 
+                            fontWeight: "600", 
+                            color: "#111827", 
+                            marginBottom: "4px",
+                            fontSize: "14px"
+                          }}>
+                            {member.fullName || member.name || "Không có tên"}
+                          </div>
+                          <div style={{ 
+                            color: "#6b7280", 
+                            fontSize: "12px",
+                            marginBottom: "2px"
+                          }}>
+                            Vai trò: {(() => {
+                              // If API returns roleName directly, use it
+                              if (member.roleName) {
+                                // Map English role names to Vietnamese
+                                const roleMap = {
+                                  'Leader': 'Quản trị hệ thống',
+                                  'Manager': 'Quản lý cấp cao',
+                                  'Supervisor': 'Giám sát viên ',
+                                  'Worker': 'Nhân viên vệ sinh'
+                                };
+                                return roleMap[member.roleName] || member.roleName;
+                              }
+                              // Otherwise use roleId with mapping
+                              if (member.roleId) {
+                                return authService.mapRoleIdToRoleName(member.roleId);
+                              }
+                              // Fallback
+                              return "Nhân viên vệ sinh";
+                            })()}
+                          </div>
+                          {member.userEmail && (
+                            <div style={{ 
+                              color: "#6b7280", 
+                              fontSize: "12px"
+                            }}>
+                              📧 {member.userEmail}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Status Badge */}
+                        <div style={{
+                          padding: "4px 8px",
+                          borderRadius: "12px",
+                          fontSize: "11px",
+                          fontWeight: "600",
+                          backgroundColor: member.leftAt ? "#fee2e2" : "#dcfce7",
+                          color: member.leftAt ? "#dc2626" : "#15803d"
+                        }}>
+                          {member.leftAt ? "Đã rời" : "Hoạt động"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ 
+                    marginTop: "8px",
+                    padding: "32px",
+                    backgroundColor: "#f8fafc",
+                    borderRadius: "8px",
+                    border: "1px solid #e2e8f0",
+                    textAlign: "center"
+                  }}>
+                    <div style={{ fontSize: "48px", marginBottom: "12px" }}>👥</div>
+                    <div style={{ 
+                      fontSize: "14px", 
+                      color: "#6b7280",
+                      fontWeight: "500"
+                    }}>
+                      Nhóm này chưa có thành viên
+                    </div>
+                    <div style={{ 
+                      fontSize: "12px", 
+                      color: "#9ca3af",
+                      marginTop: "4px"
+                    }}>
+                      Hãy thêm thành viên vào nhóm để bắt đầu làm việc
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
