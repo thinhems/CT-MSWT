@@ -7,6 +7,7 @@ import useUsers from "../hooks/useUsers";
 import Notification from "../components/Notification";
 import ApiTestDebug from "../components/ApiTestDebug";
 import QuickApiTest from "../components/QuickApiTest";
+import { uploadImageToCloudinary } from "../services/imageUploadService";
 
 const UserManagement = () => {
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ const UserManagement = () => {
   });
   const [notification, setNotification] = useState({ show: false, message: "", type: "" });
   const [isSubmitting, setIsSubmitting] = useState(false); // Local loading state for form submission
+  const [isUploadingImage, setIsUploadingImage] = useState(false); // State for image upload
 
   const itemsPerPage = 5; // Số user hiển thị mỗi trang
 
@@ -215,16 +217,77 @@ const UserManagement = () => {
     });
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = async (e) => {
     const { name, value, type, files } = e.target;
     
     if (type === 'file') {
       const file = files[0];
-      setNewUser(prev => ({
-        ...prev,
-        avatarFile: file,
-        avatar: file ? URL.createObjectURL(file) : ""
-      }));
+      if (file) {
+        try {
+          setIsUploadingImage(true);
+          
+          console.log('🖼️ ===== BẮT ĐẦU UPLOAD HÌNH ẢNH =====');
+          console.log('📁 File info:');
+          console.log('   📝 Tên file:', file.name);
+          console.log('   📏 Kích thước:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+          console.log('   🎨 Loại file:', file.type);
+          console.log('=====================================');
+          
+          showNotification("🔄 Đang tải hình ảnh lên Cloudinary...", "info");
+          
+          // Upload to Cloudinary
+          const uploadResult = await uploadImageToCloudinary(file);
+          
+          if (uploadResult.success) {
+            console.log('✅ ===== UPLOAD CLOUDINARY THÀNH CÔNG =====');
+            console.log('🌐 Cloudinary URL:', uploadResult.url);
+            console.log('🆔 Public ID:', uploadResult.publicId);
+            console.log('📊 Upload data:', uploadResult.data);
+            console.log('=========================================');
+            
+            setNewUser(prev => ({
+              ...prev,
+              avatarFile: file,
+              avatar: uploadResult.url // Use Cloudinary URL
+            }));
+            showNotification("✅ Tải hình ảnh thành công!", "success");
+          } else {
+            console.error('❌ ===== UPLOAD CLOUDINARY THẤT BẠI =====');
+            console.error('🚨 Lỗi:', uploadResult.error);
+            console.error('🔄 Chuyển sang sử dụng URL local');
+            console.error('======================================');
+            
+            // Fallback to local URL
+            setNewUser(prev => ({
+              ...prev,
+              avatarFile: file,
+              avatar: URL.createObjectURL(file)
+            }));
+            showNotification("⚠️ Upload Cloudinary thất bại, sử dụng hình ảnh local", "warning");
+          }
+        } catch (error) {
+          console.error('❌ ===== LỖI UPLOAD HÌNH ẢNH =====');
+          console.error('🚨 Chi tiết lỗi:', error);
+          console.error('🔄 Chuyển sang sử dụng URL local');
+          console.error('================================');
+          
+          // Fallback to local URL
+          setNewUser(prev => ({
+            ...prev,
+            avatarFile: file,
+            avatar: URL.createObjectURL(file)
+          }));
+          showNotification("⚠️ Lỗi upload hình ảnh, sử dụng hình ảnh local", "warning");
+        } finally {
+          setIsUploadingImage(false);
+        }
+      } else {
+        setNewUser(prev => ({
+          ...prev,
+          avatarFile: null,
+          avatar: ""
+        }));
+      }
     } else {
       setNewUser(prev => ({
         ...prev,
@@ -235,6 +298,12 @@ const UserManagement = () => {
 
   const handleSubmitUser = async (e) => {
     e.preventDefault();
+    
+    // Prevent submit if image is still uploading
+    if (isUploadingImage) {
+      showNotification("⏳ Vui lòng đợi hình ảnh tải lên hoàn tất!", "warning");
+      return;
+    }
     
     console.log('🔄 Submitting user form with data:', newUser);
     
@@ -270,6 +339,16 @@ const UserManagement = () => {
     try {
       setIsSubmitting(true);
       
+      console.log('🔄 ===== BẮT ĐẦU THÊM NHÂN VIÊN =====');
+      console.log('📝 Dữ liệu form nhập vào:');
+      console.log('   👤 Tên:', newUser.name?.trim());
+      console.log('   🏷️ Chức vụ:', newUser.position);
+      console.log('   📧 Email:', newUser.email?.trim());
+      console.log('   📱 SĐT:', newUser.phone?.trim());
+      console.log('   🏠 Địa chỉ:', newUser.address?.trim() || "Không có");
+      console.log('   🖼️ Avatar:', newUser.avatar ? 'Có hình ảnh' : 'Sử dụng avatar mặc định');
+      console.log('=====================================');
+      
       const userToAdd = {
         name: newUser.name.trim(),
         username: newUser.username.trim(),
@@ -283,7 +362,7 @@ const UserManagement = () => {
         createdDate: new Date().toISOString().split('T')[0]
       };
       
-      console.log('🚀 Calling API with clean data:', {
+      console.log('🚀 Gọi API với dữ liệu đã xử lý:', {
         ...userToAdd,
         password: '[HIDDEN]' // Don't log password
       });
@@ -291,7 +370,20 @@ const UserManagement = () => {
       // Create user via API
       const createdUser = await apiCreateUser(userToAdd);
       
-      console.log('✅ User created successfully:', createdUser);
+      // Enhanced success logging
+      console.log('🎉 ===== THÊM NHÂN VIÊN THÀNH CÔNG =====');
+      console.log('📝 Thông tin nhân viên đã tạo:');
+      console.log('   👤 Tên:', createdUser?.name || userToAdd.name);
+      console.log('   🏷️ Chức vụ:', createdUser?.position || userToAdd.position);
+      console.log('   📧 Email:', createdUser?.email || userToAdd.email);
+      console.log('   📱 SĐT:', createdUser?.phone || userToAdd.phone);
+      console.log('   🆔 User ID:', createdUser?.id || 'Chưa có ID');
+      console.log('   🖼️ Avatar URL:', createdUser?.avatar || userToAdd.avatar);
+      console.log('   📅 Ngày tạo:', createdUser?.createdDate || userToAdd.createdDate);
+      console.log('   ✅ Trạng thái:', createdUser?.status || userToAdd.status);
+      console.log('🎯 API Response:', createdUser);
+      console.log('=======================================');
+      
       showNotification("🎉 Đã thêm nhân viên thành công!");
       
       // Refresh user list
@@ -300,7 +392,15 @@ const UserManagement = () => {
       handleClosePopup();
       
     } catch (error) {
-      console.error('❌ Error creating user:', error);
+      // Enhanced error logging
+      console.error('❌ ===== LỖI KHI THÊM NHÂN VIÊN =====');
+      console.error('🚨 Chi tiết lỗi:');
+      console.error('   📝 Error message:', error.message);
+      console.error('   🔍 Error stack:', error.stack);
+      console.error('   📡 API Response:', error.response?.data);
+      console.error('   📊 Status code:', error.response?.status);
+      console.error('   🎯 Full error object:', error);
+      console.error('=======================================');
       
       // Show specific error message from API or generic message
       const errorMessage = error.message || "Có lỗi xảy ra khi thêm nhân viên!";
@@ -354,7 +454,7 @@ const UserManagement = () => {
         await fetchUsers();
       } catch (error) {
         console.error('Failed to load users:', error);
-        showNotification("❌ Có lỗi khi tải danh sách người dùng", "error");
+        showNotification("❌ Có lỗi khi tải danh sách nhân viên", "error");
       }
     };
     loadUsers();
@@ -406,7 +506,7 @@ const UserManagement = () => {
       )}
 
       {/* Loading Indicator */}
-      {(loading || isSubmitting) && (
+      {(loading || isSubmitting || isUploadingImage) && (
         <div style={{
           position: "fixed",
           top: 0,
@@ -435,7 +535,9 @@ const UserManagement = () => {
               margin: "0 auto"
             }}></div>
             <p style={{ marginTop: "10px", textAlign: "center" }}>
-              {isSubmitting ? "Đang thêm nhân viên..." : "Đang tải..."}
+              {isSubmitting ? "Đang thêm nhân viên..." : 
+               isUploadingImage ? "Đang tải hình ảnh lên Cloudinary..." : 
+               "Đang tải..."}
             </p>
           </div>
         </div>
@@ -482,12 +584,12 @@ const UserManagement = () => {
             marginBottom: "16px",
           }}
         >
-          Danh sách người dùng
+          Danh sách nhân viên
         </h1>
             <span>Trang chủ</span>
             <span style={{ margin: "0 8px" }}>›</span>
             <span style={{ color: "#374151", fontWeight: "500" }}>
-              Danh sách người dùng
+              Danh sách nhân viên
             </span>
           </nav>
         </div>
@@ -686,7 +788,7 @@ const UserManagement = () => {
             </div>
             <input
               type="text"
-              placeholder="Tìm người dùng"
+              placeholder="Tìm nhân viên"
               value={searchTerm}
               onChange={handleSearchChange}
               style={{
@@ -728,7 +830,7 @@ const UserManagement = () => {
               onMouseLeave={(e) => (e.target.style.backgroundColor = "#FF5B27")}
             >
               <HiOutlinePlus style={{ width: "16px", height: "16px" }} />
-              Thêm người dùng
+              Thêm nhân viên
             </button>
           </div>
         </div>
@@ -1074,19 +1176,39 @@ const UserManagement = () => {
                   name="avatar"
                   onChange={handleInputChange}
                   accept="image/*"
+                  disabled={isUploadingImage}
                   style={{
                     width: "100%",
                     padding: "12px",
-                    border: "1px solid #d1d5db",
+                    border: `1px solid ${isUploadingImage ? "#fbbf24" : "#d1d5db"}`,
                     borderRadius: "8px",
                     fontSize: "14px",
                     outline: "none",
                     transition: "border-color 0.2s",
-                    backgroundColor: "white",
+                    backgroundColor: isUploadingImage ? "#fefbf2" : "white",
+                    cursor: isUploadingImage ? "not-allowed" : "pointer",
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-                  onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+                  onFocus={(e) => {
+                    if (!isUploadingImage) {
+                      e.target.style.borderColor = "#3b82f6";
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (!isUploadingImage) {
+                      e.target.style.borderColor = "#d1d5db";
+                    }
+                  }}
                 />
+                {isUploadingImage && (
+                  <p style={{ 
+                    fontSize: "12px", 
+                    color: "#f59e0b", 
+                    marginTop: "4px",
+                    fontWeight: "500"
+                  }}>
+                    🔄 Đang tải hình ảnh lên Cloudinary...
+                  </p>
+                )}
                 {newUser.avatar && (
                   <div style={{ marginTop: "12px", textAlign: "center" }}>
                     <img
@@ -1140,31 +1262,33 @@ const UserManagement = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isUploadingImage}
                   style={{
                     padding: "12px 20px",
                     border: "none",
                     borderRadius: "8px",
                     fontSize: "14px",
                     fontWeight: "500",
-                    backgroundColor: isSubmitting ? "#9ca3af" : "#FF5B27",
+                    backgroundColor: (isSubmitting || isUploadingImage) ? "#9ca3af" : "#FF5B27",
                     color: "white",
-                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                    cursor: (isSubmitting || isUploadingImage) ? "not-allowed" : "pointer",
                     transition: "background-color 0.2s",
-                    opacity: isSubmitting ? 0.7 : 1,
+                    opacity: (isSubmitting || isUploadingImage) ? 0.7 : 1,
                   }}
                   onMouseEnter={(e) => {
-                    if (!isSubmitting) {
+                    if (!isSubmitting && !isUploadingImage) {
                       e.target.style.backgroundColor = "#E04B1F";
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isSubmitting) {
+                    if (!isSubmitting && !isUploadingImage) {
                       e.target.style.backgroundColor = "#FF5B27";
                     }
                   }}
                 >
-                  {isSubmitting ? "Đang thêm..." : "Thêm nhân viên"}
+                  {isSubmitting ? "Đang thêm..." : 
+                   isUploadingImage ? "Đang tải hình ảnh..." : 
+                   "Thêm nhân viên"}
                 </button>
               </div>
             </form>
