@@ -183,6 +183,12 @@ const Schedules = () => {
       return;
     }
 
+    // Validate that end date is after start date
+    if (new Date(newSchedule.startDate) >= new Date(newSchedule.endDate)) {
+      showNotificationMessage("error", "Ngày kết thúc phải sau ngày bắt đầu!");
+      return;
+    }
+
     try {
       await createSchedule(newSchedule);
       showNotificationMessage("success", "Đã thêm lịch trình thành công!");
@@ -224,6 +230,12 @@ const Schedules = () => {
     if (!updateScheduleData.scheduleName.trim() || 
         !updateScheduleData.startDate || !updateScheduleData.endDate || !updateScheduleData.shiftId) {
       showNotificationMessage("error", "Vui lòng điền đầy đủ thông tin bắt buộc!");
+      return;
+    }
+
+    // Validate that end date is after start date
+    if (new Date(updateScheduleData.startDate) >= new Date(updateScheduleData.endDate)) {
+      showNotificationMessage("error", "Ngày kết thúc phải sau ngày bắt đầu!");
       return;
     }
 

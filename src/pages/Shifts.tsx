@@ -199,6 +199,17 @@ const Shifts = () => {
       return;
     }
 
+    // Validate that end time is after start time
+    const startTime = updateShiftData.startTime;
+    const endTime = updateShiftData.endTime;
+    if (startTime >= endTime) {
+      showNotificationMessage(
+        "error",
+        "Thời gian kết thúc phải sau thời gian bắt đầu!"
+      );
+      return;
+    }
+
     await updateAsync(selectedShift!.shiftId, updateShiftData);
     handleCloseUpdateModal();
     showNotificationMessage("success", "Đã cập nhật ca làm thành công!");
@@ -251,6 +262,17 @@ const Shifts = () => {
       showNotificationMessage(
         "error",
         "Thời gian kết thúc không hợp lệ! Vui lòng nhập theo định dạng HH:MM:SS"
+      );
+      return;
+    }
+
+    // Validate that end time is after start time
+    const startTime = newShift.startTime;
+    const endTime = newShift.endTime;
+    if (startTime >= endTime) {
+      showNotificationMessage(
+        "error",
+        "Thời gian kết thúc phải sau thời gian bắt đầu!"
       );
       return;
     }

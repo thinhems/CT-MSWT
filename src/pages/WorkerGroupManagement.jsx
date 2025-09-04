@@ -164,8 +164,30 @@ const WorkerGroupManagement = () => {
   // Tạo danh sách options cho dropdown nhân viên
   const memberOptions = safeAvailableUsers.map(user => ({
     value: user.userId || user.id,
-    label: user.userName || user.name,
-    subtitle: `${user.position || user.roleName || 'Không có chức vụ'} - ${user.phone || user.userPhone || 'Không có số điện thoại'}`,
+    label: user.fullName || user.userName || user.name,
+    subtitle: (() => {
+      const parts = [];
+      
+      // Thêm role name nếu có
+      if (user.roleName) {
+        const roleMap = {
+          'Leader': 'Quản trị hệ thống',
+          'Manager': 'Quản lý cấp cao',
+          'Supervisor': 'Giám sát viên',
+          'Worker': 'Nhân viên vệ sinh'
+        };
+        parts.push(roleMap[user.roleName] || user.roleName);
+      } else if (user.position) {
+        parts.push(user.position);
+      }
+      
+      // Thêm số điện thoại nếu có
+      if (user.phone || user.userPhone) {
+        parts.push(user.phone || user.userPhone);
+      }
+      
+      return parts.join(' - ');
+    })(),
     avatar: user.avatar || user.userAvatar
   }));
 

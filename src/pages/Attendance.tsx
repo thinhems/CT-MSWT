@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import { useAttendanceAll, useAttendanceByDate, AttendanceRecord } from "../hooks/useAttendance";
 
 const Attendance = () => {
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  // Mặc định hiển thị ngày hôm nay
+  const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  const [selectedDate, setSelectedDate] = useState<string>(today);
 
   const { records: allRecords, isLoading: loadingAll, error: errorAll } = useAttendanceAll();
   const { records: dateRecords, isLoading: loadingDate, error: errorDate } = useAttendanceByDate(selectedDate || undefined);
@@ -40,22 +42,91 @@ const Attendance = () => {
         </nav>
       </div>
 
-      <div style={{ padding: 16, display: "flex", alignItems: "center", gap: 12 }}>
-        <label style={{ fontSize: 14, color: "#374151" }}>Chọn ngày:</label>
+      <div style={{ padding: 16, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <label style={{ fontSize: 14, color: "#374151", fontWeight: "500" }}>Chọn ngày:</label>
         <input
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          style={{ padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14 }}
+          style={{ 
+            padding: "8px 12px", 
+            border: "1px solid #d1d5db", 
+            borderRadius: 6, 
+            fontSize: 14,
+            transition: "border-color 0.2s ease"
+          }}
+          onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+          onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
         />
         {selectedDate && (
           <button
             onClick={() => setSelectedDate("")}
-            style={{ padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 6, background: "white", cursor: "pointer" }}
+            style={{ 
+              padding: "8px 12px", 
+              border: "1px solid #d1d5db", 
+              borderRadius: 6, 
+              background: "white", 
+              cursor: "pointer",
+              fontSize: "14px",
+              transition: "all 0.2s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "#f3f4f6";
+              e.target.style.borderColor = "#9ca3af";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "white";
+              e.target.style.borderColor = "#d1d5db";
+            }}
           >
-            Xem tất cả
+            Xem tất cả ngày
           </button>
         )}
+        
+        {/* Hiển thị thông tin ngày đang xem */}
+        <div style={{ 
+          marginLeft: "auto", 
+          fontSize: "14px", 
+          color: "#6b7280",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px"
+        }}>
+          {selectedDate ? (
+            <>
+              <span style={{ color: "#374151", fontWeight: "500" }}>Đang xem:</span>
+              <span style={{ 
+                backgroundColor: "#eff6ff", 
+                color: "#1d4ed8", 
+                padding: "4px 8px", 
+                borderRadius: "4px",
+                fontSize: "12px",
+                fontWeight: "500"
+              }}>
+                {new Date(selectedDate).toLocaleDateString('vi-VN', { 
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </span>
+            </>
+          ) : (
+            <>
+              <span style={{ color: "#374151", fontWeight: "500" }}>Đang xem:</span>
+              <span style={{ 
+                backgroundColor: "#f3f4f6", 
+                color: "#6b7280", 
+                padding: "4px 8px", 
+                borderRadius: "4px",
+                fontSize: "12px",
+                fontWeight: "500"
+              }}>
+                Tất cả ngày
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
       <div style={{ padding: 16 }}>

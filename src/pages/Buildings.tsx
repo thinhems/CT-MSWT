@@ -300,7 +300,7 @@ const Buildings = () => {
       </div>
 
              {/* Building Table Container */}
-       <div style={{ flex: "1", overflow: "visible", minHeight: 0 }}>
+       <div style={{ flex: "0 0 auto", overflow: "visible" }}>
          <BuildingTable
            buildings={currentBuildings}
            onActionClick={handleActionClick}
@@ -308,7 +308,7 @@ const Buildings = () => {
        </div>
 
       {/* Pagination */}
-      <div style={{ flex: "0 0 auto", padding: "16px 32px" }}>
+      <div style={{ flex: "0 0 auto", padding: "16px 32px", marginTop: "8px" }}>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
