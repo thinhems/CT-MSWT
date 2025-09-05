@@ -249,10 +249,10 @@ const TrashBinList = () => {
   const handleSubmitTrashBin = async (e) => {
     e.preventDefault();
     
-    if (!newTrashBin.areaId || !newTrashBin.location?.trim()) {
+    if (!newTrashBin.location?.trim()) {
       showNotificationMessage(
         "error",
-        "Vui lòng điền đầy đủ thông tin bắt buộc (Khu vực, Vị trí)!"
+        "Vui lòng điền đầy đủ thông tin bắt buộc (Vị trí)!"
       );
       return;
     }
@@ -261,7 +261,7 @@ const TrashBinList = () => {
     
     try {
       const createData = {
-        areaId: newTrashBin.areaId,
+        areaId: newTrashBin.areaId || null,
         location: newTrashBin.location.trim(),
         roomId: newTrashBin.roomId || ""
       };
@@ -1144,13 +1144,12 @@ const TrashBinList = () => {
                     color: "#374151",
                   }}
                 >
-                  Khu vực *
+                  Khu vực (tùy chọn)
                 </label>
                 <select
                   name="areaId"
                   value={newTrashBin.areaId}
                   onChange={handleInputChange}
-                  required
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -1163,7 +1162,7 @@ const TrashBinList = () => {
                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
                 >
-                  <option value="">Chọn khu vực</option>
+                  <option value="">Không chọn khu vực</option>
                   {areas?.map((area) => (
                     <option key={area.areaId} value={area.areaId}>
                       {area.areaName}
