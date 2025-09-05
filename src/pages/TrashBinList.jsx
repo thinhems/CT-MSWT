@@ -249,20 +249,14 @@ const TrashBinList = () => {
   const handleSubmitTrashBin = async (e) => {
     e.preventDefault();
     
-    if (!newTrashBin.location?.trim()) {
-      showNotificationMessage(
-        "error",
-        "Vui lòng điền đầy đủ thông tin bắt buộc (Vị trí)!"
-      );
-      return;
-    }
+    // Backend sẽ xử lý validation
 
     setIsSubmitting(true);
     
     try {
       const createData = {
         areaId: newTrashBin.areaId || null,
-        location: newTrashBin.location.trim(),
+        location: newTrashBin.location?.trim() || "",
         roomId: newTrashBin.roomId || ""
       };
 
@@ -1182,7 +1176,7 @@ const TrashBinList = () => {
                     color: "#374151",
                   }}
                 >
-                  Vị trí *
+                  Vị trí
                 </label>
                 <input
                   type="text"
@@ -1190,7 +1184,6 @@ const TrashBinList = () => {
                   value={newTrashBin.location}
                   onChange={handleInputChange}
                   placeholder="VD: Tầng 1 phòng 111"
-                  required
                   style={{
                     width: "100%",
                     padding: "12px",

@@ -66,10 +66,7 @@ export function useTrashBins() {
 
   const createAsync = async (newTrashBin: TrashBinCreateRequest) => {
     try {
-      // Validate required fields
-      if (!newTrashBin.areaId || !newTrashBin.location) {
-        throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc (Khu vực và Vị trí)");
-      }
+      // Backend sẽ xử lý validation
 
       // Ensure restroomId is provided if needed
       const cleanedData = {
