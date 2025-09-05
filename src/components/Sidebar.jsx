@@ -123,15 +123,16 @@ const Sidebar = () => {
           icon: HiOutlineOfficeBuilding,
         },
         {
-          title: "Quản lý phòng",
-          path: "/rooms",
-          icon: HiOutlineHome,
-        },
-        {
           title: "Quản lý khu vực",
           path: "/areas",
           icon: HiOutlineFolder,
         },
+        {
+          title: "Quản lý phòng",
+          path: "/rooms",
+          icon: HiOutlineHome,
+        },
+        
         {
           title: "Danh sách thùng rác",
           path: "/trash",
