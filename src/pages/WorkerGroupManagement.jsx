@@ -7,11 +7,18 @@ import WorkerGroupTable from "../components/WorkerGroupTable";
 import { useWorkerGroup } from "../hooks/useWorkerGroup";
 import MultiSelectDropdown from "../components/common/MultiSelectDropdown";
 import { authService } from "../services/authService";
+import { BASE_API_URL } from "../constants/api-urls";
 
 const WorkerGroupManagement = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Helper function to get correct API URL based on environment
+  const getApiUrl = (endpoint) => {
+    const isDevelopment = import.meta.env.DEV;
+    return isDevelopment ? `/api/${endpoint}` : `${BASE_API_URL}/${endpoint}`;
+  };
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -52,7 +59,7 @@ const WorkerGroupManagement = () => {
       setIsLoadingUsers(true);
       setUsersError(null);
       
-      const response = await fetch('/api/workerGroup/available-users');
+      const response = await fetch(getApiUrl('workerGroup/available-users'));
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -220,7 +227,7 @@ const WorkerGroupManagement = () => {
         console.log('📊 API expects: { name, description, userIds }');
       
       // Make API call to create worker group using workGroupMember/create endpoint
-      const response = await fetch('/api/workGroupMember/create', {
+      const response = await fetch(getApiUrl('workGroupMember/create'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -295,7 +302,7 @@ const WorkerGroupManagement = () => {
        console.log('📊 API expects: { workerGroupName, description, memberUserIds }');
       
       // Make API call to update worker group
-      const response = await fetch(`/api/workerGroup/${editingGroup.groupId}`, {
+      const response = await fetch(getApiUrl(`workerGroup/${editingGroup.groupId}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
