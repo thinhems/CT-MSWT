@@ -108,6 +108,12 @@ const ScheduleDetailsPage = () => {
     areaId: "",
   });
 
+  // Separate state for time components
+  const [timeComponents, setTimeComponents] = useState({
+    hour: "",
+    minute: "",
+  });
+
   // State for detail modal
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState<ScheduleDetailResponse | null>(null);
@@ -223,6 +229,82 @@ const ScheduleDetailsPage = () => {
     }
   };
 
+  // Handle time component changes
+  const handleTimeComponentChange = (component: 'hour' | 'minute', value: string) => {
+    setTimeComponents(prev => {
+      const updated = {
+        ...prev,
+        [component]: value
+      };
+      
+      // Update startTime in newDetail when both hour and minute are selected
+      if (updated.hour && updated.minute) {
+        setNewDetail(prevDetail => ({
+          ...prevDetail,
+          startTime: `${updated.hour.padStart(2, '0')}:${updated.minute.padStart(2, '0')}:00`
+        }));
+      } else {
+        setNewDetail(prevDetail => ({
+          ...prevDetail,
+          startTime: ""
+        }));
+      }
+      
+      return updated;
+    });
+  };
+
+
+  // Enhanced validation function
+  const validateForm = () => {
+    const errors = [];
+    
+    if (!scheduleId) {
+      errors.push("Không tìm thấy thông tin lịch trình!");
+    }
+    
+    if (!newDetail?.description?.trim()) {
+      errors.push("Vui lòng nhập mô tả công việc!");
+    }
+    
+    if (!newDetail?.workerGroupId?.trim()) {
+      errors.push("Vui lòng chọn nhóm công nhân!");
+    }
+    
+    if (!newDetail?.groupAssignmentId?.trim()) {
+      errors.push("Vui lòng chọn phân công nhóm!");
+    }
+    
+    if (!newDetail?.areaId?.trim()) {
+      errors.push("Vui lòng chọn khu vực!");
+    }
+    
+    // Validate time components if provided
+    if (timeComponents.hour && !timeComponents.minute) {
+      errors.push("Vui lòng nhập phút!");
+    }
+    if (timeComponents.minute && !timeComponents.hour) {
+      errors.push("Vui lòng nhập giờ!");
+    }
+    
+    // Validate time ranges
+    if (timeComponents.hour) {
+      const hour = parseInt(timeComponents.hour);
+      if (isNaN(hour) || hour < 0 || hour > 23) {
+        errors.push("Giờ phải từ 0 đến 23!");
+      }
+    }
+    
+    if (timeComponents.minute) {
+      const minute = parseInt(timeComponents.minute);
+      if (isNaN(minute) || minute < 0 || minute > 59) {
+        errors.push("Phút phải từ 0 đến 59!");
+      }
+    }
+    
+    return errors;
+  };
+
   // Handle form submission using the useScheduleDetails hook
   const handleSubmitDetail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,17 +312,12 @@ const ScheduleDetailsPage = () => {
     console.log("🚀 FORM SUBMISSION STARTED");
     console.log("- Schedule ID:", scheduleId);
     console.log("- newDetail:", newDetail);
-    console.log("- Description:", `"${newDetail?.description}" (trimmed: "${newDetail?.description?.trim()}")`);
     
-    if (!scheduleId) {
-      console.log("❌ VALIDATION FAILED: No schedule ID");
-      showNotification("error", "Không tìm thấy thông tin lịch trình!");
-      return;
-    }
-    
-    if (!newDetail?.description?.trim()) {
-      console.log("❌ VALIDATION FAILED: Empty description");
-      showNotification("error", "Vui lòng nhập đầy đủ thông tin mô tả công việc!");
+    // Enhanced validation
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      console.log("❌ VALIDATION FAILED:", validationErrors);
+      showNotification("error", validationErrors.join(" "));
       return;
     }
     
@@ -264,22 +341,33 @@ const ScheduleDetailsPage = () => {
       // Use the hook function which has the correct endpoint configuration
       console.log(`Using hook function createScheduleDetailForSchedule with scheduleId: ${scheduleId}`);
       
-      const result = await createScheduleDetailForSchedule(scheduleId, requestBody);
+      const result = await createScheduleDetailForSchedule(scheduleId!, requestBody);
 
       console.log("=== RESPONSE SUCCESS ===");
       console.log("Response data:", result);
       
-      // Show success message
-      showNotification("success", "Tạo chi tiết lịch trình thành công!");
+      // Show success message with details
+      showNotification("success", `✅ Tạo chi tiết lịch trình thành công! 
+        📝 Mô tả: ${newDetail.description.slice(0, 50)}${newDetail.description.length > 50 ? '...' : ''}
+        👥 Nhóm: ${workerGroupsData?.find(g => g.workerGroupId === newDetail.workerGroupId)?.workerGroupName || 'N/A'}
+        📍 Khu vực: ${areasData?.find((a: any) => a.areaId === newDetail.areaId)?.areaName || 'N/A'}`);
       
       // Reset form and close
       setShowCreateForm(false);
-      setNewDetail({
-        description: "",
-        workerGroupId: "",
-        startTime: "",
-        groupAssignmentId: "",
-        areaId: "",
+                              setNewDetail({
+                          description: "",
+                          workerGroupId: "",
+                          startTime: "",
+                          groupAssignmentId: "",
+                          areaId: "",
+                        });
+                        setTimeComponents({
+                          hour: "",
+                          minute: "",
+                        });
+      setTimeComponents({
+        hour: "",
+        minute: "",
       });
       
       // Refresh the schedule details using mutate
@@ -288,27 +376,25 @@ const ScheduleDetailsPage = () => {
     } catch (error: any) {
       console.error("Error creating schedule detail:", error);
       
-      // Provide specific error messages based on error type
-      let errorMessage = "❌ **VẤN ĐỀ BACKEND NGHIÊM TRỌNG**\n\n";
+      // Provide user-friendly error messages
+      let errorMessage = "❌ Không thể tạo chi tiết lịch trình! ";
       
-      if (error.message?.includes('Network Error') || error.message?.includes('kết nối mạng')) {
-        errorMessage += "🔥 **CORS + Server Error Combo:**\n";
-        errorMessage += "- Backend server trả về HTTP 500 (Internal Server Error)\n";
-        errorMessage += "- CORS policy chưa được cấu hình đúng\n";
-        errorMessage += "- Endpoint có thể chưa được implement hoặc có bug\n\n";
-        errorMessage += "📞 **Cần liên hệ Backend Team để:**\n";
-        errorMessage += "1. Fix lỗi HTTP 500 trên endpoint POST /scheduledetails/{id}/details\n";
-        errorMessage += "2. Cấu hình CORS cho endpoint này\n";
-        errorMessage += "3. Kiểm tra data validation và database schema\n\n";
-        errorMessage += "⚠️ **Tạm thời không thể tạo schedule detail mới!**";
-      } else if (error.response?.status === 500) {
-        errorMessage += "Backend server gặp lỗi nội bộ (HTTP 500).";
+      if (error.response?.status === 400) {
+        errorMessage += "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin đã nhập.";
+      } else if (error.response?.status === 401) {
+        errorMessage += "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+      } else if (error.response?.status === 403) {
+        errorMessage += "Bạn không có quyền thực hiện thao tác này.";
       } else if (error.response?.status === 404) {
-        errorMessage += "Endpoint không tồn tại (HTTP 404).";
+        errorMessage += "Không tìm thấy lịch trình hoặc endpoint không tồn tại.";
+      } else if (error.response?.status === 500) {
+        errorMessage += "Lỗi server nội bộ. Vui lòng thử lại sau hoặc liên hệ quản trị viên.";
+      } else if (error.message?.includes('Network Error') || error.message?.includes('kết nối mạng')) {
+        errorMessage += "Lỗi kết nối mạng. Vui lòng kiểm tra internet và thử lại.";
       } else if (error.message?.includes('CORS')) {
-        errorMessage += "CORS policy chưa được cấu hình đúng.";
+        errorMessage += "Lỗi cấu hình server. Vui lòng liên hệ quản trị viên.";
       } else {
-        errorMessage += `Lỗi không xác định: ${error.message || 'Không rõ nguyên nhân'}`;
+        errorMessage += `Lỗi không xác định: ${error.message || 'Vui lòng thử lại sau'}`;
       }
       
       showNotification("error", errorMessage);
@@ -915,13 +1001,17 @@ const ScheduleDetailsPage = () => {
                         if (!showCreateForm) {
                           console.log("- Opening form, resetting newDetail");
                           // Reset form when opening
-                          setNewDetail({
-                            description: "",
-                            workerGroupId: "",
-                            startTime: "",
-                            groupAssignmentId: "",
-                            areaId: "",
-                          });
+                                                  setNewDetail({
+                          description: "",
+                          workerGroupId: "",
+                          startTime: "",
+                          groupAssignmentId: "",
+                          areaId: "",
+                        });
+                        setTimeComponents({
+                          hour: "",
+                          minute: "",
+                        });
                         } else {
                           console.log("- Closing form");
                         }
@@ -961,54 +1051,90 @@ const ScheduleDetailsPage = () => {
              {/* Create Form */}
              {showCreateForm && (
                <form onSubmit={handleSubmitDetail} style={{
-                 backgroundColor: "#f0f9ff",
-                 borderRadius: "8px",
-                 padding: "20px",
-                 marginBottom: "16px",
-                 border: "1px solid #e0f2fe"
+                 backgroundColor: "#ffffff",
+                 borderRadius: "12px",
+                 padding: "24px",
+                 marginBottom: "20px",
+                 border: "1px solid #e5e7eb",
+                 boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
                }}>
-                 <h4 style={{ 
-                   fontSize: "14px", 
-                   fontWeight: "600", 
-                   color: "#374151",
-                   marginBottom: "16px",
-                   marginTop: "0",
-                   letterSpacing: "0.25px"
+                 <div style={{
+                   display: "flex",
+                   alignItems: "center",
+                   justifyContent: "space-between",
+                   marginBottom: "20px",
+                   paddingBottom: "16px",
+                   borderBottom: "2px solid #f3f4f6"
                  }}>
-                   Tạo chi tiết lịch trình
-                 </h4>
-                 
-                 {/* Worker Group Selection */}
-                 <div style={{ marginBottom: "20px" }}>
-                   <div style={{ 
-                     marginBottom: "8px"
+                   <h4 style={{ 
+                     fontSize: "18px", 
+                     fontWeight: "700", 
+                     color: "#1f2937",
+                     margin: "0",
+                     letterSpacing: "0.25px"
                    }}>
+                     📝 Tạo chi tiết lịch trình
+                   </h4>
+                   <button
+                     type="button"
+                     onClick={() => setShowCreateForm(false)}
+                     style={{
+                       padding: "6px",
+                       border: "none",
+                       borderRadius: "6px",
+                       backgroundColor: "transparent",
+                       cursor: "pointer",
+                       color: "#6b7280",
+                       fontSize: "18px"
+                     }}
+                     onMouseEnter={(e) => ((e.target as HTMLButtonElement).style.backgroundColor = "#f3f4f6")}
+                     onMouseLeave={(e) => ((e.target as HTMLButtonElement).style.backgroundColor = "transparent")}
+                   >
+                     ✕
+                   </button>
+                 </div>
+                 
+                 {/* Form Grid Layout */}
+                 <div style={{
+                   display: "grid",
+                   gridTemplateColumns: "1fr 1fr",
+                   gap: "20px",
+                   marginBottom: "24px"
+                 }}>
+                   {/* Worker Group Selection */}
+                   <div>
                      <label style={{ 
-                       fontSize: "12px", 
+                       display: "block",
+                       fontSize: "14px", 
                        fontWeight: "600",
                        color: "#374151",
+                       marginBottom: "8px",
                        letterSpacing: "0.1px"
                      }}>
-                       Chọn nhóm công nhân
+                       👥 Chọn nhóm công nhân <span style={{ color: "#ef4444" }}>*</span>
                      </label>
-                   </div>
-                   <select
-                     name="workerGroupId"
-                     value={newDetail.workerGroupId}
-                     onChange={handleDetailInputChange}
-                     disabled={isLoadingWorkerGroups}
-                     style={{
-                       width: "100%",
-                       padding: "12px",
-                       border: "1px solid #d1d5db",
-                       borderRadius: "8px",
-                       fontSize: "12px",
-                       backgroundColor: isLoadingWorkerGroups ? "#f3f4f6" : "white",
-                       fontFamily: "inherit",
-                       cursor: isLoadingWorkerGroups ? "not-allowed" : "pointer",
-                       letterSpacing: "0.1px"
-                     }}
-                   >
+                     <select
+                       name="workerGroupId"
+                       value={newDetail.workerGroupId}
+                       onChange={handleDetailInputChange}
+                       disabled={isLoadingWorkerGroups}
+                       required
+                       style={{
+                         width: "100%",
+                         padding: "12px 16px",
+                         border: "2px solid #e5e7eb",
+                         borderRadius: "8px",
+                         fontSize: "14px",
+                         backgroundColor: isLoadingWorkerGroups ? "#f9fafb" : "white",
+                         fontFamily: "inherit",
+                         cursor: isLoadingWorkerGroups ? "not-allowed" : "pointer",
+                         letterSpacing: "0.1px",
+                         transition: "all 0.2s ease",
+                         outline: "none"
+                       }}
+                       onFocus={(e) => ((e.target as HTMLSelectElement).style.borderColor = "#3b82f6")}
+                       onBlur={(e) => ((e.target as HTMLSelectElement).style.borderColor = "#e5e7eb")}
+                     >
                      <option value="">
                        {isLoadingWorkerGroups ? "Đang tải..." : "-- Chọn tên nhóm công nhân --"}
                      </option>
@@ -1023,81 +1149,161 @@ const ScheduleDetailsPage = () => {
                          {isLoadingWorkerGroups ? "Đang tải..." : "Không có dữ liệu nhóm công nhân"}
                        </option>
                      )}
-                   </select>
-                 </div>
+                     </select>
+                   </div>
 
-                 {/* Start Time Selection */}
-                 <div style={{ marginBottom: "20px" }}>
-                   <div style={{ 
-                     marginBottom: "8px"
-                   }}>
+                   {/* Start Time Selection */}
+                   <div>
                      <label style={{ 
-                       fontSize: "12px", 
+                       display: "block",
+                       fontSize: "14px", 
                        fontWeight: "600",
                        color: "#374151",
+                       marginBottom: "8px",
                        letterSpacing: "0.1px"
                      }}>
-                       Thời gian bắt đầu (24h)
+                       🕐 Thời gian bắt đầu
                      </label>
-                   </div>
-                   <input
-                     type="text"
-                     name="startTime"
-                     value={newDetail.startTime}
-                     onChange={handleDetailInputChange}
-                     placeholder="HH:MM:SS (ví dụ: 05:00:00, 14:30:00)"
-                     style={{
-                       width: "100%",
-                       padding: "12px",
-                       border: "1px solid #d1d5db",
-                       borderRadius: "8px",
-                       fontSize: "12px",
-                       backgroundColor: "white",
-                       fontFamily: "inherit",
-                       letterSpacing: "0.1px"
-                     }}
-                   />
-                   <div style={{ 
-                     fontSize: "12px", 
-                     color: "#6b7280", 
-                     marginTop: "4px",
-                     fontStyle: "italic"
-                   }}>
-                     Định dạng: HH:MM:SS (ví dụ: 05:00:00, 14:30:00)
+                     <div style={{
+                       display: "flex",
+                       gap: "12px",
+                       alignItems: "center"
+                     }}>
+                       {/* Hour Input */}
+                       <div style={{ flex: 1 }}>
+                         <input
+                           type="number"
+                           min="0"
+                           max="23"
+                           value={timeComponents.hour}
+                           onChange={(e) => {
+                             const value = e.target.value;
+                             if (value === '' || (parseInt(value) >= 0 && parseInt(value) <= 23)) {
+                               handleTimeComponentChange('hour', value);
+                             }
+                           }}
+                           placeholder="Giờ (0-23)"
+                           style={{
+                             width: "100%",
+                             padding: "12px 16px",
+                             border: "2px solid #e5e7eb",
+                             borderRadius: "8px",
+                             fontSize: "14px",
+                             backgroundColor: "white",
+                             fontFamily: "inherit",
+                             letterSpacing: "0.1px",
+                             transition: "all 0.2s ease",
+                             outline: "none",
+                             textAlign: "center"
+                           }}
+                           onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "#3b82f6")}
+                           onBlur={(e) => ((e.target as HTMLInputElement).style.borderColor = "#e5e7eb")}
+                         />
+                       </div>
+                       
+                       <div style={{
+                         fontSize: "18px",
+                         fontWeight: "600",
+                         color: "#6b7280"
+                       }}>
+                         :
+                       </div>
+                       
+                       {/* Minute Input */}
+                       <div style={{ flex: 1 }}>
+                         <input
+                           type="number"
+                           min="0"
+                           max="59"
+                           value={timeComponents.minute}
+                           onChange={(e) => {
+                             const value = e.target.value;
+                             if (value === '' || (parseInt(value) >= 0 && parseInt(value) <= 59)) {
+                               handleTimeComponentChange('minute', value);
+                             }
+                           }}
+                           placeholder="Phút (0-59)"
+                           style={{
+                             width: "100%",
+                             padding: "12px 16px",
+                             border: "2px solid #e5e7eb",
+                             borderRadius: "8px",
+                             fontSize: "14px",
+                             backgroundColor: "white",
+                             fontFamily: "inherit",
+                             letterSpacing: "0.1px",
+                             transition: "all 0.2s ease",
+                             outline: "none",
+                             textAlign: "center"
+                           }}
+                           onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "#3b82f6")}
+                           onBlur={(e) => ((e.target as HTMLInputElement).style.borderColor = "#e5e7eb")}
+                         />
+                       </div>
+                     </div>
+                     
+                     {/* Display current time selection */}
+                     {timeComponents.hour && timeComponents.minute && (
+                       <div style={{ 
+                         fontSize: "12px", 
+                         color: "#059669", 
+                         marginTop: "8px",
+                         fontWeight: "500",
+                         display: "flex",
+                         alignItems: "center",
+                         gap: "4px",
+                         padding: "6px 12px",
+                         backgroundColor: "#f0fdf4",
+                         borderRadius: "6px",
+                         border: "1px solid #bbf7d0"
+                       }}>
+                         ✅ Thời gian đã chọn: {timeComponents.hour.padStart(2, '0')}:{timeComponents.minute.padStart(2, '0')}:00
+                       </div>
+                     )}
                    </div>
                  </div>
 
-                 {/* Group Assignment Selection */}
-                 <div style={{ marginBottom: "20px" }}>
-                   <div style={{ 
-                     marginBottom: "8px"
-                   }}>
+                 {/* Second Row - Group Assignment and Area */}
+                 <div style={{
+                   display: "grid",
+                   gridTemplateColumns: "1fr 1fr",
+                   gap: "20px",
+                   marginBottom: "24px"
+                 }}>
+                   {/* Group Assignment Selection */}
+                   <div>
                      <label style={{ 
-                       fontSize: "12px", 
+                       display: "block",
+                       fontSize: "14px", 
                        fontWeight: "600",
                        color: "#374151",
+                       marginBottom: "8px",
                        letterSpacing: "0.1px"
                      }}>
-                       Chọn phân công nhóm
+                       📋 Chọn phân công nhóm <span style={{ color: "#ef4444" }}>*</span>
                      </label>
-                   </div>
-                   <select
-                     name="groupAssignmentId"
-                     value={newDetail.groupAssignmentId}
-                     onChange={handleDetailInputChange}
-                     disabled={isLoadingGroupAssignments}
-                     style={{
-                       width: "100%",
-                       padding: "12px",
-                       border: "1px solid #d1d5db",
-                       borderRadius: "8px",
-                       fontSize: "12px",
-                       backgroundColor: isLoadingGroupAssignments ? "#f3f4f6" : "white",
-                       fontFamily: "inherit",
-                       cursor: isLoadingGroupAssignments ? "not-allowed" : "pointer",
-                       letterSpacing: "0.1px"
-                     }}
-                   >
+                     <select
+                       name="groupAssignmentId"
+                       value={newDetail.groupAssignmentId}
+                       onChange={handleDetailInputChange}
+                       disabled={isLoadingGroupAssignments}
+                       required
+                       style={{
+                         width: "100%",
+                         padding: "12px 16px",
+                         border: "2px solid #e5e7eb",
+                         borderRadius: "8px",
+                         fontSize: "14px",
+                         backgroundColor: isLoadingGroupAssignments ? "#f9fafb" : "white",
+                         fontFamily: "inherit",
+                         cursor: isLoadingGroupAssignments ? "not-allowed" : "pointer",
+                         letterSpacing: "0.1px",
+                         transition: "all 0.2s ease",
+                         outline: "none"
+                       }}
+                       onFocus={(e) => ((e.target as HTMLSelectElement).style.borderColor = "#3b82f6")}
+                       onBlur={(e) => ((e.target as HTMLSelectElement).style.borderColor = "#e5e7eb")}
+                     >
                      <option value="">
                        {isLoadingGroupAssignments ? "Đang tải..." : "-- Chọn tên phân công nhóm --"}
                      </option>
@@ -1112,40 +1318,43 @@ const ScheduleDetailsPage = () => {
                          {isLoadingGroupAssignments ? "Đang tải..." : "Không có dữ liệu phân công nhóm"}
                        </option>
                      )}
-                   </select>
-                 </div>
+                     </select>
+                   </div>
 
-                 {/* Area Selection */}
-                 <div style={{ marginBottom: "20px" }}>
-                   <div style={{ 
-                     marginBottom: "8px"
-                   }}>
+                   {/* Area Selection */}
+                   <div>
                      <label style={{ 
-                       fontSize: "12px", 
+                       display: "block",
+                       fontSize: "14px", 
                        fontWeight: "600",
                        color: "#374151",
+                       marginBottom: "8px",
                        letterSpacing: "0.1px"
                      }}>
-                       Khu vực
+                       📍 Khu vực <span style={{ color: "#ef4444" }}>*</span>
                      </label>
-                   </div>
-                   <select
-                     name="areaId"
-                     value={newDetail.areaId}
-                     onChange={handleDetailInputChange}
-                     disabled={isLoadingAreas}
-                     style={{
-                       width: "100%",
-                       padding: "12px",
-                       border: "1px solid #d1d5db",
-                       borderRadius: "8px",
-                       fontSize: "12px",
-                       backgroundColor: isLoadingAreas ? "#f3f4f6" : "white",
-                       fontFamily: "inherit",
-                       cursor: isLoadingAreas ? "not-allowed" : "pointer",
-                       letterSpacing: "0.1px"
-                     }}
-                   >
+                     <select
+                       name="areaId"
+                       value={newDetail.areaId}
+                       onChange={handleDetailInputChange}
+                       disabled={isLoadingAreas}
+                       required
+                       style={{
+                         width: "100%",
+                         padding: "12px 16px",
+                         border: "2px solid #e5e7eb",
+                         borderRadius: "8px",
+                         fontSize: "14px",
+                         backgroundColor: isLoadingAreas ? "#f9fafb" : "white",
+                         fontFamily: "inherit",
+                         cursor: isLoadingAreas ? "not-allowed" : "pointer",
+                         letterSpacing: "0.1px",
+                         transition: "all 0.2s ease",
+                         outline: "none"
+                       }}
+                       onFocus={(e) => ((e.target as HTMLSelectElement).style.borderColor = "#3b82f6")}
+                       onBlur={(e) => ((e.target as HTMLSelectElement).style.borderColor = "#e5e7eb")}
+                     >
                      <option value="">
                        {isLoadingAreas ? "Đang tải..." : "-- Chọn khu vực --"}
                      </option>
@@ -1160,101 +1369,134 @@ const ScheduleDetailsPage = () => {
                          {isLoadingAreas ? "Đang tải..." : "Không có dữ liệu khu vực"}
                        </option>
                      )}
-                   </select>
+                     </select>
+                   </div>
                  </div>
                  
-                 {/* Description */}
-                 <div style={{ marginBottom: "20px" }}>
-                   <div style={{ 
-                     marginBottom: "8px"
+                 {/* Description - Full Width */}
+                 <div style={{ marginBottom: "24px" }}>
+                   <label style={{ 
+                     display: "block",
+                     fontSize: "14px", 
+                     fontWeight: "600",
+                     color: "#374151",
+                     marginBottom: "8px",
+                     letterSpacing: "0.1px"
                    }}>
-                     <label style={{ 
-                       fontSize: "12px", 
-                       fontWeight: "600",
-                       color: "#374151",
-                       letterSpacing: "0.1px"
-                     }}>
-                       Mô tả công việc
-                     </label>
-                   </div>
+                     📝 Mô tả công việc <span style={{ color: "#ef4444" }}>*</span>
+                   </label>
                    <textarea
                      name="description"
                      value={newDetail.description}
                      onChange={handleDetailInputChange}
-                     placeholder=""
+                     placeholder="Nhập mô tả chi tiết về công việc cần thực hiện..."
                      required
                      rows={4}
                      style={{
                        width: "100%",
-                       padding: "12px",
-                       border: "1px solid #d1d5db",
+                       padding: "12px 16px",
+                       border: "2px solid #e5e7eb",
                        borderRadius: "8px",
-                       fontSize: "12px",
+                       fontSize: "14px",
                        resize: "vertical",
                        fontFamily: "inherit",
                        backgroundColor: "white",
-                       letterSpacing: "0.1px"
+                       letterSpacing: "0.1px",
+                       transition: "all 0.2s ease",
+                       outline: "none",
+                       minHeight: "100px"
                      }}
+                     onFocus={(e) => ((e.target as HTMLTextAreaElement).style.borderColor = "#3b82f6")}
+                     onBlur={(e) => ((e.target as HTMLTextAreaElement).style.borderColor = "#e5e7eb")}
                    />
                  </div>
 
                  {/* Action Buttons */}
                  <div style={{ 
                    display: "flex", 
-                   gap: "12px", 
-                   justifyContent: "flex-end"
+                   gap: "16px", 
+                   justifyContent: "flex-end",
+                   paddingTop: "16px",
+                   borderTop: "1px solid #f3f4f6"
                  }}>
                    <button
                      type="button"
                      onClick={() => {
                        setShowCreateForm(false);
-                       setNewDetail({
-                         description: "",
-                         workerGroupId: "",
-                         startTime: "",
-                         groupAssignmentId: "",
-                         areaId: "",
-                       });
+                                               setNewDetail({
+                          description: "",
+                          workerGroupId: "",
+                          startTime: "",
+                          groupAssignmentId: "",
+                          areaId: "",
+                        });
+                        setTimeComponents({
+                          hour: "",
+                          minute: "",
+                        });
                      }}
-                                         style={{
-                      padding: "8px 16px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "6px",
-                      backgroundColor: "white",
-                      color: "#374151",
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      letterSpacing: "0.1px"
-                    }}
+                     style={{
+                       padding: "12px 24px",
+                       border: "2px solid #e5e7eb",
+                       borderRadius: "8px",
+                       backgroundColor: "white",
+                       color: "#374151",
+                       fontSize: "14px",
+                       fontWeight: "600",
+                       cursor: "pointer",
+                       transition: "all 0.2s ease",
+                       letterSpacing: "0.1px"
+                     }}
+                     onMouseEnter={(e) => {
+                       (e.target as HTMLButtonElement).style.backgroundColor = "#f9fafb";
+                       (e.target as HTMLButtonElement).style.borderColor = "#d1d5db";
+                     }}
+                     onMouseLeave={(e) => {
+                       (e.target as HTMLButtonElement).style.backgroundColor = "white";
+                       (e.target as HTMLButtonElement).style.borderColor = "#e5e7eb";
+                     }}
                    >
-                     Hủy
+                     ❌ Hủy bỏ
                    </button>
-                                     <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    onClick={(e) => {
-                      console.log("🔘 Submit Button Clicked");
-                      console.log("- isSubmitting:", isSubmitting);
-                      console.log("- Event:", e);
-                      // Don't prevent default, let form submission handle it
-                    }}
-                    style={{
-                      padding: "8px 16px",
-                      border: "none",
-                      borderRadius: "6px",
-                      backgroundColor: isSubmitting ? "#9ca3af" : "#FF5B27",
-                      color: "white",
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      cursor: isSubmitting ? "not-allowed" : "pointer",
-                      transition: "all 0.2s ease",
-                      letterSpacing: "0.1px",
-                      boxShadow: isSubmitting ? "none" : "0 1px 3px rgba(255, 91, 39, 0.2)"
-                    }}
-                  >
-                     {isSubmitting ? "Đang tạo..." : "Tạo chi tiết"}
+                   <button
+                     type="submit"
+                     disabled={isSubmitting}
+                     onClick={(e) => {
+                       console.log("🔘 Submit Button Clicked");
+                       console.log("- isSubmitting:", isSubmitting);
+                       console.log("- Event:", e);
+                       // Don't prevent default, let form submission handle it
+                     }}
+                     style={{
+                       padding: "12px 24px",
+                       border: "none",
+                       borderRadius: "8px",
+                       backgroundColor: isSubmitting ? "#9ca3af" : "#FF5B27",
+                       color: "white",
+                       fontSize: "14px",
+                       fontWeight: "700",
+                       cursor: isSubmitting ? "not-allowed" : "pointer",
+                       transition: "all 0.2s ease",
+                       letterSpacing: "0.1px",
+                       boxShadow: isSubmitting ? "none" : "0 4px 6px -1px rgba(255, 91, 39, 0.3)",
+                       display: "flex",
+                       alignItems: "center",
+                       gap: "8px"
+                     }}
+                     onMouseEnter={(e) => {
+                       if (!isSubmitting) {
+                         (e.target as HTMLButtonElement).style.backgroundColor = "#E04B1F";
+                         (e.target as HTMLButtonElement).style.transform = "translateY(-1px)";
+                       }
+                     }}
+                     onMouseLeave={(e) => {
+                       if (!isSubmitting) {
+                         (e.target as HTMLButtonElement).style.backgroundColor = "#FF5B27";
+                         (e.target as HTMLButtonElement).style.transform = "translateY(0)";
+                       }
+                     }}
+                   >
+                     {isSubmitting ? "⏳ Đang tạo..." : "✅ Tạo chi tiết"}
                    </button>
                  </div>
                </form>
