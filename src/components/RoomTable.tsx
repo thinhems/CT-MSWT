@@ -241,12 +241,7 @@ const RoomTable = ({
                       icon: <HiOutlinePencil style={{ width: "14px", height: "14px" }} />,
                       color: "#374151"
                     },
-                    {
-                      action: 'delete',
-                      label: 'Xóa',
-                      icon: <HiOutlineTrash style={{ width: "14px", height: "14px" }} />,
-                      color: "#dc2626"
-                    }
+                    
                   ]}
                   onItemClick={(item: any, triggerData: any) => handleDropdownAction(item, triggerData)}
                   triggerData={room}
