@@ -1126,7 +1126,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                        fontWeight: "500",
                        color: "#374151"
                      }}>
-                       Chọn phân công nhóm
+                       Chọn nhóm công việc
                      </label>
                    </div>
                    <select

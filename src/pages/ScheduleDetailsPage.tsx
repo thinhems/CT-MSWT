@@ -272,7 +272,7 @@ const ScheduleDetailsPage = () => {
     }
     
     if (!newDetail?.groupAssignmentId?.trim()) {
-      errors.push("Vui lòng chọn phân công nhóm!");
+      errors.push("Vui lòng chọn nhóm công việc!");
     }
     
     if (!newDetail?.areaId?.trim()) {
@@ -1280,7 +1280,7 @@ const ScheduleDetailsPage = () => {
                        marginBottom: "8px",
                        letterSpacing: "0.1px"
                      }}>
-                       📋 Chọn phân công nhóm <span style={{ color: "#ef4444" }}>*</span>
+                       📋 Chọn nhóm công việc <span style={{ color: "#ef4444" }}>*</span>
                      </label>
                      <select
                        name="groupAssignmentId"
