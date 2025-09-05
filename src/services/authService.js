@@ -55,11 +55,11 @@ export const authService = {
           console.log('💼 Guessed position:', userData.position);
           
           // Check if user is Leader - only Leaders can access this web
-          if (userData.role !== 'Leader') {
+          if (userData.role !== 'Quản trị hệ thống') {
             console.log('❌ Access denied - Only Leaders can access this system');
             return {
               success: false,
-              error: 'Chỉ có Quản trị hệ thống (Leader) mới được phép truy cập ứng dụng này.'
+              error: 'Chỉ có Quản trị hệ thống mới được phép truy cập ứng dụng này.'
             };
           }
           
@@ -86,8 +86,8 @@ export const authService = {
             address: '',
             status: 'Hoạt động',
             image: '',
-            roleId: 'c2a66975-420d-4961-9edd-d5bdff89be58', // Default Worker
-            role: 'Worker',
+            roleId: 'RL04', // Default Worker
+            role: 'Nhân viên vệ sinh',
             position: 'Nhân viên vệ sinh',
             createdAt: new Date().toISOString(),
           };
@@ -148,11 +148,11 @@ export const authService = {
         console.log('💼 Final position:', userData.position);
         
         // Check if user is Leader - only Leaders can access this web
-        if (userData.role !== 'Leader') {
+        if (userData.role !== 'Quản trị hệ thống') {
           console.log('❌ Access denied - Only Leaders can access this system');
           return {
             success: false,
-            error: 'Chỉ có Quản trị hệ thống (Leader) mới được phép truy cập ứng dụng này.'
+            error: 'Chỉ có Quản trị hệ thống mới được phép truy cập ứng dụng này.'
           };
         }
         
@@ -233,7 +233,7 @@ export const authService = {
         email: userData.email,
         phone: userData.phone,
         address: userData.address,
-        roleId: userData.roleId || 'c2a66975-420d-4961-9edd-d5bdff89be58' // Default to worker role
+        roleId: userData.roleId || 'RL04' // Default to worker role
       });
       
       console.log('✅ Registration API Response:', response.data);
@@ -306,20 +306,30 @@ export const authService = {
   // Helper function to map roleId to role name
   mapRoleIdToRoleName(roleId) {
     const roleMap = {
-      '0ecdd2e4-d5dc-48b4-8006-03e6b4868e75': 'Leader',      // Quản trị hệ thống
-      '5b7a2bcd-9f5e-4f0e-8e47-2a15bcf85e37': 'Manager',     // Quản lý cấp cao  
-      '7dcd71ae-17c3-4e84-bb9f-dd96fa401976': 'Supervisor',  // Giám sát viên và sinh
-      'c2a66975-420d-4961-9edd-d5bdff89be58': 'Worker'       // Nhân viên vệ sinh
+      'RL01': 'Quản lý cấp cao',     // Manager
+      'RL02': 'Quản trị hệ thống',   // Leader
+      'RL03': 'Giám sát viên vệ sinh', // Supervisor
+      'RL04': 'Nhân viên vệ sinh',   // Worker
+      // Legacy UUID support (for backward compatibility)
+      '0ecdd2e4-d5dc-48b4-8006-03e6b4868e75': 'Quản trị hệ thống',
+      '5b7a2bcd-9f5e-4f0e-8e47-2a15bcf85e37': 'Quản lý cấp cao',
+      '7dcd71ae-17c3-4e84-bb9f-dd96fa401976': 'Giám sát viên vệ sinh',
+      'c2a66975-420d-4961-9edd-d5bdff89be58': 'Nhân viên vệ sinh'
     };
-    return roleMap[roleId] || 'Worker';
+    return roleMap[roleId] || 'Nhân viên vệ sinh';
   },
 
   // Helper function to map roleId to position (Vietnamese)
   mapRoleIdToPosition(roleId) {
     const positionMap = {
+      'RL01': 'Quản lý cấp cao',
+      'RL02': 'Quản trị hệ thống', 
+      'RL03': 'Giám sát viên vệ sinh',
+      'RL04': 'Nhân viên vệ sinh',
+      // Legacy UUID support (for backward compatibility)
       '0ecdd2e4-d5dc-48b4-8006-03e6b4868e75': 'Quản trị hệ thống',
       '5b7a2bcd-9f5e-4f0e-8e47-2a15bcf85e37': 'Quản lý cấp cao',
-      '7dcd71ae-17c3-4e84-bb9f-dd96fa401976': 'Giám sát viên và sinh',
+      '7dcd71ae-17c3-4e84-bb9f-dd96fa401976': 'Giám sát viên vệ sinh',
       'c2a66975-420d-4961-9edd-d5bdff89be58': 'Nhân viên vệ sinh'
     };
     return positionMap[roleId] || 'Nhân viên vệ sinh';
@@ -328,12 +338,14 @@ export const authService = {
   // Helper function to map position to roleId
   mapPositionToRoleId(position) {
     const roleIdMap = {
-      'Quản trị hệ thống': '0ecdd2e4-d5dc-48b4-8006-03e6b4868e75',
-      'Quản lý cấp cao': '5b7a2bcd-9f5e-4f0e-8e47-2a15bcf85e37',
-      'Giám sát viên và sinh': '7dcd71ae-17c3-4e84-bb9f-dd96fa401976',
-      'Nhân viên vệ sinh': 'c2a66975-420d-4961-9edd-d5bdff89be58'
+      'Quản lý cấp cao': 'RL01',
+      'Quản trị hệ thống': 'RL02',
+      'Giám sát viên vệ sinh': 'RL03',
+      'Nhân viên vệ sinh': 'RL04',
+      // Legacy support
+      'Giám sát viên và sinh': 'RL03' // Fix typo in old mapping
     };
-    return roleIdMap[position] || 'c2a66975-420d-4961-9edd-d5bdff89be58';
+    return roleIdMap[position] || 'RL04';
   },
 
   // Check if user is authenticated
@@ -348,7 +360,7 @@ export const authService = {
     // Additional check: Only Leaders can access this system
     try {
       const user = JSON.parse(userData);
-      if (user.role !== 'Leader') {
+      if (user.role !== 'Quản trị hệ thống') {
         console.log('❌ Authentication failed - User is not a Leader');
         // Clear invalid user data
         this.logout();
@@ -378,16 +390,16 @@ export const authService = {
     
     // Pattern matching cho role dựa trên username
     if (lowerUsername.includes('leader') || lowerUsername.includes('admin') || lowerUsername.includes('system')) {
-      return '0ecdd2e4-d5dc-48b4-8006-03e6b4868e75'; // Leader - Quản trị hệ thống
+      return 'RL02'; // Leader - Quản trị hệ thống
     }
     else if (lowerUsername.includes('manager') || lowerUsername.includes('quanly')) {
-      return '5b7a2bcd-9f5e-4f0e-8e47-2a15bcf85e37'; // Manager - Quản lý cấp cao
+      return 'RL01'; // Manager - Quản lý cấp cao
     }
     else if (lowerUsername.includes('supervisor') || lowerUsername.includes('giamsat')) {
-      return '7dcd71ae-17c3-4e84-bb9f-dd96fa401976'; // Supervisor - Giám sát viên
+      return 'RL03'; // Supervisor - Giám sát viên vệ sinh
     }
     else {
-      return 'c2a66975-420d-4961-9edd-d5bdff89be58'; // Default Worker - Nhân viên vệ sinh
+      return 'RL04'; // Default Worker - Nhân viên vệ sinh
     }
   }
 };

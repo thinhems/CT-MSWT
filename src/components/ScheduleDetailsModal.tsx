@@ -11,6 +11,7 @@ import useSWR from "swr";
 import { useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { authService } from "../services/authService";
 
 interface ScheduleDetailResponse {
   scheduleDetailId: string;
@@ -1492,7 +1493,7 @@ const ScheduleDetailsModal = ({ schedule, isVisible, onClose }: IProps) => {
                                   ID: {worker.userId}
                                 </div>
                                 <div style={{ color: "#6b7280", fontSize: "12px" }}>
-                                  Vai trò: {worker.roleId}
+                                  Vai trò: {authService.mapRoleIdToRoleName(worker.roleId)}
                                 </div>
                               </div>
                             </div>

@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   HiOutlineBell, 
-  HiOutlineCheck, 
-  HiOutlineX, 
-  HiOutlineTrash,
   HiOutlineExclamationCircle,
   HiOutlineInformationCircle,
   HiOutlineCheckCircle
@@ -11,10 +8,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { 
   useNotifications, 
-  useNotificationsByUser, 
-  markNotificationAsRead, 
-  markAllNotificationsAsRead, 
-  deleteNotification as deleteNotificationAPI 
+  useNotificationsByUser
 } from '../hooks/useNotifications';
 
 const Notifications = () => {
@@ -121,54 +115,7 @@ const Notifications = () => {
     }
   };
 
-  const markAsRead = async (id) => {
-    try {
-      await markNotificationAsRead(id);
-      refetch();
-      if (user?.id) refetchUserNotifications();
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-      alert('Không thể đánh dấu thông báo đã đọc');
-    }
-  };
-
-  const markAsUnread = async (id) => {
-    try {
-      // Note: API might not have mark as unread, you may need to implement this
-      // For now, we'll just refetch data
-      refetch();
-      if (user?.id) refetchUserNotifications();
-    } catch (error) {
-      console.error('Failed to mark notification as unread:', error);
-      alert('Không thể đánh dấu thông báo chưa đọc');
-    }
-  };
-
-  const deleteNotification = async (id) => {
-    if (window.confirm("Bạn có chắc muốn xóa thông báo này?")) {
-      try {
-        await deleteNotificationAPI(id);
-        refetch();
-        if (user?.id) refetchUserNotifications();
-      } catch (error) {
-        console.error('Failed to delete notification:', error);
-        alert('Không thể xóa thông báo');
-      }
-    }
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      if (user?.id) {
-        await markAllNotificationsAsRead(user.id);
-      }
-      refetch();
-      if (user?.id) refetchUserNotifications();
-    } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
-      alert('Không thể đánh dấu tất cả thông báo đã đọc');
-    }
-  };
+  // Read-only mode - removed action functions
 
   const unreadCount = notificationsArray.filter(alert => alert && alert.resolvedAt === null).length;
 
@@ -333,31 +280,7 @@ const Notifications = () => {
             ))}
           </div>
 
-          {/* Action Button */}
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllAsRead}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "10px 16px",
-                backgroundColor: "#f3f4f6",
-                border: "1px solid #e5e7eb",
-                borderRadius: "8px",
-                color: "#374151",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                transition: "all 0.2s"
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = "#e5e7eb"}
-              onMouseLeave={(e) => e.target.style.backgroundColor = "#f3f4f6"}
-            >
-              <HiOutlineCheck style={{ width: "16px", height: "16px" }} />
-              Đánh dấu tất cả đã xử lý
-            </button>
-          )}
+          {/* Read-only mode - no action buttons */}
         </div>
       </div>
 
@@ -515,84 +438,7 @@ const Notifications = () => {
                         </div>
                       </div>
 
-                      {/* Actions */}
-                      <div style={{ display: "flex", gap: "8px", marginLeft: "16px" }}>
-                        {!isResolved ? (
-                          <button
-                            onClick={() => markAsRead(alert.alertId)}
-                            style={{
-                              padding: "6px",
-                              backgroundColor: "transparent",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "6px",
-                              color: "#6b7280",
-                              cursor: "pointer",
-                              transition: "all 0.2s"
-                            }}
-                            onMouseEnter={(e) => {
-                              e.target.style.backgroundColor = "#f3f4f6";
-                              e.target.style.color = "#374151";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.backgroundColor = "transparent";
-                              e.target.style.color = "#6b7280";
-                            }}
-                            title="Đánh dấu đã xử lý"
-                          >
-                            <HiOutlineCheck style={{ width: "16px", height: "16px" }} />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => markAsUnread(alert.alertId)}
-                            style={{
-                              padding: "6px",
-                              backgroundColor: "transparent",
-                              border: "1px solid #e5e7eb",
-                              borderRadius: "6px",
-                              color: "#6b7280",
-                              cursor: "pointer",
-                              transition: "all 0.2s"
-                            }}
-                            onMouseEnter={(e) => {
-                              e.target.style.backgroundColor = "#f3f4f6";
-                              e.target.style.color = "#374151";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.backgroundColor = "transparent";
-                              e.target.style.color = "#6b7280";
-                            }}
-                            title="Đánh dấu chưa xử lý"
-                          >
-                            <HiOutlineX style={{ width: "16px", height: "16px" }} />
-                          </button>
-                        )}
-                        
-                        <button
-                          onClick={() => deleteNotification(alert.alertId)}
-                          style={{
-                            padding: "6px",
-                            backgroundColor: "transparent",
-                            border: "1px solid #e5e7eb",
-                            borderRadius: "6px",
-                            color: "#6b7280",
-                            cursor: "pointer",
-                            transition: "all 0.2s"
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = "#fee2e2";
-                            e.target.style.borderColor = "#fecaca";
-                            e.target.style.color = "#dc2626";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = "transparent";
-                            e.target.style.borderColor = "#e5e7eb";
-                            e.target.style.color = "#6b7280";
-                          }}
-                          title="Xóa thông báo"
-                        >
-                          <HiOutlineTrash style={{ width: "16px", height: "16px" }} />
-                        </button>
-                      </div>
+                      {/* Read-only mode - no action buttons */}
                     </div>
                   </div>
                 </div>

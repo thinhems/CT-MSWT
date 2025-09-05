@@ -186,6 +186,9 @@ const WorkerGroupManagement = () => {
         parts.push(roleMap[user.roleName] || user.roleName);
       } else if (user.position) {
         parts.push(user.position);
+      } else if (user.roleId) {
+        // Nếu không có roleName/position, map từ roleId
+        parts.push(authService.mapRoleIdToRoleName(user.roleId));
       }
       
       // Thêm số điện thoại nếu có

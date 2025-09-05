@@ -7,10 +7,9 @@ import {
   HiOutlinePlus,
   HiOutlineSearch,
   HiX,
-  HiOutlinePencil,
-  HiOutlineEye,
 } from "react-icons/hi";
 import AreaTable from "../components/AreaTable";
+import Notification from "../components/Notification";
 import Pagination from "../components/Pagination";
 import { ICreateAreaRequest } from "@/config/models/area.model";
 
@@ -38,10 +37,30 @@ const Areas = () => {
     description: "",
     status: "Hoạt động",
   });
+  const [notification, setNotification] = useState({
+    isVisible: false,
+    type: "success",
+    message: "",
+  });
 
   const itemsPerPage = 5; // Số khu vực hiển thị mỗi trang
   const { areas, createAsync, deleteAsync, updateAsync } = useAreas();
   const { buildings } = useBuildings();
+
+  const showNotificationMessage = (type: string, message: string) => {
+    setNotification({
+      isVisible: true,
+      type,
+      message,
+    });
+  };
+
+  const hideNotification = () => {
+    setNotification((prev) => ({
+      ...prev,
+      isVisible: false,
+    }));
+  };
 
   const handleActionClick = async ({
     action,
@@ -68,8 +87,29 @@ const Areas = () => {
       setShowUpdateAreaModal(true);
     } else if (action === "delete") {
       if (window.confirm("Bạn có chắc muốn xóa khu vực này?")) {
-        await deleteAsync(area.areaId);
-        alert("✅ Đã xóa khu vực thành công!");
+        try {
+          console.log('🗑️ ===== BẮT ĐẦU XÓA KHU VỰC =====');
+          console.log('📝 Thông tin khu vực cần xóa:');
+          console.log('   🏷️ Tên khu vực:', area.areaName);
+          console.log('   🏢 Tòa nhà:', area.buildingName);
+          console.log('   🆔 Area ID:', area.areaId);
+          console.log('   📊 Trạng thái:', area.status);
+          console.log('=====================================');
+          
+          await deleteAsync(area.areaId);
+          
+          console.log('🎉 ===== XÓA KHU VỰC THÀNH CÔNG =====');
+          console.log('✅ Đã xóa khu vực thành công:', area.areaName);
+          console.log('=======================================');
+          
+          showNotificationMessage("success", "🗑️ Đã xóa khu vực thành công!");
+        } catch (error) {
+          console.error('❌ ===== LỖI KHI XÓA KHU VỰC =====');
+          console.error('🚨 Chi tiết lỗi:', error);
+          console.error('=======================================');
+          
+          showNotificationMessage("error", "❌ Có lỗi xảy ra khi xóa khu vực!");
+        }
       }
     }
   };
@@ -113,16 +153,38 @@ const Areas = () => {
 
   const handleSubmitUpdate = async (e: any) => {
     e.preventDefault();
-    handleCloseUpdateModal();
+    
+    try {
+      console.log('🔄 ===== BẮT ĐẦU CẬP NHẬT KHU VỰC =====');
+      console.log('📝 Dữ liệu cập nhật:');
+      console.log('   🏷️ Tên khu vực:', updateAreaData.areaName);
+      console.log('   🏢 Tòa nhà ID:', updateAreaData.buildingId);
+      console.log('   📄 Mô tả:', updateAreaData.description);
+      console.log('   📊 Trạng thái:', updateAreaData.status);
+      console.log('   🆔 Area ID:', updateAreaData.areaId);
+      console.log('=====================================');
+      
+      await updateAsync(updateAreaData.areaId, {
+        areaName: updateAreaData.areaName,
+        buildingId: updateAreaData.buildingId,
+        description: updateAreaData.description,
+        status: updateAreaData.status,
+      });
 
-    await updateAsync(updateAreaData.areaId, {
-      areaName: updateAreaData.areaName,
-      buildingId: updateAreaData.buildingId,
-      description: updateAreaData.description,
-      status: updateAreaData.status,
-    });
-
-    alert("✅ Đã cập nhật khu vực thành công!");
+      console.log('🎉 ===== CẬP NHẬT KHU VỰC THÀNH CÔNG =====');
+      console.log('✅ Đã cập nhật khu vực:', updateAreaData.areaName);
+      console.log('🏢 Thuộc tòa nhà:', buildings.find(b => b.buildingId === updateAreaData.buildingId)?.buildingName || 'Không xác định');
+      console.log('=======================================');
+      
+      handleCloseUpdateModal();
+      showNotificationMessage("success", "🔄 Đã cập nhật khu vực thành công!");
+    } catch (error) {
+      console.error('❌ ===== LỖI KHI CẬP NHẬT KHU VỰC =====');
+      console.error('🚨 Chi tiết lỗi:', error);
+      console.error('=======================================');
+      
+      showNotificationMessage("error", "❌ Có lỗi xảy ra khi cập nhật khu vực!");
+    }
   };
 
   const handleClosePopup = () => {
@@ -155,7 +217,7 @@ const Areas = () => {
     }));
   };
 
-  const handleSubmitArea = (e: any) => {
+  const handleSubmitArea = async (e: any) => {
     e.preventDefault();
 
     // Kiểm tra đầy đủ thông tin
@@ -163,33 +225,63 @@ const Areas = () => {
       !newArea.areaName ||
       !newArea.buildingId
     ) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc!");
+      showNotificationMessage("error", "❌ Vui lòng điền đầy đủ thông tin bắt buộc!");
       return;
     }
-
-    // Kiểm tra số phòng hợp lệ
-    // const roomBeginNum = parseInt(newArea.roomBegin.trim());
-    // const roomEndNum = parseInt(newArea.roomEnd.trim());
-
-    // if (isNaN(roomBeginNum) || isNaN(roomEndNum)) {
-    //   alert("Số phòng phải là số hợp lệ!");
-    //   return;
-    // }
-
-    // if (roomBeginNum >= roomEndNum) {
-    //   alert("Số phòng bắt đầu phải nhỏ hơn số phòng kết thúc!");
-    //   return;
-    // }
 
     // Kiểm tra tên khu vực
     if (newArea.areaName.trim().length < 2) {
-      alert("Tên khu vực phải có ít nhất 2 ký tự!");
+      showNotificationMessage("error", "❌ Tên khu vực phải có ít nhất 2 ký tự!");
       return;
     }
 
-    createAsync(newArea);
-    handleClosePopup();
-    alert("✅ Đã thêm khu vực thành công!");
+    try {
+      console.log('🔄 ===== BẮT ĐẦU THÊM KHU VỰC =====');
+      console.log('📝 Dữ liệu form nhập vào:');
+      console.log('   🏷️ Tên khu vực:', newArea.areaName?.trim());
+      console.log('   🏢 Tòa nhà ID:', newArea.buildingId);
+      console.log('   🏢 Tên tòa nhà:', buildings.find(b => b.buildingId === newArea.buildingId)?.buildingName || 'Không xác định');
+      console.log('   📄 Mô tả:', newArea.description?.trim() || "Không có mô tả");
+      console.log('   📊 Trạng thái:', newArea.status);
+      console.log('=====================================');
+      
+      const areaToAdd = {
+        areaName: newArea.areaName.trim(),
+        buildingId: newArea.buildingId,
+        description: newArea.description?.trim() || "",
+        status: newArea.status || "Hoạt động",
+      };
+      
+      console.log('🚀 Gọi API với dữ liệu đã xử lý:', areaToAdd);
+      
+      const createdArea = await createAsync(areaToAdd);
+      
+      console.log('🎉 ===== THÊM KHU VỰC THÀNH CÔNG =====');
+      console.log('📝 Thông tin khu vực đã tạo:');
+      console.log('   🏷️ Tên khu vực:', createdArea?.areaName || areaToAdd.areaName);
+      console.log('   🏢 Tòa nhà:', buildings.find(b => b.buildingId === areaToAdd.buildingId)?.buildingName || 'Không xác định');
+      console.log('   🆔 Area ID:', createdArea?.areaId || 'Chưa có ID');
+      console.log('   📄 Mô tả:', createdArea?.description || areaToAdd.description);
+      console.log('   📊 Trạng thái:', createdArea?.status || areaToAdd.status);
+      console.log('🎯 API Response:', createdArea);
+      console.log('=======================================');
+      
+      handleClosePopup();
+      showNotificationMessage("success", `🎉 Đã thêm khu vực "${areaToAdd.areaName}" thành công!`);
+      
+    } catch (error: any) {
+      console.error('❌ ===== LỖI KHI THÊM KHU VỰC =====');
+      console.error('🚨 Chi tiết lỗi:');
+      console.error('   📝 Error message:', error?.message);
+      console.error('   🔍 Error stack:', error?.stack);
+      console.error('   📡 API Response:', error?.response?.data);
+      console.error('   📊 Status code:', error?.response?.status);
+      console.error('   🎯 Full error object:', error);
+      console.error('=======================================');
+      
+      const errorMessage = error?.message || "Có lỗi xảy ra khi thêm khu vực!";
+      showNotificationMessage("error", `❌ ${errorMessage}`);
+    }
   };
 
   // Filter areas based on active tab and search term
@@ -212,18 +304,10 @@ const Areas = () => {
     return area.areaName.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  // Sort areas by floor number and room begin (ascending)
-  const sortedAreas = [...filteredAreas].sort((a, b) => {
-    // First sort by floor number (ascending)
-    // if (a.floorNumber !== b.floorNumber) {
-    //   return a.floorNumber - b.floorNumber;
-    // }
-    
-    // Then sort by room begin number (ascending)
-    // const aRoomBegin = parseInt(a.roomBegin?.toString() || "0");
-    // const bRoomBegin = parseInt(b.roomBegin?.toString() || "0");
-    // return aRoomBegin - bRoomBegin;
-    return 0; // No sorting by floor number or room begin in this version
+  // Sort areas by area name (ascending)
+  const sortedAreas = [...filteredAreas].sort((_a, _b) => {
+    // Currently no sorting applied
+    return 0; 
   });
 
   // Tính toán pagination
@@ -248,6 +332,13 @@ const Areas = () => {
         flexDirection: "column",
       }}
     >
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={hideNotification}
+      />
       <div style={{ padding: "16px", flex: "0 0 auto" }}>
         <div style={{ marginBottom: "16px" }}>
           <nav style={{ color: "#6b7280", fontSize: "14px" }}>
